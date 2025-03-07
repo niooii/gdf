@@ -5,6 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/include",
                 "${workspaceFolder}/extern",
+                "${workspaceFolder}/gdfe/extern",
+                "${workspaceFolder}/gdfe/include",
                 "${VULKAN_SDK}/include"
             ],
             "defines": [
