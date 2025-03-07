@@ -67,7 +67,7 @@ bool block_textures_init(VkRenderContext* context, block_textures* out_textures)
     VkMemoryAllocateInfo img_alloc_info = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
         .allocationSize = mem_req.size,
-        .memoryTypeIndex = utils_find_memory_type_idx(
+        .memoryTypeIndex = GDF_VkUtilsFindMemTypeIdx(
             context, 
             mem_req.memoryTypeBits, 
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
