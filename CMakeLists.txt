@@ -35,7 +35,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Ofast -fno-plt -fuse-ld=lld -funroll-loops -finline-functions -fomit-frame-pointer -fno-exceptions -ftree-vectorize -fvectorize -fslp-vectorize -DNDEBUG -DGDF_RELEASE")
 else()
     set(PROFILE_DIR "debug")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -Og -DDEBUG")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g3 -O0 -fno-omit-frame-pointer -DDEBUG")
 endif()
 
 function(find_src_files result search_dir)
@@ -47,6 +47,8 @@ endfunction()
 
 find_src_files(SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src")
 find_src_files(EXTERN_SRC "${CMAKE_CURRENT_SOURCE_DIR}/extern")
+
+SET_SOURCE_FILES_PROPERTIES(${SOURCE_FILES} ${EXTERN_SRC} PROPERTIES LANGUAGE C)
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${EXTERN_SRC})
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <core.h>
+#include <../../gdfe/include/core.h>
 
 typedef struct GDF_ClientSettings {
     bool verbose_output;

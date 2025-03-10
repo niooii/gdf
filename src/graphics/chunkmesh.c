@@ -1,4 +1,6 @@
-#include <render/chunkmesh.h>
+#include <graphics/chunkmesh.h>
+#include <render/vk/buffers.h>
+#include "graphics/renderer.h"
 
 // #define GDFP_DISABLE
 
@@ -219,8 +221,7 @@ void __mesh_chunk(ChunkMesh* mesh)
         }
     }
     GDFP_LOG_MSG_RESET("Finished face culling.");
-    u32 cube_idx = 0;
-    // One map per axis.  
+    // One map per axis.
     GDF_HashMap planes[6] = {
         // keys for the outer map are just the block type. 
         // each outer map is a hashmap of the pair:

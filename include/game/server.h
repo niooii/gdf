@@ -1,5 +1,5 @@
 #pragma once
-#include <core.h>
+#include <../../gdfe/include/core.h>
 #include <os/socket.h>
 #include <os/thread.h>
 #include <game/world.h>

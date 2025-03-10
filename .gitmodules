@@ -1,3 +1,4 @@
 [submodule "gdfe"]
 	path = gdfe
 	url = https://github.com/niooii/gdfe.git
+	branch = main

@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <core.h>
+#include <../../../gdfe/include/pub/core.h>
 
 typedef struct GDF_GraphicSettings {
     

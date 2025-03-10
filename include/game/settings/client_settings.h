@@ -1,6 +1,6 @@
 #pragma once
 
-#include <core.h>
+#include <../../../gdfe/include/pub/core.h>
 #include <movement.h>
 #include <keybinds.h>
 #include <graphics.h>

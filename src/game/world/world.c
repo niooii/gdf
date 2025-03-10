@@ -1,6 +1,6 @@
 #include <game/world.h>
 #include <game/events.h>
-#include <render/renderer.h>
+#include <graphics/renderer.h>
 
 u32 chunk_hash(const u8* data, u32 len) {
     ivec3* coord = (ivec3*)(data);

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <core.h>
-#include <render/vk_types.h>
+#include <../../gdfe/include/core.h>
+#include <graphics/vk_types.h>
 
 typedef struct block_textures {
     vk_device* device;

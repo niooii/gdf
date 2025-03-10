@@ -1,8 +1,7 @@
 #pragma once
 
-#include <core.h>
+#include <../../gdfe/include/core.h>
 #include <vulkan/vulkan.h>
-#include <render/vk_types.h>
 
 #define MAX_TEXTURES = 2048
 
@@ -16,6 +15,6 @@ typedef enum GDF_TEXTURE_INDEX {
 
 // This initializes the texture array buffer
 // and copies block_texture_ids[] from block.c to a storage buffer.
-bool block_textures_init(VkRenderContext* context, block_textures* out_texture_manager);
-
-bool block_textures_destroy(block_textures* texture_manager);
+// bool block_textures_init(VkRenderContext* context, block_textures* out_texture_manager);
+//
+// bool block_textures_destroy(block_textures* texture_manager);

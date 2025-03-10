@@ -1,11 +1,10 @@
 #include <game/game.h>
+#include <../gdfe/include/core.h>
 #include <os/sysinfo.h>
-#include <app.h>
-#include <asserts.h>
 #include <subsystems.h>
-#include <os/thread.h>
 #include <game/server.h>
 #include <collections/hashmap.h>
+#include <graphics/renderer.h>
 
 #include "gdfe.h"
 
@@ -26,16 +25,22 @@ bool on_frame(const GDF_AppState* app_state, f64 delta_time, void* state) {
         LOG_DEBUG("YAY!!");
     }
 
-
-
     return true;
 }
 
 int main()
 {
+    GameState* game = game_init();
     GDF_InitInfo init = {
         .callbacks = {
-            .on_frame = on_frame
+            .on_frame = game_update,
+            .on_frame_state = game,
+            .on_render_init = renderer_init,
+            .on_render_destroy = renderer_destroy,
+            .on_render = renderer_draw,
+        },
+        .config = {
+            .fps_cap = 0,
         }
     };
     if (!GDF_Init(init))

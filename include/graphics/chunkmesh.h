@@ -1,9 +1,10 @@
 #pragma once
 
-#include <core.h>
+#include <../../gdfe/include/core.h>
 #include <game/world.h>
-#include <render/vk/buffers.h>
 #include <render/vk_types.h>
+
+#include "graphics/renderer.h"
 
 // holy wasteful man
 #define MAX_CHUNK_VERTICES (CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE * 8)

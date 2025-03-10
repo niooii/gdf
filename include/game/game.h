@@ -1,8 +1,10 @@
 #pragma once
 
-#include <core.h>
+#include <../../gdfe/include/core.h>
 #include <game/world.h>
 #include <camera.h>
+
+#include "gdfe.h"
 
 typedef enum GDF_GAME_SCREEN {
     GDF_GAME_SCREEN_MAIN_MENU,
@@ -15,15 +17,15 @@ typedef enum GDF_GAME_SCREENTYPE {
     GDF_GAME_SCREENTYPE_WORLD_GUI_MENU,
 } GDF_GAME_SCREENTYPE;
 
-typedef struct GDF_Game {
+typedef struct GameState {
     World* world;
     // HumanoidEntity* main_player;
     GDF_GAME_SCREEN current_screen;
     GDF_GAME_SCREENTYPE current_screen_type;
 
-    GDF_Camera* main_camera;
-} GDF_Game;
+    GDF_Camera main_camera;
+} GameState;
 
-bool GDF_GAME_Init();
-bool GDF_GAME_Update(f32 dt);
-GDF_Game* GDF_GAME_GetInstance();
+GameState* game_init();
+void game_destroy();
+bool game_update(const GDF_AppState* app_state, f64 delta_time, void* state);

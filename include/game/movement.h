@@ -1,6 +1,6 @@
 #pragma once
 
-#include <core.h>
+#include <../../gdfe/include/core.h>
 #include <physics/physics.h>
 
 typedef struct HumanoidEntity HumanoidEntity;
