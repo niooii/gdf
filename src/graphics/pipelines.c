@@ -1,5 +1,5 @@
 // #include <../../gdfe/include/render/vk/utils.h>
-// #include <../../gdfe/include/render/vk/buffers.h>
+// #include <../../gdfe/include/render/vk/utils.h>
 // #include <../../gdfe/include/render/vk_types.h>
 // #include <render/chunkmesh.h>
 //

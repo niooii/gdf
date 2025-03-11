@@ -31,8 +31,8 @@ struct ChunkVertex_T {
 typedef struct ChunkVertex_T ChunkVertex;
 
 typedef struct MeshBuffer {
-    buffer vertex_buffer;
-    buffer index_buffer;
+    GDF_VkBuffer vertex_buffer;
+    GDF_VkBuffer index_buffer;
 
     bool up_to_date;
 } MeshBuffer;
@@ -62,12 +62,12 @@ typedef struct ChunkMeshUpdates {
     GDF_HashMap(ivec3, Block*) created;
 } ChunkMeshUpdates; 
 
-bool chunk_mesh_init(VkRenderContext* ctx, World* world, Chunk* chunk, ChunkMesh* mesh);
+bool chunk_mesh_init(GDF_VkRenderContext* ctx, World* world, Chunk* chunk, ChunkMesh* mesh);
 // for now this shit rebuilds the entire chunk lol but  please use it as implmeneted
 bool chunk_mesh_update(ChunkMesh* mesh, ChunkMeshUpdates* updates);
-void chunk_mesh_destroy(VkRenderContext* ctx, ChunkMesh* mesh);
+void chunk_mesh_destroy(GDF_VkRenderContext* ctx, ChunkMesh* mesh);
 
-bool chunk_mesh_update_buffers(VkRenderContext* ctx, ChunkMesh* mesh, u16 buffer_idx);
+bool chunk_mesh_update_buffers(GDF_VkRenderContext* ctx, ChunkMesh* mesh, u16 buffer_idx);
 
 // no memory should be allocated, the data is static
 void get_vertex_attrs(VkVertexInputAttributeDescription** attrs, u32* len);

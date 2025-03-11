@@ -209,13 +209,12 @@ void game_handle_input(GameState* game, f64 dt)
 
 bool game_update(const GDF_AppState* app_state, f64 dt, void* state)
 {
-    LOG_INFO("DT: %lf", dt);
     GameState* game = (GameState*)state;
     // LOG_INFO("VEL: %f %f %f", player->base.vel.x, player->base.vel.y, player->base.vel.z);
     game_handle_input(game, dt);
     world_update(game->world, dt);
 
-    LOG_DEBUG("pos: %f %f %f", player->base.aabb.min.x, player->base.aabb.min.y, player->base.aabb.min.z);
+    // LOG_DEBUG("pos: %f %f %f", player->base.aabb.min.x, player->base.aabb.min.y, player->base.aabb.min.z);
     // LOG_DEBUG("vel: %f %f %f", player_comp->vel.x, player_comp->vel.y, player_comp->vel.z);
     return true;
 }

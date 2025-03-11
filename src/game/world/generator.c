@@ -22,7 +22,7 @@ bool generator_gen_chunk(
     };
     BLOCK_TYPE type = BLOCK_TYPE_Grass;
 
-    for (u8 y = 0; y < 20; y++)
+    for (u8 y = 0; y < 2; y++)
     {
         for (u8 x = 0; x < CHUNK_SIZE; x++)
         {

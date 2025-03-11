@@ -129,7 +129,7 @@
         "camera.h": "c",
         "ios": "c",
         "xiosbase": "c",
-        "buffers.h": "c",
+        "utils.h": "c",
         "textures.h": "c",
         "generator.h": "c",
         "player.h": "c",

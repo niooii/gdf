@@ -1,5 +1,5 @@
 #include <graphics/chunkmesh.h>
-#include <render/vk/buffers.h>
+#include <../../gdfe/include/render/vk_utils.h>
 #include "graphics/renderer.h"
 
 // #define GDFP_DISABLE
@@ -517,7 +517,7 @@ void __mesh_chunk(ChunkMesh* mesh)
 }
 
 // mesh should not be accessed while its being initialized. 
-bool chunk_mesh_init(VkRenderContext* ctx, World* world, Chunk* chunk, ChunkMesh* mesh) 
+bool chunk_mesh_init(GDF_VkRenderContext* ctx, World* world, Chunk* chunk, ChunkMesh* mesh) 
 {
     // BUG! untested
     GDF_MemSet(mesh, 0, sizeof(*mesh));
@@ -530,7 +530,7 @@ bool chunk_mesh_init(VkRenderContext* ctx, World* world, Chunk* chunk, ChunkMesh
 
     for (u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         GDF_ASSERT_RETURN_FALSE(
-            buffers_create_vertex(
+            GDF_VkBufferCreateVertex(
                 ctx,
                 NULL,
                 MAX_CHUNK_VERTICES,
@@ -539,7 +539,7 @@ bool chunk_mesh_init(VkRenderContext* ctx, World* world, Chunk* chunk, ChunkMesh
             )
         );
         GDF_ASSERT_RETURN_FALSE(
-            buffers_create_index(
+            GDF_VkBufferCreateIndex(
                 ctx,
                 NULL,
                 MAX_CHUNK_INDICES,
@@ -555,10 +555,10 @@ bool chunk_mesh_init(VkRenderContext* ctx, World* world, Chunk* chunk, ChunkMesh
     return true;
 }
 
-bool chunk_mesh_update_buffers(VkRenderContext* ctx, ChunkMesh* mesh, u16 i)
+bool chunk_mesh_update_buffers(GDF_VkRenderContext* ctx, ChunkMesh* mesh, u16 i)
 {
     GDF_ASSERT_RETURN_FALSE(
-        buffers_update(
+        GDF_VkBufferUpdate(
             ctx, 
             &mesh->buffers[i].vertex_buffer, 
             mesh->vertices,
@@ -566,7 +566,7 @@ bool chunk_mesh_update_buffers(VkRenderContext* ctx, ChunkMesh* mesh, u16 i)
         )
     );
     GDF_ASSERT_RETURN_FALSE(
-        buffers_update(
+        GDF_VkBufferUpdate(
             ctx, 
             &mesh->buffers[i].index_buffer, 
             mesh->indices,
@@ -584,17 +584,17 @@ bool chunk_mesh_update(ChunkMesh* mesh, ChunkMeshUpdates* updates)
     return true;
 }
 
-void chunk_mesh_destroy(VkRenderContext* ctx, ChunkMesh* mesh) 
+void chunk_mesh_destroy(GDF_VkRenderContext* ctx, ChunkMesh* mesh) 
 {
     GDF_LIST_Destroy(mesh->vertices);
     GDF_LIST_Destroy(mesh->indices);
 
     for (u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        buffers_destroy(
+        GDF_VkBufferDestroy(
             ctx, 
             &mesh->buffers[i].vertex_buffer 
         );
-        buffers_destroy(
+        GDF_VkBufferDestroy(
             ctx, 
             &mesh->buffers[i].index_buffer 
         );
