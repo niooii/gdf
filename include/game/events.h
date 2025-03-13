@@ -1,7 +1,7 @@
 #pragma once
 
-#include <gdfe/../../gdfe/include/gdfe/core.h>
-#include <gdfe/../../gdfe/include/gdfe/event.h>
+#include <gdfe/core.h>
+#include <gdfe/event.h>
 #include <game/world.h>
 
 // TODO! kill this
@@ -28,12 +28,12 @@ typedef enum GDF_EVENT {
     /*
     Whenever a chunk is unloaded.
     The chunk pointer is guarenteed to be valid when the event
-    handlers are called. 
+    handlers are called.
     Usage:
     Chunk* chunk = (Chunk*)sender;
     */
     GDF_EVENT_CHUNK_UNLOAD,
-    
+
     // Not actaully an event.
     GDF_EVENT_MAX = 0xFFF
 
@@ -45,7 +45,7 @@ void on_chunk_load(CHUNK_LOAD_HANDLER);
 typedef struct ChunkUpdates {
     // Hashmap of <RelBlockCoord, Block*>.
     // If the block was removed, then the block pointer will be NULL.
-    GDF_HashMap(RelBlockCoord, Block*) updated_blocks;
+    // GDF_HashMap(RelBlockCoord, Block*) updated_blocks;
 } ChunkUpdates;
 
 #define CHUNK_UPDATE_HANDLER void (*handle_chunk_update)(World* world, Chunk* chunk, ChunkUpdates* updates, void* state)

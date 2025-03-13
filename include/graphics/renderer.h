@@ -1,7 +1,7 @@
 #pragma once
 
-#include <gdfe/graphics/renderer.h>
-#include <gdfe/../../gdfe/include/gdfe/gdfe.h>
+#include <graphics/renderer.h>
+#include <gdfe/gdfe.h>
 
 typedef struct GameRenderer {
 

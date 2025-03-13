@@ -1,5 +1,5 @@
-#include <gdfe/graphics/chunkmesh.h>
-#include <gdfe/../../gdfe/include/render/vk_utils.h>
+#include <graphics/chunkmesh.h>
+#include <gdfe/render/vk_utils.h>
 #include "graphics/renderer.h"
 
 // #define GDFP_DISABLE
@@ -49,10 +49,10 @@ static const VkVertexInputAttributeDescription vertex_attrs[] = {
     },
 };
 
-void get_vertex_attrs(VkVertexInputAttributeDescription** attrs, u32* len) 
+void get_vertex_attrs(VkVertexInputAttributeDescription** attrs, u32* len)
 {
-    *attrs = vertex_attrs;
-    *len = sizeof(vertex_attrs) / sizeof(*vertex_attrs);
+    *attrs = const_cast<VkVertexInputAttributeDescription*>(vertex_attrs);
+    *len = std::size(vertex_attrs);
 }
 
 void print_mask(const char* msg, u64 n)
@@ -128,7 +128,7 @@ FORCEINLINE BLOCK_FACE __axis_to_face(u32 axis)
             return BLOCK_FACE_BACK;
     }
     LOG_FATAL("are u stupid");
-    return -1;
+    return BLOCK_FACE_BOT;
 }
 
 FORCEINLINE ivec3 __get_actual_coord(u32 axis_depth, BLOCK_FACE face, u32 rel_x, u32 rel_y) 
@@ -153,19 +153,16 @@ FORCEINLINE ivec3 __get_actual_coord(u32 axis_depth, BLOCK_FACE face, u32 rel_x,
 
 // Implementation of a binary greedy meshing algorithm.
 // WARNING: this is a very specific impl that only works for 32x32x32. take a look later..
-void __mesh_chunk(ChunkMesh* mesh)
+void ChunkMesh::mesh()
 {
-    #include <gdfe/../../gdfe/include/gdfe/profiler.h>
-
+    #include <gdfe/profiler.h>
 
     GDFP_START();
 
-    World* world = mesh->world;
-    Chunk* chunk = mesh->chunk;
-    GDF_LIST_Clear(mesh->vertices);
-    GDF_LIST_Clear(mesh->indices);
-
-    // TODO! this could be optimized hella
+    World* world = world_;
+    Chunk* chunk = chunk_;
+    vertices_.clear();
+    indices_.clear();
 
     // stores the bitmasks for each axis x y and z
     u64 axis_masks[3][CHUNK_SIZE_P][CHUNK_SIZE_P];
@@ -182,7 +179,7 @@ void __mesh_chunk(ChunkMesh* mesh)
         {
             for (i32 z = 0; z < CHUNK_SIZE_P; z++) 
             {
-                vec3 world_pos = vec3_add(chunk_coord_to_world_pos(chunk->cc), vec3_new(x-1, y-1, z-1));
+                vec3 world_pos = vec3_add(chunk_coord_to_world_pos(chunk_coord_), vec3_new(x-1, y-1, z-1));
                 
                 // TODO! could replace this entire loop with just iterating through the chunks
                 // owned blocks, then 8 other for loops for the outer edges of the chunk (the neighboring stuff)
@@ -223,24 +220,17 @@ void __mesh_chunk(ChunkMesh* mesh)
         }
     }
     GDFP_LOG_MSG_RESET("Finished face culling.");
+
+    using ankerl::unordered_dense::map, std::array;
     // One map per axis.
-    GDF_HashMap planes[6] = {
-        // keys for the outer map are just the block type. 
-        // each outer map is a hashmap of the pair:
-        // <block_type: u32, GDF_HashMap(axis_depth: u32, plane: u32[32])> 
-        // each inner map is of the pair:
-        // <axis_depth: u32, plane: u32[32] (will be manually allocated when needed)>
-        // TODO! might as well just use a fucking flat array oml
-        // TODO! hey chat what if i make an option to create a non expandable hash table :>
-        [0] = GDF_HashmapCreate(u32, GDF_HashMap(u32, u32[32]), GDF_FALSE),
-        [1] = GDF_HashmapCreate(u32, GDF_HashMap(u32, u32[32]), GDF_FALSE),
-        [2] = GDF_HashmapCreate(u32, GDF_HashMap(u32, u32[32]), GDF_FALSE),
-        [3] = GDF_HashmapCreate(u32, GDF_HashMap(u32, u32[32]), GDF_FALSE),
-        [4] = GDF_HashmapCreate(u32, GDF_HashMap(u32, u32[32]), GDF_FALSE),
-        [5] = GDF_HashmapCreate(u32, GDF_HashMap(u32, u32[32]), GDF_FALSE),
-    };
-    // maintain a list of allocated planes for easier (arguably faster - should benchmark) deallocation 
-    GDF_LIST(u32*) allocated_planes = GDF_LIST_Reserve(u32*, 256);
+    // keys for the outer map are just the block type.
+    // each outer map is a hashmap of the pair:
+    // <block_type: u32, GDF_HashMap(axis_depth: u32, plane: u32[32])>
+    // each inner map is of the pair:
+    // <axis_depth: u32, plane: u32[32] (will be manually allocated when needed)>
+    // TODO! might as well just use a fucking flat array oml
+    // TODO! hey chat what if i make an option to create a non expandable hash table :>
+    map<u32, map<u32, array<u32, 32>>> planes[6] = {};
 
     for (u32 axis = 0; axis < 6; axis++) 
     {
@@ -287,32 +277,14 @@ void __mesh_chunk(ChunkMesh* mesh)
                     Block* block = chunk_get_block(chunk, block_coord);
 
                     if (!block) {
-                        LOG_ERR("yea yo code is doodoo");
+                        LOG_FATAL("yea yo code is doodoo");
                     }
 
-                    GDF_HashMap* depth_map_p = GDF_HashmapGet(planes[axis], &block->data.type);
-                    if (!depth_map_p) {
-                        GDF_HashMap t = GDF_HashmapCreate(u32, u32*, GDF_FALSE);
-                        depth_map_p = GDF_HashmapInsert(
-                            planes[axis], 
-                            &block->data.type, 
-                            &t,
-                            NULL
-                        );
-                        GDF_ASSERT(depth_map_p);
-                    }
+                    auto type_entry  = planes[axis].emplace(block->data.type).first;
+                    map<u32, array<u32, 32>>& depth_map = type_entry->second;
+                    auto depth_entry = depth_map.emplace(depth).first;
 
-                    GDF_HashMap depth_map = *depth_map_p;
-
-                    u32** plane_p = GDF_HashmapGet(depth_map, &depth);
-                    if (!plane_p) {
-                        u32* plane = GDF_Malloc(sizeof(u32) * 32, GDF_MEMTAG_ARRAY);
-                        plane_p = GDF_HashmapInsert(depth_map, &depth, &plane, NULL);
-                        GDF_LIST_Push(allocated_planes, plane);
-                    }
-
-                    // 32 size
-                    u32* plane = *plane_p;
+                    array<u32, 32>& plane = depth_entry->second;
                     plane[j] |= (u32)1 << i;
                 }
             }
@@ -381,7 +353,8 @@ void __mesh_chunk(ChunkMesh* mesh)
                         ivec3 v1_pos = __get_actual_coord(depth, face, row + h, x);
                         ivec3 v2_pos = __get_actual_coord(depth, face, row + h, x + w);
                         ivec3 v3_pos = __get_actual_coord(depth, face, row, x + w);
-                        ChunkVertex v0 = {
+                        u32 num_vertices = vertices_.size();
+                        vertices_.emplace_back({
                             .block_type = block_type,
                             .face_dir = face,
                             .x_pos = v0_pos.x,
@@ -389,8 +362,8 @@ void __mesh_chunk(ChunkMesh* mesh)
                             .z_pos = v0_pos.z,
                             .u = 0,
                             .v = 0
-                        };
-                        ChunkVertex v1 = {
+                        });
+                        vertices_.emplace_back({
                             .block_type = block_type,
                             .face_dir = face,
                             .x_pos = v1_pos.x,
@@ -398,8 +371,8 @@ void __mesh_chunk(ChunkMesh* mesh)
                             .z_pos = v1_pos.z,
                             .u = h,
                             .v = 0
-                        };
-                        ChunkVertex v2 = {
+                        });
+                        vertices_.emplace_back({
                             .block_type = block_type,
                             .face_dir = face,
                             .x_pos = v2_pos.x,
@@ -407,8 +380,8 @@ void __mesh_chunk(ChunkMesh* mesh)
                             .z_pos = v2_pos.z,
                             .u = h,
                             .v = w
-                        };
-                        ChunkVertex v3 = {
+                        });
+                        vertices_.emplace_back({
                             .block_type = block_type,
                             .face_dir = face,
                             .x_pos = v3_pos.x,
@@ -416,70 +389,64 @@ void __mesh_chunk(ChunkMesh* mesh)
                             .z_pos = v3_pos.z,
                             .u = 0,
                             .v = w
-                        };
-                        u32 num_vertices = GDF_LIST_GetLength(mesh->vertices);
-                        GDF_LIST_Push(mesh->vertices, v0);
-                        GDF_LIST_Push(mesh->vertices, v1);
-                        GDF_LIST_Push(mesh->vertices, v2);
-                        GDF_LIST_Push(mesh->vertices, v3);
-                        
+                        });
+
                         // push indices based on face dir for consistent winding
                         switch (face) {
                             case BLOCK_FACE_FRONT: // +Z face
-                                GDF_LIST_Push(mesh->indices, num_vertices);     // v0
-                                GDF_LIST_Push(mesh->indices, num_vertices + 3); // v3
-                                GDF_LIST_Push(mesh->indices, num_vertices + 2); // v2
-                                GDF_LIST_Push(mesh->indices, num_vertices);     // v0
-                                GDF_LIST_Push(mesh->indices, num_vertices + 2); // v2
-                                GDF_LIST_Push(mesh->indices, num_vertices + 1); // v1
+                                indices_.push_back(num_vertices);     // v0
+                                indices_.push_back(num_vertices + 3); // v3
+                                indices_.push_back(num_vertices + 2); // v2
+                                indices_.push_back(num_vertices);     // v0
+                                indices_.push_back(num_vertices + 2); // v2
+                                indices_.push_back(num_vertices + 1); // v1
                                 break;
-                            
+
                             case BLOCK_FACE_BACK: // -Z face
-                                GDF_LIST_Push(mesh->indices, num_vertices);     // v0
-                                GDF_LIST_Push(mesh->indices, num_vertices + 1); // v1
-                                GDF_LIST_Push(mesh->indices, num_vertices + 2); // v2
-                                GDF_LIST_Push(mesh->indices, num_vertices);     // v0
-                                GDF_LIST_Push(mesh->indices, num_vertices + 2); // v2
-                                GDF_LIST_Push(mesh->indices, num_vertices + 3); // v3
+                                indices_.push_back(num_vertices);     // v0
+                                indices_.push_back(num_vertices + 1); // v1
+                                indices_.push_back(num_vertices + 2); // v2
+                                indices_.push_back(num_vertices);     // v0
+                                indices_.push_back(num_vertices + 2); // v2
+                                indices_.push_back(num_vertices + 3); // v3
                                 break;
-                            
+
                             case BLOCK_FACE_RIGHT: // +X face
-                                GDF_LIST_Push(mesh->indices, num_vertices);     // v0
-                                GDF_LIST_Push(mesh->indices, num_vertices + 1); // v1
-                                GDF_LIST_Push(mesh->indices, num_vertices + 2); // v2
-                                GDF_LIST_Push(mesh->indices, num_vertices);     // v0
-                                GDF_LIST_Push(mesh->indices, num_vertices + 2); // v2
-                                GDF_LIST_Push(mesh->indices, num_vertices + 3); // v3
+                                indices_.push_back(num_vertices);     // v0
+                                indices_.push_back(num_vertices + 1); // v1
+                                indices_.push_back(num_vertices + 2); // v2
+                                indices_.push_back(num_vertices);     // v0
+                                indices_.push_back(num_vertices + 2); // v2
+                                indices_.push_back(num_vertices + 3); // v3
                                 break;
-                            
+
                             case BLOCK_FACE_LEFT: // -X face
-                                GDF_LIST_Push(mesh->indices, num_vertices);     // v0
-                                GDF_LIST_Push(mesh->indices, num_vertices + 3); // v3
-                                GDF_LIST_Push(mesh->indices, num_vertices + 2); // v2
-                                GDF_LIST_Push(mesh->indices, num_vertices);     // v0
-                                GDF_LIST_Push(mesh->indices, num_vertices + 2); // v2
-                                GDF_LIST_Push(mesh->indices, num_vertices + 1); // v1
+                                indices_.push_back(num_vertices);     // v0
+                                indices_.push_back(num_vertices + 3); // v3
+                                indices_.push_back(num_vertices + 2); // v2
+                                indices_.push_back(num_vertices);     // v0
+                                indices_.push_back(num_vertices + 2); // v2
+                                indices_.push_back(num_vertices + 1); // v1
                                 break;
-                            
+
                             case BLOCK_FACE_TOP: // +Y face
-                                GDF_LIST_Push(mesh->indices, num_vertices);     // v0
-                                GDF_LIST_Push(mesh->indices, num_vertices + 1); // v1
-                                GDF_LIST_Push(mesh->indices, num_vertices + 2); // v2
-                                GDF_LIST_Push(mesh->indices, num_vertices);     // v0
-                                GDF_LIST_Push(mesh->indices, num_vertices + 2); // v2
-                                GDF_LIST_Push(mesh->indices, num_vertices + 3); // v3
+                                indices_.push_back(num_vertices);     // v0
+                                indices_.push_back(num_vertices + 1); // v1
+                                indices_.push_back(num_vertices + 2); // v2
+                                indices_.push_back(num_vertices);     // v0
+                                indices_.push_back(num_vertices + 2); // v2
+                                indices_.push_back(num_vertices + 3); // v3
                                 break;
-                            
+
                             case BLOCK_FACE_BOT: // -Y face
-                                GDF_LIST_Push(mesh->indices, num_vertices);     // v0
-                                GDF_LIST_Push(mesh->indices, num_vertices + 3); // v3
-                                GDF_LIST_Push(mesh->indices, num_vertices + 2); // v2
-                                GDF_LIST_Push(mesh->indices, num_vertices);     // v0
-                                GDF_LIST_Push(mesh->indices, num_vertices + 2); // v2
-                                GDF_LIST_Push(mesh->indices, num_vertices + 1); // v1
+                                indices_.push_back(num_vertices);     // v0
+                                indices_.push_back(num_vertices + 3); // v3
+                                indices_.push_back(num_vertices + 2); // v2
+                                indices_.push_back(num_vertices);     // v0
+                                indices_.push_back(num_vertices + 2); // v2
+                                indices_.push_back(num_vertices + 1); // v1
                                 break;
                         }
-
                         x += w;
                     }
                 }
@@ -491,70 +458,42 @@ void __mesh_chunk(ChunkMesh* mesh)
 
     // finalization
     for (u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        mesh->buffers[i].up_to_date = GDF_FALSE;
+        buffers_[i].up_to_date = false;
     }
-    // __gen_indices(mesh);
-    mesh->num_indices = GDF_LIST_GetLength(mesh->indices);
-
-    // cleanup
-    for (u32 i = 0; i < 6; i++) {
-        for (
-            HashmapEntry* iter = GDF_HashmapIter(planes[i]);
-            iter != NULL;
-            GDF_HashmapIterAdvance(&iter)
-        ) {
-            GDF_HashMap inner = *(GDF_HashMap*)iter->val;
-            GDF_ASSERT(GDF_HashmapDestroy(inner));
-        }
-        GDF_ASSERT(GDF_HashmapDestroy(planes[i]));
-    }
-
-    u32 num_planes = GDF_LIST_GetLength(allocated_planes);
-    for (u32 i = 0; i < num_planes; i++) {
-        GDF_Free(allocated_planes[i]);
-    }
-    GDF_LIST_Destroy(allocated_planes);
-
     GDFP_END();
 }
 
-// mesh should not be accessed while its being initialized. 
-GDF_BOOL chunk_mesh_init(GDF_VkRenderContext* ctx, World* world, Chunk* chunk, ChunkMesh* mesh)
+ChunkMesh::ChunkMesh(World* world, Chunk* chunk, ivec3 chunk_coord)
+    : chunk_(chunk), world_(world), chunk_coord_(chunk_coord)
 {
-    // BUG! untested
-    GDF_MemSet(mesh, 0, sizeof(*mesh));
-    mesh->chunk = chunk;
-    mesh->world = world;
+    vertices_.reserve(256);
+    indices_.reserve(256);
 
-    mesh->vertices = GDF_LIST_Create(ChunkVertex);
-    mesh->indices = GDF_LIST_Create(CHUNK_MESH_INDEX_TYPE);
-    __mesh_chunk(mesh);
+    this->mesh();
 
     for (u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        GDF_ASSERT_RETURN_FALSE(
-            GDF_VkBufferCreateVertex(
-                ctx,
-                NULL,
-                MAX_CHUNK_VERTICES,
-                sizeof(ChunkVertex),
-                &mesh->buffers[i].vertex_buffer
-            )
-        );
-        GDF_ASSERT_RETURN_FALSE(
-            GDF_VkBufferCreateIndex(
-                ctx,
-                NULL,
-                MAX_CHUNK_INDICES,
-                &mesh->buffers[i].index_buffer
-            )
-        );
+        if (!GDF_VkBufferCreateVertex(
+            NULL,
+            MAX_CHUNK_VERTICES,
+            sizeof(ChunkVertex),
+            &buffers_[i].vertex_buffer
+        ))
+        {
+            LOG_FATAL("buffer cooked");
+        }
+        if (!GDF_VkBufferCreateIndex(
+            NULL,
+            MAX_CHUNK_INDICES,
+            &buffers_[i].index_buffer
+        ))
+        {
+            LOG_FATAL("buffer cooked");
+        }
         // update info for all buffers in the init pass as well.
-        if (!chunk_mesh_update_buffers(ctx, mesh, i)) {
+        if (!this->update_buffers(i)) {
             LOG_FATAL("Failed to update chunkmesh buffer");
-            return GDF_FALSE;
         }
     }
-    return GDF_TRUE;
 }
 
 GDF_BOOL chunk_mesh_update_buffers(GDF_VkRenderContext* ctx, ChunkMesh* mesh, u16 i)
@@ -563,15 +502,15 @@ GDF_BOOL chunk_mesh_update_buffers(GDF_VkRenderContext* ctx, ChunkMesh* mesh, u1
         GDF_VkBufferUpdate(
             ctx, 
             &mesh->buffers[i].vertex_buffer, 
-            mesh->vertices,
-            GDF_LIST_GetLength(mesh->vertices) * sizeof(ChunkVertex)
+            vertices_,
+            GDF_LIST_GetLength(vertices_) * sizeof(ChunkVertex)
         )
     );
     GDF_ASSERT_RETURN_FALSE(
         GDF_VkBufferUpdate(
             ctx, 
             &mesh->buffers[i].index_buffer, 
-            mesh->indices,
+            indices_,
             mesh->num_indices * sizeof(CHUNK_MESH_INDEX_TYPE)  
         )
     );
@@ -588,17 +527,15 @@ GDF_BOOL chunk_mesh_update(ChunkMesh* mesh, ChunkMeshUpdates* updates)
 
 void chunk_mesh_destroy(GDF_VkRenderContext* ctx, ChunkMesh* mesh) 
 {
-    GDF_LIST_Destroy(mesh->vertices);
-    GDF_LIST_Destroy(mesh->indices);
+    GDF_LIST_Destroy(vertices_);
+    GDF_LIST_Destroy(indices_);
 
     for (u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         GDF_VkBufferDestroy(
-            ctx, 
-            &mesh->buffers[i].vertex_buffer 
+            &mesh->buffers[i].vertex_buffer
         );
         GDF_VkBufferDestroy(
-            ctx, 
-            &mesh->buffers[i].index_buffer 
+            &mesh->buffers[i].index_buffer
         );
     }
 }

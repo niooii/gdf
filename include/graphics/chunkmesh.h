@@ -1,6 +1,6 @@
 #pragma once
 
-#include <gdfe/../../gdfe/include/gdfe/core.h>
+#include <gdfe/core.h>
 #include <game/world.h>
 #include <gdfe/render/vk_types.h>
 
@@ -34,32 +34,35 @@ typedef struct MeshBuffer {
     GDF_VkBuffer vertex_buffer;
     GDF_VkBuffer index_buffer;
 
-    GDF_BOOL up_to_date;
+    bool up_to_date;
 } MeshBuffer;
 
-typedef struct ChunkMesh {
-    GDF_LIST(ChunkVertex) vertices;
-    GDF_LIST(CHUNK_MESH_INDEX_TYPE) indices;
-    
-    // for concurrency safety
-    // will be updated with the frames in flight fences
-    MeshBuffer buffers[MAX_FRAMES_IN_FLIGHT];
-    
-    VkDescriptorSet descriptor_set;
+class ChunkMesh {
+    std::vector<ChunkVertex> vertices_;
+    std::vector<CHUNK_MESH_INDEX_TYPE> indices_;
 
-    u32 num_indices;
-    
-    GDF_BOOL is_visible;
+    // TODO! should really not store buffers here. update them
+    // in the render callback
+    MeshBuffer buffers_[MAX_FRAMES_IN_FLIGHT] = {};
+    Chunk* chunk_;
+    // TODO! remove these in the future design it better
+    World* world_;
+    ivec3 chunk_coord_;
 
-    // rust has made me scared of stuff like this
-    // TODO! RW LOCK PLEASE!!
-    Chunk* chunk;
-    World* world;
-} ChunkMesh;
+public:
+    // TODO! make it use adjacent chunk data not
+    // requiring the entire world to be passed in
+    ChunkMesh(World* world, Chunk* chunk, ivec3 chunk_coord);
+    ~ChunkMesh();
 
-// Changes per frame can be batched and updated all at once.  
+    void mesh();
+    bool update_buffers(u32 frame_idx);
+    MeshBuffer* get_mesh_buffer(u32 frame_idx);
+};
+
+// Changes per frame can be batched and updated all at once.
 typedef struct ChunkMeshUpdates {
-    GDF_HashMap(ivec3, Block*) created;
+    // GDF_HashMap(ivec3, Block*) created;
 } ChunkMeshUpdates; 
 
 GDF_BOOL chunk_mesh_init(GDF_VkRenderContext* ctx, World* world, Chunk* chunk, ChunkMesh* mesh);

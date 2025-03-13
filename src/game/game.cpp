@@ -39,7 +39,7 @@ GameState* game_init()
     };
     world_create(game->world, &world_info);
     player = world_create_humanoid(game->world);
-    physics_add_entity(game->world->physics, &player->base);
+    physics_add_entity(game->world->physics_, &player->base);
     player->base.aabb.min = vec3_new(-0.375, 0, -0.375);
     player->base.aabb.max = vec3_new(0.375, 1.8, 0.375);
     aabb_translate(&player->base.aabb, vec3_new(1, 5, 1));

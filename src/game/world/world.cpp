@@ -70,31 +70,12 @@ static GDF_BOOL __on_block_touch(u16 event_code, void* sender, void* listener_in
     return GDF_FALSE;
 }
 
-Chunk* __gen_chunk(World* world, ivec3 coord)
+// TODO! make customizable
+World::World()
+    : generator_{this}
 {
-    Chunk** cp = (Chunk**)GDF_HashmapGet(world->chunks, &coord);
-    if (cp == NULL)
-    {
-        Chunk* t = GDF_Malloc(sizeof(Chunk), GDF_MEMTAG_GAME);
-        chunk_init(t);
-        cp = GDF_HashmapInsert(world->chunks, &coord, &t, NULL);
-        if (cp == NULL)
-        {
-            LOG_WARN("WOMP WOMP");
-        } 
-        
-        if (!generator_gen_chunk(&world->generator, world, coord, *cp))
-        {
-            LOG_ERR("Failed to create chunk");
-            return NULL;
-        }
-    }
-
-    return *cp;
-}
-
-void world_create(World* out_world, WorldCreateInfo* create_info)
-{
+    chunks_.reserve(128);
+    humanoids_.reserve(128);
     PhysicsCreateInfo physics_info = {
         .gravity = {0, -20, 0},
         .gravity_active = GDF_TRUE,
@@ -102,21 +83,20 @@ void world_create(World* out_world, WorldCreateInfo* create_info)
         .ground_drag = 12.f,
         .terminal_velocity = -50.f
     };
-    out_world->physics = physics_init(physics_info);
-    out_world->chunk_simulate_distance = create_info->chunk_simulate_distance;
-    i32 chunk_sim_distance = out_world->chunk_simulate_distance;
-    out_world->ticks_per_sec = create_info->ticks_per_sec;
-    out_world->chunks = GDF_HashmapWithHasher(ivec3, Chunk*, chunk_hash, GDF_FALSE);
-    out_world->humanoids = GDF_LIST_Reserve(HumanoidEntity*, 32);
 
-    out_world->world_update_stopwatch = GDF_StopwatchCreate();
+    chunk_sim_dist_ = 8;
+    chunk_view_dist_ = 8;
 
-    GDF_LIST(Chunk*) created_chunks = GDF_LIST_Reserve(Chunk*, 128);
+    // TODO! make physics class
+    physics_ = physics_init(physics_info);
+    ticks_per_sec_ = 20;
+
+    upd_stopwatch_ = GDF_StopwatchCreate();
 
     // Create chunks
     for (i32 chunk_x = -4; chunk_x <= 4; chunk_x++)
     {
-        for (i32 chunk_y = 0; chunk_y < 1; chunk_y++)
+        for (i32 chunk_y = -2; chunk_y < 2; chunk_y++)
         {
             for (i32 chunk_z = -4; chunk_z <= 4; chunk_z++)
             {
@@ -125,14 +105,14 @@ void world_create(World* out_world, WorldCreateInfo* create_info)
                     .y = chunk_y,
                     .z = chunk_z
                 };
-                Chunk* c = __gen_chunk(out_world, cc);
-                GDF_LIST_Push(created_chunks, c);
+                auto entry = chunks_.emplace(cc).first;
+                Chunk& chunk = entry->second;
+                generator_.gen_chunk(cc, chunk);
             }
         }
     }
 
-    u32 num_chunks = GDF_LIST_GetLength(created_chunks);
-    for (u32 i = 0; i < num_chunks; i++) 
+    for (u32 i = 0; i < num_chunks; i++)
     {
         // renderer_register_chunk(created_chunks[i]);
     }
@@ -144,11 +124,47 @@ void world_create(World* out_world, WorldCreateInfo* create_info)
     // GDF_ASSERT(GDF_EventRegister(GDF_EVENT_CHUNK_UPDATE, out_world, __on_chunk_update));
 }
 
+World::~World()
+{
+
+}
+
+void World::update()
+{
+    u32 num_humanoids = humanoids_.size();
+    for (u32 i = 0; i < num_humanoids; i++)
+        humanoid_entity_update(world->humanoids_[i]);
+    physics_update(world->physics_, world, dt);
+}
+
+Chunk* __gen_chunk(World* world, ivec3 coord)
+{
+    Chunk** cp = (Chunk**)GDF_HashmapGet(world->chunks_, &coord);
+    if (cp == NULL)
+    {
+        Chunk* t = GDF_Malloc(sizeof(Chunk), GDF_MEMTAG_GAME);
+        chunk_init(t);
+        cp = GDF_HashmapInsert(world->chunks_, &coord, &t, NULL);
+        if (cp == NULL)
+        {
+            LOG_WARN("WOMP WOMP");
+        } 
+        
+        if (!generator_gen_chunk(&world->generator_, world, coord, *cp))
+        {
+            LOG_ERR("Failed to create chunk");
+            return NULL;
+        }
+    }
+
+    return *cp;
+}
+
 HumanoidEntity* world_create_humanoid(World* world)
 {
     HumanoidEntity* hum = GDF_Malloc(sizeof(HumanoidEntity), GDF_MEMTAG_GAME);
 
-    GDF_LIST_Push(world->humanoids, hum);
+    GDF_LIST_Push(world->humanoids_, hum);
 
     hum->base.type = ENTITY_TYPE_HUMANOID;
     hum->base.parent = hum;
@@ -159,13 +175,13 @@ HumanoidEntity* world_create_humanoid(World* world)
 // if multiplayer this should only run on the client. god i want to die
 void world_update(World* world, f64 dt)
 {
-    u32 num_humanoids = GDF_LIST_GetLength(world->humanoids);
+    u32 num_humanoids = GDF_LIST_GetLength(world->humanoids_);
     for (u32 i = 0; i < num_humanoids; i++)
-        humanoid_entity_update(world->humanoids[i]);
-    physics_update(world->physics, world, dt);
+        humanoid_entity_update(world->humanoids_[i]);
+    physics_update(world->physics_, world, dt);
 
-    // here we remesh chunks if they changed
-    // TODO! a list of chunks ptrs may be bad for cache locality benchmark a bit later
+    // here we remesh chunks_ if they changed
+    // TODO! a list of chunks_ ptrs may be bad for cache locality benchmark a bit later
     // u32 len = GDF_LIST_GetLength(world->queued_mesh_upds);
 
     // for (u32 i = 0; i < len; i++) {
@@ -177,7 +193,7 @@ void world_update(World* world, f64 dt)
 
 Chunk* world_get_or_create_chunk(World* world, ivec3 coord)
 {
-    Chunk** cp = (Chunk**)GDF_HashmapGet(world->chunks, &coord);
+    Chunk** cp = (Chunk**)GDF_HashmapGet(world->chunks_, &coord);
     if (cp) 
         return *cp;
 
@@ -192,7 +208,7 @@ Chunk* world_get_or_create_chunk(World* world, ivec3 coord)
 
 Chunk* world_get_chunk(World* world, ivec3 coord)
 {
-    Chunk** cp = (Chunk**)GDF_HashmapGet(world->chunks, &coord);
+    Chunk** cp = (Chunk**)GDF_HashmapGet(world->chunks_, &coord);
     if (cp == NULL)
         return NULL;
 

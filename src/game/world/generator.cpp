@@ -1,20 +1,22 @@
 #include <game/world.h>
 
-Generator generator_create_default()
+Generator::Generator(World* world) : world{world}
 {
-    // TODO!
-    Generator gen = {};
 
-    return gen;
 }
 
-GDF_BOOL generator_gen_chunk(
-    Generator* generator, 
-    World* world, 
-    ivec3 cc,
-    Chunk* out_chunk
-)
+Generator::~Generator()
 {
+
+}
+
+void Generator::gen_chunk(ivec3 cc, Chunk& chunk)
+{
+    // quick checkerboard patter with chunks lol
+    if (cc.x % 2 == (cc.y % 2) || cc.z % 2 == ((cc.y + 1) % 2))
+    {
+        return;
+    }
     RelBlockCoord bc = {
         .block_x = 0,
         .block_y = 5,
@@ -34,12 +36,8 @@ GDF_BOOL generator_gen_chunk(
 
                 type = (BLOCK_TYPE)0;
 
-                chunk_set_block(out_chunk, type, bc);
+                chunk.set_block(type, bc);
             }
         }
     }
-
-    out_chunk->cc = cc;
-    
-    return GDF_TRUE;
 }

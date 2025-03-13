@@ -46,7 +46,7 @@ typedef struct Block {
     u8 x_rel;
     u8 y_rel;
     u8 z_rel;
-    GDF_BOOL exists;
+    bool exists;
 } Block;
 
 typedef enum BLOCK_FACE {
@@ -76,7 +76,7 @@ typedef enum WORLD_DIRECTION {
 class Chunk {
     // TODO! use sparse octrees
     // Array of [CHUNK_SIZE^3] size for direct access.
-    std::array<Block, CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE> block_arr;
+    std::vector<Block> block_arr;
 
     // GDF_LIST of ChunkBlock pointers for easy iteration over existing blocks.
     std::vector<Block*> block_list;
@@ -85,59 +85,49 @@ class Chunk {
     // TODO! did nothing with this yet
     u64 axis_masks[3][CHUNK_SIZE_P][CHUNK_SIZE_P];
 
-    ivec3 cc;
-
-    // for updating a chunk's mesh before each render only if it changes
-    bool should_upd_mesh;  // replaced GDF_BOOL with standard C++ bool
-
     // indices correspond to the BLOCK_FACE enum
-    Chunk* adjacent[6];  // Array of pointers to adjacent chunks
+    Chunk* adjacent[6];
 
 public:
     Chunk();
-
     ~Chunk();
 
-    // You can add additional methods here to manipulate the chunk data
-    // For example:
-    void updateMesh();
-    bool needsMeshUpdate() const;
-    void setAdjacent(int face, Chunk* chunk);
-    Chunk* getAdjacent(int face) const;
-
-    // Add other functionality as needed
+    void set_block(BLOCK_TYPE type, RelBlockCoord block_coord);
+    Block* get_block(RelBlockCoord block_coord);
+    void destroy_block(RelBlockCoord block_coord, Block* out);
 };
 
-typedef struct Generator {
-    u64 testfield;
-} Generator;
+// A terrain generator_
+class Generator {
+    World* world;
+public:
+    Generator(World* world);
+    ~Generator();
 
-Generator generator_create_default();
+    void gen_chunk(ivec3 chunk_coord, Chunk& chunk);
+};
 
-GDF_BOOL generator_gen_chunk(
-    Generator* generator, 
-    World* world, 
-    ivec3 cc,
-    Chunk* out_chunk
-);
-
-typedef struct World {
+class World {
     // Terrain stuff
-    Generator generator;
+    Generator generator_;
     
-    // <ivec3, Chunk*>
-    ankerl::unordered_dense::map<ivec3, Chunk*> chunks;
-    // will reset every frame
-    u8 chunk_simulate_distance;
-    u16 chunk_view_distance;
+    ankerl::unordered_dense::map<ivec3, Chunk> chunks_;
+    u8 chunk_sim_dist_;
+    u16 chunk_view_dist_;
 
-    u16 ticks_per_sec;
-    GDF_Stopwatch world_update_stopwatch;
+    u16 ticks_per_sec_;
+    GDF_Stopwatch upd_stopwatch_;
     
-    std::vector<HumanoidEntity> humanoids{32};
+    std::vector<HumanoidEntity> humanoids_;
     
-    PhysicsEngine physics;
-} World;
+    PhysicsEngine physics_;
+
+public:
+    World();
+    ~World();
+
+    void update();
+};
 
 FORCEINLINE AxisAlignedBoundingBox block_get_aabb(vec3 world_pos) {
     return (AxisAlignedBoundingBox) {
@@ -213,7 +203,7 @@ HumanoidEntity* world_create_humanoid(World* world);
 void world_update(World* world, f64 dt);
 
 /* This has two behaviors:
- * If a chunk doesn't exist in RAM, it will refresh what chunks are in RAM 
+ * If a chunk doesn't exist in RAM, it will refresh what chunks_ are in RAM
  * by reading from the world's save file and try again
  * If a chunk still doesn't exist, it will create it
  */
