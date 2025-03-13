@@ -1,7 +1,7 @@
 #pragma once
 
-#include <../../gdfe/include/core.h>
-#include <math/math.h>
+#include <gdfe/../../gdfe/include/gdfe/core.h>
+#include <gdfe/math/math.h>
 
 typedef enum AXIS {
     AXIS_POS_X,
@@ -13,7 +13,7 @@ typedef struct AxisAlignedBoundingBox {
 } AxisAlignedBoundingBox;
 
 // Returns whether an aabb is colliding with another aabb->
-FORCEINLINE bool aabb_collides(AxisAlignedBoundingBox* a, AxisAlignedBoundingBox* b) 
+FORCEINLINE GDF_BOOL aabb_collides(AxisAlignedBoundingBox* a, AxisAlignedBoundingBox* b) 
 {
     return a->min.x <= b->max.x &&
     a->max.x >= b->min.x &&
@@ -23,7 +23,7 @@ FORCEINLINE bool aabb_collides(AxisAlignedBoundingBox* a, AxisAlignedBoundingBox
     a->max.z >= b->min.z;
 }
 
-FORCEINLINE bool aabb_intersects(AxisAlignedBoundingBox* a, AxisAlignedBoundingBox* b) 
+FORCEINLINE GDF_BOOL aabb_intersects(AxisAlignedBoundingBox* a, AxisAlignedBoundingBox* b) 
 {
     return a->min.x < b->max.x &&
     a->max.x > b->min.x &&

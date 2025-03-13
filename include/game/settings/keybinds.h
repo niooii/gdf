@@ -1,6 +1,6 @@
 #pragma once
 
-#include <../../../gdfe/include/pub/core.h>
+#include <gdfe/../../../gdfe/include/pub/core.h>
 
 typedef struct GDF_Keybinds {
     

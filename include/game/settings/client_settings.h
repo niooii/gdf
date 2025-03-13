@@ -1,10 +1,10 @@
 #pragma once
 
-#include <../../../gdfe/include/pub/core.h>
-#include <movement.h>
-#include <keybinds.h>
-#include <graphics.h>
-#include <mouse.h>
+#include <gdfe/../../../gdfe/include/pub/core.h>
+#include <gdfe/movement.h>
+#include <gdfe/keybinds.h>
+#include <gdfe/graphics.h>
+#include <gdfe/mouse.h>
 
 typedef struct GDF_Settings {
     GDF_Keybinds keybinds;

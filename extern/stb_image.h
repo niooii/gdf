@@ -10,7 +10,7 @@
    #include ...
    #include ...
    #define STB_IMAGE_IMPLEMENTATION
-   #include <stb_image.h>
+   #include <gdfe/stb_image.h>
 
    You can #define STBI_ASSERT(x) before the #include to avoid using assert.h.
    And #define STBI_MALLOC, STBI_REALLOC, and STBI_FREE to avoid using malloc,realloc,free
@@ -267,7 +267,7 @@ RECENT REVISION HISTORY:
 // On x86, SSE2 will automatically be used when available based on a run-time
 // test; if not, the generic C versions are used as a fall-back. On ARM targets,
 // the typical path is to have separate builds for NEON and non-NEON devices
-// (at least this is true for iOS and Android). Therefore, the NEON support is
+// (at least this is GDF_TRUE for iOS and Android). Therefore, the NEON support is
 // toggled by a build flag: define STBI_NEON to get NEON loops.
 //
 // If for some reason you do not want to use any of SIMD code, or if
@@ -474,7 +474,7 @@ STBIDEF stbi_us *stbi_load_from_file_16(FILE *f, int *x, int *y, int *channels_i
    STBIDEF void   stbi_ldr_to_hdr_scale(float scale);
 #endif // STBI_NO_LINEAR
 
-// stbi_is_hdr is always defined, but always returns false if STBI_NO_HDR
+// stbi_is_hdr is always defined, but always returns GDF_FALSE if STBI_NO_HDR
 STBIDEF int    stbi_is_hdr_from_callbacks(stbi_io_callbacks const *clbk, void *user);
 STBIDEF int    stbi_is_hdr_from_memory(stbi_uc const *buffer, int len);
 #ifndef STBI_NO_STDIO
@@ -508,21 +508,21 @@ STBIDEF int      stbi_is_16_bit_from_file(FILE *f);
 // for image formats that explicitly notate that they have premultiplied alpha,
 // we just return the colors as stored in the file. set this flag to force
 // unpremultiplication. results are undefined if the unpremultiply overflow.
-STBIDEF void stbi_set_unpremultiply_on_load(int flag_true_if_should_unpremultiply);
+STBIDEF void stbi_set_unpremultiply_on_load(int flag_GDF_TRUE_if_should_unpremultiply);
 
 // indicate whether we should process iphone images back to canonical format,
 // or just pass them through "as-is"
-STBIDEF void stbi_convert_iphone_png_to_rgb(int flag_true_if_should_convert);
+STBIDEF void stbi_convert_iphone_png_to_rgb(int flag_GDF_TRUE_if_should_convert);
 
 // flip the image vertically, so the first pixel in the output array is the bottom left
-STBIDEF void stbi_set_flip_vertically_on_load(int flag_true_if_should_flip);
+STBIDEF void stbi_set_flip_vertically_on_load(int flag_GDF_TRUE_if_should_flip);
 
 // as above, but only applies to images loaded on the thread that calls the function
 // this function is only available if your compiler supports thread-local variables;
 // calling it will fail to link if your compiler doesn't
-STBIDEF void stbi_set_unpremultiply_on_load_thread(int flag_true_if_should_unpremultiply);
-STBIDEF void stbi_convert_iphone_png_to_rgb_thread(int flag_true_if_should_convert);
-STBIDEF void stbi_set_flip_vertically_on_load_thread(int flag_true_if_should_flip);
+STBIDEF void stbi_set_unpremultiply_on_load_thread(int flag_GDF_TRUE_if_should_unpremultiply);
+STBIDEF void stbi_convert_iphone_png_to_rgb_thread(int flag_GDF_TRUE_if_should_convert);
+STBIDEF void stbi_set_flip_vertically_on_load_thread(int flag_GDF_TRUE_if_should_flip);
 
 // ZLIB client - used by PNG, available for other purposes
 
@@ -588,10 +588,10 @@ STBIDEF int   stbi_zlib_decode_noheader_buffer(char *obuffer, int olen, const ch
 #include <stddef.h> // ptrdiff_t on osx
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
+#include <gdfe/limits.h>
 
 #if !defined(STBI_NO_LINEAR) || !defined(STBI_NO_HDR)
-#include <math.h>  // ldexp, pow
+#include <gdfe/math.h>  // ldexp, pow
 #endif
 
 #ifndef STBI_NO_STDIO
@@ -599,7 +599,7 @@ STBIDEF int   stbi_zlib_decode_noheader_buffer(char *obuffer, int olen, const ch
 #endif
 
 #ifndef STBI_ASSERT
-#include <assert.h>
+#include <gdfe/assert.h>
 #define STBI_ASSERT(x) assert(x)
 #endif
 
@@ -723,12 +723,12 @@ typedef unsigned char validate_uint32[sizeof(stbi__uint32)==4 ? 1 : -1];
 
 #if !defined(STBI_NO_SIMD) && (defined(STBI__X86_TARGET) || defined(STBI__X64_TARGET))
 #define STBI_SSE2
-#include <emmintrin.h>
+#include <gdfe/emmintrin.h>
 
 #ifdef _MSC_VER
 
 #if _MSC_VER >= 1400  // not VC6
-#include <intrin.h> // __cpuid
+#include <gdfe/intrin.h> // __cpuid
 static int stbi__cpuid3(void)
 {
    int info[4];
@@ -780,7 +780,7 @@ static int stbi__sse2_available(void)
 #endif
 
 #ifdef STBI_NEON
-#include <arm_neon.h>
+#include <gdfe/arm_neon.h>
 #ifdef _MSC_VER
 #define STBI_SIMD_ALIGN(type, name) __declspec(align(16)) type name
 #else
@@ -1113,9 +1113,9 @@ static stbi_uc *stbi__hdr_to_ldr(float   *data, int x, int y, int comp);
 
 static int stbi__vertically_flip_on_load_global = 0;
 
-STBIDEF void stbi_set_flip_vertically_on_load(int flag_true_if_should_flip)
+STBIDEF void stbi_set_flip_vertically_on_load(int flag_GDF_TRUE_if_should_flip)
 {
-   stbi__vertically_flip_on_load_global = flag_true_if_should_flip;
+   stbi__vertically_flip_on_load_global = flag_GDF_TRUE_if_should_flip;
 }
 
 #ifndef STBI_THREAD_LOCAL
@@ -1123,9 +1123,9 @@ STBIDEF void stbi_set_flip_vertically_on_load(int flag_true_if_should_flip)
 #else
 static STBI_THREAD_LOCAL int stbi__vertically_flip_on_load_local, stbi__vertically_flip_on_load_set;
 
-STBIDEF void stbi_set_flip_vertically_on_load_thread(int flag_true_if_should_flip)
+STBIDEF void stbi_set_flip_vertically_on_load_thread(int flag_GDF_TRUE_if_should_flip)
 {
-   stbi__vertically_flip_on_load_local = flag_true_if_should_flip;
+   stbi__vertically_flip_on_load_local = flag_GDF_TRUE_if_should_flip;
    stbi__vertically_flip_on_load_set = 1;
 }
 
@@ -1162,7 +1162,7 @@ static void *stbi__load_main(stbi__context *s, int *x, int *y, int *comp, int re
    #endif
 
    // then the formats that can end up attempting to load with just 1 or 2
-   // bytes matching expectations; these are prone to false positives, so
+   // bytes matching expectations; these are prone to GDF_FALSE positives, so
    // try them later
    #ifndef STBI_NO_JPEG
    if (stbi__jpeg_test(s)) return stbi__jpeg_load(s,x,y,comp,req_comp, ri);
@@ -1512,7 +1512,7 @@ STBIDEF float *stbi_loadf_from_file(FILE *f, int *x, int *y, int *comp, int req_
 
 // these is-hdr-or-not is defined independent of whether STBI_NO_LINEAR is
 // defined, for API simplicity; if STBI_NO_LINEAR is defined, it always
-// reports false!
+// reports GDF_FALSE!
 
 STBIDEF int stbi_is_hdr_from_memory(stbi_uc const *buffer, int len)
 {
@@ -1629,7 +1629,7 @@ stbi_inline static int stbi__at_eof(stbi__context *s)
 {
    if (s->io.read) {
       if (!(s->io.eof)(s->io_user_data)) return 0;
-      // if feof() is true, check if buffer = end
+      // if feof() is GDF_TRUE, check if buffer = end
       // special case: we've only got the special 0 character at the end
       if (s->read_from_callbacks == 0) return 1;
    }
@@ -4993,14 +4993,14 @@ static int stbi__expand_png_palette(stbi__png *a, stbi_uc *palette, int len, int
 static int stbi__unpremultiply_on_load_global = 0;
 static int stbi__de_iphone_flag_global = 0;
 
-STBIDEF void stbi_set_unpremultiply_on_load(int flag_true_if_should_unpremultiply)
+STBIDEF void stbi_set_unpremultiply_on_load(int flag_GDF_TRUE_if_should_unpremultiply)
 {
-   stbi__unpremultiply_on_load_global = flag_true_if_should_unpremultiply;
+   stbi__unpremultiply_on_load_global = flag_GDF_TRUE_if_should_unpremultiply;
 }
 
-STBIDEF void stbi_convert_iphone_png_to_rgb(int flag_true_if_should_convert)
+STBIDEF void stbi_convert_iphone_png_to_rgb(int flag_GDF_TRUE_if_should_convert)
 {
-   stbi__de_iphone_flag_global = flag_true_if_should_convert;
+   stbi__de_iphone_flag_global = flag_GDF_TRUE_if_should_convert;
 }
 
 #ifndef STBI_THREAD_LOCAL
@@ -5010,15 +5010,15 @@ STBIDEF void stbi_convert_iphone_png_to_rgb(int flag_true_if_should_convert)
 static STBI_THREAD_LOCAL int stbi__unpremultiply_on_load_local, stbi__unpremultiply_on_load_set;
 static STBI_THREAD_LOCAL int stbi__de_iphone_flag_local, stbi__de_iphone_flag_set;
 
-STBIDEF void stbi_set_unpremultiply_on_load_thread(int flag_true_if_should_unpremultiply)
+STBIDEF void stbi_set_unpremultiply_on_load_thread(int flag_GDF_TRUE_if_should_unpremultiply)
 {
-   stbi__unpremultiply_on_load_local = flag_true_if_should_unpremultiply;
+   stbi__unpremultiply_on_load_local = flag_GDF_TRUE_if_should_unpremultiply;
    stbi__unpremultiply_on_load_set = 1;
 }
 
-STBIDEF void stbi_convert_iphone_png_to_rgb_thread(int flag_true_if_should_convert)
+STBIDEF void stbi_convert_iphone_png_to_rgb_thread(int flag_GDF_TRUE_if_should_convert)
 {
-   stbi__de_iphone_flag_local = flag_true_if_should_convert;
+   stbi__de_iphone_flag_local = flag_GDF_TRUE_if_should_convert;
    stbi__de_iphone_flag_set = 1;
 }
 
@@ -5160,7 +5160,7 @@ static int stbi__parse_png_file(stbi__png *z, int scan, int req_comp)
                // non-paletted with tRNS = constant alpha. if header-scanning, we can stop now.
                if (scan == STBI__SCAN_header) { ++s->img_n; return 1; }
                if (z->depth == 16) {
-                  for (k = 0; k < s->img_n && k < 3; ++k) // extra loop test to suppress false GCC warning
+                  for (k = 0; k < s->img_n && k < 3; ++k) // extra loop test to suppress GDF_FALSE GCC warning
                      tc16[k] = (stbi__uint16)stbi__get16be(s); // copy the values as-is
                } else {
                   for (k = 0; k < s->img_n && k < 3; ++k)

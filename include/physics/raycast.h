@@ -1,7 +1,7 @@
 #pragma once
 
-#include <../../gdfe/include/core.h>
-#include <math/math.h>
+#include <gdfe/../../gdfe/include/gdfe/core.h>
+#include <gdfe/math/math.h>
 #include <game/entity/entity.h>
 #include <game/world.h>
 

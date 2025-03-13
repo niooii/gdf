@@ -1,7 +1,7 @@
 #pragma once
 
-#include <../../gdfe/include/core.h>
-#include <graphics/vk_types.h>
+#include <gdfe/../../gdfe/include/gdfe/core.h>
+#include <gdfe/graphics/vk_types.h>
 
 typedef struct block_textures {
     vk_device* device;
@@ -32,8 +32,8 @@ typedef struct pipeline_block {
     GDF_LIST(VkDescriptorSetLayout) descriptor_layouts;
 } pipeline_block;
 
-bool pipelines_create_blocks(VkRenderContext* context);
-// bool pipelines_create_lighting(VkRenderContext* context);
-// bool pipelines_create_post_processing(VkRenderContext* context);
-bool pipelines_create_grid(VkRenderContext* context);
-bool pipelines_create_ui(VkRenderContext* context);
+GDF_BOOL pipelines_create_blocks(VkRenderContext* context);
+// GDF_BOOL pipelines_create_lighting(VkRenderContext* context);
+// GDF_BOOL pipelines_create_post_processing(VkRenderContext* context);
+GDF_BOOL pipelines_create_grid(VkRenderContext* context);
+GDF_BOOL pipelines_create_ui(VkRenderContext* context);

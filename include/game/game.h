@@ -1,10 +1,10 @@
 #pragma once
 
-#include <../../gdfe/include/core.h>
+#include <gdfe/core.h>
 #include <game/world.h>
-#include <camera.h>
+#include <gdfe/camera.h>
 
-#include "gdfe.h"
+#include <gdfe/gdfe.h>
 
 typedef enum GDF_GAME_SCREEN {
     GDF_GAME_SCREEN_MAIN_MENU,
@@ -28,4 +28,4 @@ typedef struct GameState {
 
 GameState* game_init();
 void game_destroy();
-bool game_update(const GDF_AppState* app_state, f64 delta_time, void* state);
+GDF_BOOL game_update(const GDF_AppState* app_state, f64 delta_time, void* state);

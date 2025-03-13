@@ -1,11 +1,10 @@
 #pragma once
 
-#include <../../gdfe/include/core.h>
+#include <gdfe/core.h>
 #include <game/entity/humanoid.h>
 #include <physics/physics.h>
 #include <physics/aabb.h>
-#include <collections/list.h>
-#include <collections/hashmap.h>
+#include <unordered_dense.h>
 
 u32 chunk_hash(const u8* data, u32 len);
 
@@ -47,7 +46,7 @@ typedef struct Block {
     u8 x_rel;
     u8 y_rel;
     u8 z_rel;
-    bool exists;
+    GDF_BOOL exists;
 } Block;
 
 typedef enum BLOCK_FACE {
@@ -74,12 +73,13 @@ typedef enum WORLD_DIRECTION {
     WORLD_BACKWARD = 5,
 } WORLD_DIRECTION;
 
-typedef struct Chunk {
-    // Heap allocated array of [CHUNK_SIZE * CHUNK_SIZE * MAX_CHUNK_Y] size for direct access.
-    Block* block_arr;
+class Chunk {
+    // TODO! use sparse octrees
+    // Array of [CHUNK_SIZE^3] size for direct access.
+    std::array<Block, CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE> block_arr;
 
     // GDF_LIST of ChunkBlock pointers for easy iteration over existing blocks.
-    Block** block_list;
+    std::vector<Block*> block_list;
 
     // for fast meshing
     // TODO! did nothing with this yet
@@ -88,12 +88,25 @@ typedef struct Chunk {
     ivec3 cc;
 
     // for updating a chunk's mesh before each render only if it changes
-    bool should_upd_mesh;
+    bool should_upd_mesh;  // replaced GDF_BOOL with standard C++ bool
 
-    // indices correpond to the BLOCK_FACE enum
-    // TODO! initialize
-    struct Chunk* adjacent[6];
-} Chunk;
+    // indices correspond to the BLOCK_FACE enum
+    Chunk* adjacent[6];  // Array of pointers to adjacent chunks
+
+public:
+    Chunk();
+
+    ~Chunk();
+
+    // You can add additional methods here to manipulate the chunk data
+    // For example:
+    void updateMesh();
+    bool needsMeshUpdate() const;
+    void setAdjacent(int face, Chunk* chunk);
+    Chunk* getAdjacent(int face) const;
+
+    // Add other functionality as needed
+};
 
 typedef struct Generator {
     u64 testfield;
@@ -101,7 +114,7 @@ typedef struct Generator {
 
 Generator generator_create_default();
 
-bool generator_gen_chunk(
+GDF_BOOL generator_gen_chunk(
     Generator* generator, 
     World* world, 
     ivec3 cc,
@@ -113,7 +126,7 @@ typedef struct World {
     Generator generator;
     
     // <ivec3, Chunk*>
-    GDF_HashMap(ivec3, Chunk*) chunks;
+    ankerl::unordered_dense::map<ivec3, Chunk*> chunks;
     // will reset every frame
     u8 chunk_simulate_distance;
     u16 chunk_view_distance;
@@ -121,7 +134,7 @@ typedef struct World {
     u16 ticks_per_sec;
     GDF_Stopwatch world_update_stopwatch;
     
-    GDF_LIST(HumanoidEntity*) humanoids;
+    std::vector<HumanoidEntity> humanoids{32};
     
     PhysicsEngine physics;
 } World;
@@ -138,17 +151,17 @@ FORCEINLINE ivec3 world_pos_to_chunk_coord(vec3 pos) {
     // GDF_ASSERT(pos.y < i32_MAX * CHUNK_SIZE)
     // GDF_ASSERT(pos.z < i32_MAX * CHUNK_SIZE)
     return (ivec3){
-        FLOOR(pos.x / CHUNK_SIZE),
-        FLOOR(pos.y / CHUNK_SIZE), 
-        FLOOR(pos.z / CHUNK_SIZE)
+        (i32)FLOOR(pos.x / CHUNK_SIZE),
+        (i32)FLOOR(pos.y / CHUNK_SIZE),
+        (i32)FLOOR(pos.z / CHUNK_SIZE)
     };
 }
 
 FORCEINLINE vec3 chunk_coord_to_world_pos(ivec3 coord) {
     return (vec3){
-        coord.x * CHUNK_SIZE,
-        coord.y * CHUNK_SIZE,
-        coord.z * CHUNK_SIZE
+        (f32)coord.x * CHUNK_SIZE,
+        (f32)coord.y * CHUNK_SIZE,
+        (f32)coord.z * CHUNK_SIZE
     };
 }
 
@@ -163,9 +176,9 @@ FORCEINLINE ChunkBlockPosTuple world_pos_to_chunk_block_tuple(vec3 world_pos)
 
     return (ChunkBlockPosTuple) {
         .bc = (RelBlockCoord) { 
-            .block_x = world_pos.x - cc.x * CHUNK_SIZE,
-            .block_y = world_pos.y - cc.y * CHUNK_SIZE,
-            .block_z = world_pos.z - cc.z * CHUNK_SIZE
+            .block_x = (u8)(world_pos.x - cc.x * CHUNK_SIZE),
+            .block_y = (u8)(world_pos.y - cc.y * CHUNK_SIZE),
+            .block_z = (u8)(world_pos.z - cc.z * CHUNK_SIZE)
         },
         .cc = cc
     };
@@ -176,7 +189,7 @@ typedef struct WorldCreateInfo {
     u16 ticks_per_sec;
 } WorldCreateInfo;
 
-bool chunk_init(Chunk* out_chunk);
+GDF_BOOL chunk_init(Chunk* out_chunk);
 Block* chunk_get_block(
     Chunk* chunk, 
     RelBlockCoord block_coord

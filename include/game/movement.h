@@ -1,6 +1,6 @@
 #pragma once
 
-#include <../../gdfe/include/core.h>
+#include <gdfe/core.h>
 #include <physics/physics.h>
 
 typedef struct HumanoidEntity HumanoidEntity;
@@ -15,13 +15,13 @@ void player_apply_movement(
     vec3* forward,
     vec3* right,
     f32 dt,
-    bool just_jumped,
+    GDF_BOOL just_jumped,
     f32 speed
 );
 
 typedef struct MovementState {
-    bool can_dash;
-    bool in_dash;
+    GDF_BOOL can_dash;
+    GDF_BOOL in_dash;
     vec3 dash_dir;
 } MovementState;
 

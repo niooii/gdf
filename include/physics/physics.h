@@ -1,7 +1,7 @@
 #pragma once
 
-#include <../../gdfe/include/core.h>
-#include <math/math.h>
+#include <gdfe/../../gdfe/include/gdfe/core.h>
+#include <gdfe/math/math.h>
 #include <game/entity/entity.h>
 
 #include "aabb.h"
@@ -15,7 +15,7 @@ typedef struct PhysicsCreateInfo {
     // only negative numbers will work
     f32 terminal_velocity;
     vec3 gravity;
-    bool gravity_active;
+    GDF_BOOL gravity_active;
 } PhysicsCreateInfo;
 
 PhysicsEngine physics_init(PhysicsCreateInfo create_info);
@@ -23,4 +23,4 @@ PhysicsEngine physics_init(PhysicsCreateInfo create_info);
 void physics_add_entity(PhysicsEngine engine, Entity* entity);
 
 typedef struct World World; 
-bool physics_update(PhysicsEngine engine, World* world, f64 delta_time);
+GDF_BOOL physics_update(PhysicsEngine engine, World* world, f64 delta_time);

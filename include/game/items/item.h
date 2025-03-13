@@ -1,6 +1,6 @@
 #pragma once
 
-#include <core.h>
+#include <gdfe/../../../gdfe/include/gdfe/core.h>
 #include <game/entity/humanoid.h>
 
 typedef enum GDF_ITEM_ID {

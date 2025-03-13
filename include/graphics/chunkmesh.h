@@ -1,8 +1,8 @@
 #pragma once
 
-#include <../../gdfe/include/core.h>
+#include <gdfe/../../gdfe/include/gdfe/core.h>
 #include <game/world.h>
-#include <render/vk_types.h>
+#include <gdfe/render/vk_types.h>
 
 #include "graphics/renderer.h"
 
@@ -11,7 +11,7 @@
 #define MAX_CHUNK_INDICES (CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE * 36)
 #define CHUNK_MESH_INDEX_TYPE u16
 
-struct ChunkVertex_T {
+PACKED_STRUCT ChunkVertex_T {
     u8 x_pos;
     u8 y_pos;
     u8 z_pos;
@@ -26,7 +26,7 @@ struct ChunkVertex_T {
     
     // uint8_t light_level;
     // uint8_t ao_level;
-} __attribute__((packed));
+} END_PACKED_STRUCT;
 
 typedef struct ChunkVertex_T ChunkVertex;
 
@@ -34,7 +34,7 @@ typedef struct MeshBuffer {
     GDF_VkBuffer vertex_buffer;
     GDF_VkBuffer index_buffer;
 
-    bool up_to_date;
+    GDF_BOOL up_to_date;
 } MeshBuffer;
 
 typedef struct ChunkMesh {
@@ -49,7 +49,7 @@ typedef struct ChunkMesh {
 
     u32 num_indices;
     
-    bool is_visible; 
+    GDF_BOOL is_visible;
 
     // rust has made me scared of stuff like this
     // TODO! RW LOCK PLEASE!!
@@ -62,12 +62,12 @@ typedef struct ChunkMeshUpdates {
     GDF_HashMap(ivec3, Block*) created;
 } ChunkMeshUpdates; 
 
-bool chunk_mesh_init(GDF_VkRenderContext* ctx, World* world, Chunk* chunk, ChunkMesh* mesh);
+GDF_BOOL chunk_mesh_init(GDF_VkRenderContext* ctx, World* world, Chunk* chunk, ChunkMesh* mesh);
 // for now this shit rebuilds the entire chunk lol but  please use it as implmeneted
-bool chunk_mesh_update(ChunkMesh* mesh, ChunkMeshUpdates* updates);
+GDF_BOOL chunk_mesh_update(ChunkMesh* mesh, ChunkMeshUpdates* updates);
 void chunk_mesh_destroy(GDF_VkRenderContext* ctx, ChunkMesh* mesh);
 
-bool chunk_mesh_update_buffers(GDF_VkRenderContext* ctx, ChunkMesh* mesh, u16 buffer_idx);
+GDF_BOOL chunk_mesh_update_buffers(GDF_VkRenderContext* ctx, ChunkMesh* mesh, u16 buffer_idx);
 
 // no memory should be allocated, the data is static
 void get_vertex_attrs(VkVertexInputAttributeDescription** attrs, u32* len);

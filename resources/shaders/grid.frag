@@ -11,18 +11,24 @@ float ease_inout_exp(float x) {
 }
 
 const vec3 grid_col = vec3(0.9);
-const float thickness = 0.05;
-const float fade_distance = 16;
+const float thickness = 0.02;
+const float fade_distance = 32;
 
 void main() {
+    vec3 distVec = in_world_pos - camera_pos;
+    float distance = sqrt(dot(distVec, distVec));
+    if (distance > fade_distance) {
+         out_color = vec4(0.0);
+         return;
+    }
     float decimal_part_x = fract(in_world_pos.x);
     float decimal_part_y = fract(in_world_pos.z);
     if ((decimal_part_x < thickness || decimal_part_x > (1-thickness))
         || (decimal_part_y < thickness || decimal_part_y > (1-thickness)))
     {
-        float distance = length(in_world_pos - camera_pos);
+        float dist = length(in_world_pos - camera_pos);
     
-        float fade_factor = max(0.0, 1.0 - distance / fade_distance);
+        float fade_factor = max(0.0, 1.0 - dist / fade_distance);
         fade_factor = ease_inout_exp(fade_factor);
         out_color = vec4(grid_col * fade_factor, 0.5);
     }
@@ -30,5 +36,4 @@ void main() {
     {
         out_color = vec4(0.0);
     }
-    // out_color = vec4(1.0);
 }

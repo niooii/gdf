@@ -1,6 +1,6 @@
 #pragma once
-#include <core.h>
-#include <os/socket.h>
+#include <gdfe/../../../gdfe/include/gdfe/core.h>
+#include <gdfe/os/socket.h>
 
 typedef struct GDF_TcpConnection {
     void* internals;

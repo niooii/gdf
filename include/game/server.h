@@ -1,10 +1,10 @@
 #pragma once
-#include <../../gdfe/include/core.h>
-#include <os/socket.h>
-#include <os/thread.h>
+#include <gdfe/core.h>
+#include <gdfe/os/socket.h>
+#include <gdfe/os/thread.h>
 #include <game/world.h>
-#include <collections/hashmap.h>
-#include <collections/list.h>
+#include <gdfe/collections/hashmap.h>
+#include <gdfe/collections/list.h>
 
 // NOT MINECRFT CLONE I SWEAR
 #define SERVER_PORT 25567
@@ -28,7 +28,7 @@ typedef enum PACKET_TYPE {
 
 typedef struct ClientInfo {
     GDF_Socket* client_socket;
-    bool fully_loaded;
+    GDF_BOOL fully_loaded;
 } ClientInfo;
 
 typedef struct WorldServer {
@@ -37,8 +37,8 @@ typedef struct WorldServer {
     GDF_LIST(ClientInfo) clients;
     // Map of uid -> ClientInfo for quick access.
     GDF_HashMap client_map;
-    bool alive;
-    bool initialized;
+    GDF_BOOL alive;
+    GDF_BOOL initialized;
     u8 max_clients;
     u8 connected_clients;
 } WorldServer;
@@ -51,6 +51,6 @@ typedef struct WorldServerStartInfo {
 } WorldServerStartInfo;
 
 // Starts 
-bool world_server_init(WorldServerStartInfo* start_info, WorldServer* ctx);
+GDF_BOOL world_server_init(WorldServerStartInfo* start_info, WorldServer* ctx);
 
 WORLDSERVER_EXIT_CODE world_server_run(WorldServer* ctx);

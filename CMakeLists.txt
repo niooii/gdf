@@ -1,15 +1,11 @@
 cmake_minimum_required(VERSION 3.20)
 
-set(CMAKE_C_COMPILER clang)
-
 set(CMAKE_CXX_COMPILER clang++)
 project(GameDevFinal
     VERSION 1.0
     DESCRIPTION "Not really a game dev final..."
-    LANGUAGES C)
+    LANGUAGES CXX)
 
-set(CMAKE_C_STANDARD 23)
-set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -27,20 +23,21 @@ endif()
 
 set(NO_WARNING_FLAGS "-Wno-unused-parameter -Wno-missing-braces -Wno-unused-variable -Wno-ignored-qualifiers -Wno-missing-field-initializers")
 
-set(CMAKE_C_FLAGS "-Wall -W -Wextra ${NO_WARNING_FLAGS} -ffast-math -march=native -mavx2 -fcolor-diagnostics")
+set(CMAKE_CXX_FLAGS "-Wall -W -Wextra ${NO_WARNING_FLAGS} -ffast-math -march=native -mavx2 -fcolor-diagnostics -fno-exceptions")
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     set(PROFILE_DIR "release")
     # TODO! link time optimization BREAKS EVERYTRHING
     #  -flto
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Ofast -fno-plt -fuse-ld=lld -funroll-loops -finline-functions -fomit-frame-pointer -fno-exceptions -ftree-vectorize -fvectorize -fslp-vectorize -DNDEBUG -DGDF_RELEASE")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -fno-plt -fuse-ld=lld -funroll-loops -finline-functions -fomit-frame-pointer -fno-exceptions -ftree-vectorize -fvectorize -fslp-vectorize -DNDEBUG -DGDF_RELEASE")
 else()
     set(PROFILE_DIR "debug")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g3 -O0 -fno-omit-frame-pointer -DDEBUG")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -O0 -fno-omit-frame-pointer -DDEBUG")
 endif()
 
 function(find_src_files result search_dir)
     file(GLOB_RECURSE source_files
-        "${search_dir}/*.c"
+            "${search_dir}/*.cpp"
+            "${search_dir}/*.c"
     )
     set(${result} ${source_files} PARENT_SCOPE)
 endfunction()
@@ -48,7 +45,7 @@ endfunction()
 find_src_files(SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src")
 find_src_files(EXTERN_SRC "${CMAKE_CURRENT_SOURCE_DIR}/extern")
 
-SET_SOURCE_FILES_PROPERTIES(${SOURCE_FILES} ${EXTERN_SRC} PROPERTIES LANGUAGE C)
+SET_SOURCE_FILES_PROPERTIES(${SOURCE_FILES} ${EXTERN_SRC} PROPERTIES LANGUAGE CXX)
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${EXTERN_SRC})
 

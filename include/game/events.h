@@ -1,7 +1,7 @@
 #pragma once
 
-#include <../../gdfe/include/core.h>
-#include <event.h>
+#include <gdfe/../../gdfe/include/gdfe/core.h>
+#include <gdfe/../../gdfe/include/gdfe/event.h>
 #include <game/world.h>
 
 // TODO! kill this

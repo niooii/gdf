@@ -1,6 +1,6 @@
 #pragma once
 
-#include <core.h>
+#include <gdfe/core.h>
 #include <physics/aabb.h>
 
 typedef enum ENTITY_TYPE {
@@ -11,7 +11,7 @@ typedef enum ENTITY_TYPE {
 
 typedef struct Entity {
     f32 health;
-    bool damagable;
+    GDF_BOOL damagable;
     ENTITY_TYPE type;
     void* parent;
 
@@ -19,5 +19,5 @@ typedef struct Entity {
     vec3 accel;
 
     AxisAlignedBoundingBox aabb;
-    bool grounded;
+    GDF_BOOL grounded;
 } Entity;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <core.h>
+#include <gdfe/core.h>
 #include <game/movement.h>
 
 #include "entity.h"

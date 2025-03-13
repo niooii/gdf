@@ -1,12 +1,12 @@
 #pragma once
 
-#include <../../gdfe/include/core.h>
+#include <gdfe/../../gdfe/include/gdfe/core.h>
 
 typedef struct GDF_ClientSettings {
-    bool verbose_output;
-    bool client_show_console;
+    GDF_BOOL verbose_output;
+    GDF_BOOL client_show_console;
 } GDF_ClientSettings;
 
-bool GDF_ClientSettings_Load();
-bool GDF_ClientSettings_Save();
+GDF_BOOL GDF_ClientSettings_Load();
+GDF_BOOL GDF_ClientSettings_Save();
 GDF_ClientSettings* GDF_AppSettings_Get();
