@@ -3,18 +3,7 @@
 #include <graphics/renderer.h>
 
 u32 chunk_hash(const u8* data, u32 len) {
-    ivec3* coord = (ivec3*)(data);
 
-    // primes n stuff
-    const u32 p1 = 73856093u;  
-    const u32 p2 = 19349663u;
-    const u32 p3 = 83492791u;
-
-    u32 h1 = (u32)(coord->x) * p1;
-    u32 h2 = (u32)(coord->y) * p2;
-    u32 h3 = (u32)(coord->z) * p3;
-
-    return h1 ^ h2 ^ h3;
 }
 //
 // static GDF_BOOL __on_chunk_load(u16 event_code, void* sender, void* listener_instance, GDF_EventContext ctx)
@@ -65,7 +54,7 @@ static GDF_BOOL __on_block_touch(u16 event_code, void* sender, void* listener_in
     if (entity->type != ENTITY_TYPE_HUMANOID)
         return GDF_FALSE;
 
-    HumanoidEntity* hum = entity->parent;
+    // HumanoidEntity* hum = entity->parent;
 
     return GDF_FALSE;
 }
@@ -105,17 +94,16 @@ World::World()
                     .y = chunk_y,
                     .z = chunk_z
                 };
-                auto entry = chunks_.emplace(cc).first;
-                Chunk& chunk = entry->second;
-                generator_.gen_chunk(cc, chunk);
+                chunks_[cc] = new Chunk();
+                generator_.gen_chunk(cc, *chunks_[cc]);
             }
         }
     }
 
-    for (u32 i = 0; i < num_chunks; i++)
-    {
-        // renderer_register_chunk(created_chunks[i]);
-    }
+    // for (u32 i = 0; i < num_chunks; i++)
+    // {
+    //     // renderer_register_chunk(created_chunks[i]);
+    // }
 
     // TODO! make events a SET of listeners not a list no problem
     // GDF_ASSERT(GDF_EventRegister(GDF_EVENT_BLOCK_TOUCHED, out_world, __on_block_touch));
@@ -126,174 +114,114 @@ World::World()
 
 World::~World()
 {
-
+    for (auto& entry : chunks_)
+    {
+        delete entry.second;
+    }
+    for (auto hum : humanoids_)
+    {
+        delete hum;
+    }
 }
 
-void World::update()
+void World::update(f64 dt)
 {
     u32 num_humanoids = humanoids_.size();
     for (u32 i = 0; i < num_humanoids; i++)
-        humanoid_entity_update(world->humanoids_[i]);
-    physics_update(world->physics_, world, dt);
+        humanoid_entity_update(humanoids_[i]);
+    physics_update(physics_, this, dt);
 }
 
-Chunk* __gen_chunk(World* world, ivec3 coord)
+Chunk* World::get_chunk(ivec3 chunk_coord)
 {
-    Chunk** cp = (Chunk**)GDF_HashmapGet(world->chunks_, &coord);
-    if (cp == NULL)
+    auto it = chunks_.find(chunk_coord);
+    if (it == chunks_.end())
     {
-        Chunk* t = GDF_Malloc(sizeof(Chunk), GDF_MEMTAG_GAME);
-        chunk_init(t);
-        cp = GDF_HashmapInsert(world->chunks_, &coord, &t, NULL);
-        if (cp == NULL)
-        {
-            LOG_WARN("WOMP WOMP");
-        } 
-        
-        if (!generator_gen_chunk(&world->generator_, world, coord, *cp))
-        {
-            LOG_ERR("Failed to create chunk");
-            return NULL;
-        }
+        LOG_ERR("NO CHUNK");
+        return nullptr;
     }
 
-    return *cp;
+    return it->second;
 }
 
-HumanoidEntity* world_create_humanoid(World* world)
+Chunk* World::get_or_create_chunk(ivec3 chunk_coord)
 {
-    HumanoidEntity* hum = GDF_Malloc(sizeof(HumanoidEntity), GDF_MEMTAG_GAME);
+    auto it = chunks_.find(chunk_coord);
+    if (it == chunks_.end())
+    {
+        chunks_[chunk_coord] = new Chunk();
+        generator_.gen_chunk(chunk_coord, *chunks_[chunk_coord]);
+        return chunks_[chunk_coord];
+    }
 
-    GDF_LIST_Push(world->humanoids_, hum);
+    return it->second;
+}
 
+HumanoidEntity* World::create_humanoid()
+{
+    auto* hum = new HumanoidEntity();
+    humanoids_.emplace_back(hum);
     hum->base.type = ENTITY_TYPE_HUMANOID;
     hum->base.parent = hum;
 
     return hum;
 }
 
-// if multiplayer this should only run on the client. god i want to die
-void world_update(World* world, f64 dt)
+// Will not create a new chunk if it doesn't exist.
+Block* World::get_block(vec3 pos)
 {
-    u32 num_humanoids = GDF_LIST_GetLength(world->humanoids_);
-    for (u32 i = 0; i < num_humanoids; i++)
-        humanoid_entity_update(world->humanoids_[i]);
-    physics_update(world->physics_, world, dt);
+    auto [cc, bc] = world_pos_to_chunk_block_tuple(pos);
+    Chunk* chunk = this->get_chunk(cc);
+    if (!chunk)
+        return nullptr;
 
-    // here we remesh chunks_ if they changed
-    // TODO! a list of chunks_ ptrs may be bad for cache locality benchmark a bit later
-    // u32 len = GDF_LIST_GetLength(world->queued_mesh_upds);
-
-    // for (u32 i = 0; i < len; i++) {
-    //     Chunk* changed = world->queued_mesh_upds;
-    //     renderer_update_chunk(changed);
-    // }
-    // GDF_LIST_Clear(world->queued_mesh_upds);
+    return chunk->get_block(bc);
 }
 
-Chunk* world_get_or_create_chunk(World* world, ivec3 coord)
+// Will create a new chunk if it doesn't exist.
+Block* World::get_block_gen_chunk(vec3 pos)
 {
-    Chunk** cp = (Chunk**)GDF_HashmapGet(world->chunks_, &coord);
-    if (cp) 
-        return *cp;
+    auto [cc, bc] = world_pos_to_chunk_block_tuple(pos);
+    Chunk* chunk = this->get_or_create_chunk(cc);
+    if (!chunk)
+        return nullptr;
 
-    Chunk* c = __gen_chunk(world, coord);
-    if (!c)
-        return NULL;
-
-    GDF_EventFire(GDF_EVENT_CHUNK_LOAD, c, (GDF_EventContext){});
-
-    return c;
+    return chunk->get_block(bc);
 }
 
-Chunk* world_get_chunk(World* world, ivec3 coord)
+Block* World::set_block(BlockCreateInfo& create_info)
 {
-    Chunk** cp = (Chunk**)GDF_HashmapGet(world->chunks_, &coord);
-    if (cp == NULL)
-        return NULL;
+    ChunkBlockPosTuple info = world_pos_to_chunk_block_tuple(create_info.world_pos);
+    Chunk* c = this->get_or_create_chunk(info.cc);
+    Block* b = c->set_block(create_info.type, info.bc);
 
-    return *cp;
+    // TODO! remove this please find a way to fit this inside the chunk functions directly.
+    // or better yet through the use of actual structured event data. PLEASE!!
+    // chunk update queue remesh stuff
+    RelBlockCoord bc = info.bc;
+
+    GDF_EventFire(GDF_EVENT_CHUNK_UPDATE, c, (GDF_EventContext){});
+
+    return b;
 }
 
-// TODO! what about usign teh chunk api directly man..
-void world_destroy_block(World* world, vec3 block_world_pos, Block* destroyed_block)
+void World::destroy_block(vec3 pos, Block* destroyed)
 {
-    ChunkBlockPosTuple info = world_pos_to_chunk_block_tuple(block_world_pos);
-    Chunk* c = world_get_or_create_chunk(world, info.cc);
-    chunk_destroy_block(c, info.bc, NULL);
+    ChunkBlockPosTuple info = world_pos_to_chunk_block_tuple(pos);
+    Chunk* c = this->get_or_create_chunk(info.cc);
+    c->destroy_block(info.bc, nullptr);
 
     // TODO! remove this please find a way to fit this inside the chunk functions directly.
     // or better yet through the use of actual structured event data. PLEASE!!
     // OR MAYBE JUST MAEK THE EVENT SYSTEM TO POOL CHANGES . YES.,
-    RelBlockCoord bc = info.bc;
 
     GDF_EventFire(GDF_EVENT_CHUNK_UPDATE, c, (GDF_EventContext){});
-
-    // if (bc.block_x > 0 && bc.block_x < CHUNK_SIZE - 1
-    //     && bc.block_y > 0 && bc.block_y < CHUNK_SIZE - 1
-    //     && bc.block_z > 0 && bc.block_z < CHUNK_SIZE - 1)  {
-    //     return;
-    // }
-    // if (bc.block_x == 0) {
-    //     renderer_queue_chunk_remesh(ivec3_add(info.cc, ivec3_new(-1, 0, 0)));
-    // } else if (bc.block_x == CHUNK_SIZE - 1) {
-    //     renderer_queue_chunk_remesh(ivec3_add(info.cc, ivec3_new(1, 0, 0)));
-    // }
-    //
-    // if (bc.block_y == 0) {
-    //     renderer_queue_chunk_remesh(ivec3_add(info.cc, ivec3_new(0, -1, 0)));
-    // } else if (bc.block_y == CHUNK_SIZE - 1) {
-    //     renderer_queue_chunk_remesh(ivec3_add(info.cc, ivec3_new(0, 1, 0)));
-    // }
-    //
-    // if (bc.block_z == 0) {
-    //     renderer_queue_chunk_remesh(ivec3_add(info.cc, ivec3_new(0, 0, -1)));
-    // } else if (bc.block_z == CHUNK_SIZE - 1) {
-    //     renderer_queue_chunk_remesh(ivec3_add(info.cc, ivec3_new(0, 0, 1)));
-    // }
 }
 
-Block* world_set_block(World* world, BlockCreateInfo* create_info)
-{
-    ChunkBlockPosTuple info = world_pos_to_chunk_block_tuple(create_info->world_pos);
-    Chunk* c = world_get_or_create_chunk(world, info.cc);
-    Block* b = chunk_set_block(c, create_info->type, info.bc);
-
-    // TODO! remove this please find a way to fit this inside the chunk functions directly.
-    // or better yet through the use of actual structured event data. PLEASE!!
-    RelBlockCoord bc = info.bc;
-
-    GDF_EventFire(GDF_EVENT_CHUNK_UPDATE, c, (GDF_EventContext){});
-
-    // if (bc.block_x > 0 && bc.block_x < CHUNK_SIZE - 1
-    //     && bc.block_y > 0 && bc.block_y < CHUNK_SIZE - 1
-    //     && bc.block_z > 0 && bc.block_z < CHUNK_SIZE - 1)  {
-    //     return b;
-    // }
-    // if (bc.block_x == 0) {
-    //     renderer_queue_chunk_remesh(ivec3_add(info.cc, ivec3_new(-1, 0, 0)));
-    // } else if (bc.block_x == CHUNK_SIZE - 1) {
-    //     renderer_queue_chunk_remesh(ivec3_add(info.cc, ivec3_new(1, 0, 0)));
-    // }
-    //
-    // if (bc.block_y == 0) {
-    //     renderer_queue_chunk_remesh(ivec3_add(info.cc, ivec3_new(0, -1, 0)));
-    // } else if (bc.block_y == CHUNK_SIZE - 1) {
-    //     renderer_queue_chunk_remesh(ivec3_add(info.cc, ivec3_new(0, 1, 0)));
-    // }
-    //
-    // if (bc.block_z == 0) {
-    //     renderer_queue_chunk_remesh(ivec3_add(info.cc, ivec3_new(0, 0, -1)));
-    // } else if (bc.block_z == CHUNK_SIZE - 1) {
-    //     renderer_queue_chunk_remesh(ivec3_add(info.cc, ivec3_new(0, 0, 1)));
-    // }
-    
-    return b;
-}
-
-u32 world_get_blocks_touching(
-    World* world, 
-    AxisAlignedBoundingBox* aabb, 
+// Gets the blocks that is touching an AABB.
+// Modifies the result_arr with the found blocks, and returns the amount of blocks found
+u32 World::get_blocks_touching(
+    AxisAlignedBoundingBox* aabb,
     BlockTouchingResult* result_arr,
     u32 result_arr_size
 )
@@ -305,17 +233,17 @@ u32 world_get_blocks_touching(
     f32 max_y = FLOOR(aabb->max.y);
     f32 max_z = aabb->max.z;
     u32 i = 0;
-    Block* cb = NULL;
+    Block* cb = nullptr;
     for (f32 x = min_x; x <= max_x; x++)
     {
         for (f32 y = min_y; y <= max_y; y++)
         {
             for (f32 z = min_z; z <= max_z; z++)
             {
-                cb = world_get_block_at(world, vec3_new(x, y, z));
-                if (cb == NULL)
+                cb = this->get_block(vec3_new(x, y, z));
+                if (!cb)
                     continue;
-                
+
                 BlockTouchingResult* res = &result_arr[i++];
                 res->block = cb;
                 res->box = (AxisAlignedBoundingBox) {
@@ -328,33 +256,8 @@ u32 world_get_blocks_touching(
             }
         }
     }
+
     return i;
-}
-
-Block* world_get_block_at(
-    World* world, 
-    vec3 pos
-)
-{
-    ChunkBlockPosTuple tuple = world_pos_to_chunk_block_tuple(pos);
-    Chunk* chunk = world_get_chunk(world, tuple.cc);
-    if (chunk == NULL)
-        return NULL;
-    
-    return chunk_get_block(chunk, tuple.bc);
-}
-
-Block* world_get_block_if_exists(
-    World* world, 
-    vec3 pos
-)
-{
-    ChunkBlockPosTuple tuple = world_pos_to_chunk_block_tuple(pos);
-    Chunk* chunk = world_get_or_create_chunk(world, tuple.cc);
-    if (chunk == NULL)
-        return NULL;
-    
-    return chunk_get_block(chunk, tuple.bc);
 }
 
 void __process_tick_events();

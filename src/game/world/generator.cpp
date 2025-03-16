@@ -13,10 +13,11 @@ Generator::~Generator()
 void Generator::gen_chunk(ivec3 cc, Chunk& chunk)
 {
     // quick checkerboard patter with chunks lol
-    if (cc.x % 2 == (cc.y % 2) || cc.z % 2 == ((cc.y + 1) % 2))
-    {
-        return;
-    }
+    // nah nvm
+    // if (cc.x % 2 == (cc.y % 2) || cc.z % 2 == ((cc.y + 1) % 2))
+    // {
+    //     return;
+    // }
     RelBlockCoord bc = {
         .block_x = 0,
         .block_y = 5,

@@ -4,26 +4,6 @@
 
 // LORD save me
 // https://gamedev.stackexchange.com/questions/47362/cast-ray-to-select-block-in-voxel-game
-FORCEINLINE static GDF_BOOL __check_entities(World* world, vec3 ray_pos, RaycastEntityHitInfo* entity_info)
-{
-    TODO("check entities");
-
-    return GDF_FALSE;
-}
-
-FORCEINLINE static GDF_BOOL __check_blocks(World* world, vec3 ray_pos, RaycastBlockHitInfo* block_info)
-{
-    Block* block = world_get_block_at(world, ray_pos);
-    if (block != NULL)
-    {
-        ivec3 cc = world_pos_to_chunk_coord(ray_pos);
-        block_info->block = block;
-        block_info->chunk_coord = cc;
-        block_info->chunk = world_get_or_create_chunk(world, cc);
-        return GDF_TRUE;
-    }
-    return GDF_FALSE;
-}
 
 // https://github.com/cgyurgyik/fast-voxel-traversal-algorithm/blob/master/overview/FastVoxelTraversalOverview.md
 void raycast_blocks(RaycastInfo* info, RaycastBlockHitInfo* result)
@@ -62,7 +42,7 @@ void raycast_blocks(RaycastInfo* info, RaycastBlockHitInfo* result)
 
     while (total_dist <= info->max_distance && iterations++ < MAX_ITERATIONS)
     {
-        Block* b = world_get_block_at(info->world, vec3_new(block_x, block_y, block_z));
+        Block* b = info->world->get_block(vec3_new(block_x, block_y, block_z));
         if (b != NULL)
         {
             ivec3 cc = world_pos_to_chunk_coord(vec3_new(block_x, block_y, block_z));
@@ -71,7 +51,7 @@ void raycast_blocks(RaycastInfo* info, RaycastBlockHitInfo* result)
             result->block = b;
             result->chunk_coord = cc;
             result->block_world_pos = vec3_new(block_x, block_y, block_z);
-            result->chunk = world_get_or_create_chunk(info->world, cc);
+            result->chunk = info->world->get_or_create_chunk(cc);
             return;
         }
 

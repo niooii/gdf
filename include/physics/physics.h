@@ -1,6 +1,6 @@
 #pragma once
 
-#include <gdfe/../../gdfe/include/gdfe/core.h>
+#include <gdfe/core.h>
 #include <gdfe/math/math.h>
 #include <game/entity/entity.h>
 
@@ -22,5 +22,5 @@ PhysicsEngine physics_init(PhysicsCreateInfo create_info);
 
 void physics_add_entity(PhysicsEngine engine, Entity* entity);
 
-typedef struct World World; 
+class World;
 GDF_BOOL physics_update(PhysicsEngine engine, World* world, f64 delta_time);

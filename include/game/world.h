@@ -4,6 +4,7 @@
 #include <game/entity/humanoid.h>
 #include <physics/physics.h>
 #include <physics/aabb.h>
+#include <gdf_math.h>
 #include <unordered_dense.h>
 
 u32 chunk_hash(const u8* data, u32 len);
@@ -92,7 +93,7 @@ public:
     Chunk();
     ~Chunk();
 
-    void set_block(BLOCK_TYPE type, RelBlockCoord block_coord);
+    Block* set_block(BLOCK_TYPE type, RelBlockCoord block_coord);
     Block* get_block(RelBlockCoord block_coord);
     void destroy_block(RelBlockCoord block_coord, Block* out);
 };
@@ -107,26 +108,53 @@ public:
     void gen_chunk(ivec3 chunk_coord, Chunk& chunk);
 };
 
+typedef struct BlockTouchingResult {
+    Block* block;
+    AxisAlignedBoundingBox box;
+} BlockTouchingResult;
+
 class World {
     // Terrain stuff
     Generator generator_;
     
-    ankerl::unordered_dense::map<ivec3, Chunk> chunks_;
+    ankerl::unordered_dense::map<ivec3, Chunk*> chunks_;
     u8 chunk_sim_dist_;
     u16 chunk_view_dist_;
 
     u16 ticks_per_sec_;
     GDF_Stopwatch upd_stopwatch_;
     
-    std::vector<HumanoidEntity> humanoids_;
-    
-    PhysicsEngine physics_;
+    std::vector<HumanoidEntity*> humanoids_;
 
 public:
+    // temp
+    PhysicsEngine physics_;
+
     World();
     ~World();
 
-    void update();
+    void update(f64 dt);
+    // Will load it from somewhere or return nullptr if nothing
+    Chunk* get_chunk(ivec3 chunk_coord);
+    Chunk* get_or_create_chunk(ivec3 chunk_coord);
+    HumanoidEntity* create_humanoid();
+
+    // Will not create a new chunk if it doesn't exist.
+    Block* get_block(vec3 pos);
+    // Will create a new chunk if it doesn't exist.
+    Block* get_block_gen_chunk(vec3 pos);
+
+    Block* set_block(BlockCreateInfo& create_info);
+
+    void destroy_block(vec3 pos, Block* destroyed);
+
+    // Gets the blocks that is touching an AABB.
+    // Modifies the result_arr with the found blocks, and returns the amount of blocks found
+    u32 get_blocks_touching(
+        AxisAlignedBoundingBox* aabb,
+        BlockTouchingResult* result_arr,
+        u32 result_arr_size
+    );
 };
 
 FORCEINLINE AxisAlignedBoundingBox block_get_aabb(vec3 world_pos) {
@@ -178,64 +206,6 @@ typedef struct WorldCreateInfo {
     u8 chunk_simulate_distance;
     u16 ticks_per_sec;
 } WorldCreateInfo;
-
-GDF_BOOL chunk_init(Chunk* out_chunk);
-Block* chunk_get_block(
-    Chunk* chunk, 
-    RelBlockCoord block_coord
-);
-Block* chunk_set_block(
-    Chunk* chunk, 
-    BLOCK_TYPE type,
-    RelBlockCoord block_coord
-);
-void chunk_destroy_block(
-    Chunk* chunk, 
-    RelBlockCoord block_coord,
-    Block* out
-);
-
-void world_create(World* out_world, WorldCreateInfo* create_info);
-// Creates a new Humanoid Entity and returns it for modification.
-HumanoidEntity* world_create_humanoid(World* world);
-
-// Called every frame.
-void world_update(World* world, f64 dt);
-
-/* This has two behaviors:
- * If a chunk doesn't exist in RAM, it will refresh what chunks_ are in RAM
- * by reading from the world's save file and try again
- * If a chunk still doesn't exist, it will create it
- */
-Chunk* world_get_or_create_chunk(World* world, ivec3 coord);
-
-// Will not create a chunk if it does not exist.  
-Chunk* world_get_chunk(World* world, ivec3 coord);
-
-// Pass NULL for destroyed_block if you don't care 
-// about the properties of the destroyed block.
-void world_destroy_block(World* world, vec3 block_world_pos, Block* destroyed_block);
-
-Block* world_set_block(World* world, BlockCreateInfo* create_info);
-
-typedef struct BlockTouchingResult {
-    Block* block;
-    AxisAlignedBoundingBox box;
-} BlockTouchingResult;
-
-// Gets the blocks that is touching an AABB.
-// Modifies the result_arr with the found blocks, and returns the amount of blocks found
-u32 world_get_blocks_touching(
-    World* world, 
-    AxisAlignedBoundingBox* aabb, 
-    BlockTouchingResult* result_arr,
-    u32 result_arr_size
-);
-
-Block* world_get_block_at(
-    World* world, 
-    vec3 pos
-);
 
 // Called every world tick by world_update()
 void world_tick(World* world);

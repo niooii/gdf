@@ -588,10 +588,10 @@ STBIDEF int   stbi_zlib_decode_noheader_buffer(char *obuffer, int olen, const ch
 #include <stddef.h> // ptrdiff_t on osx
 #include <stdlib.h>
 #include <string.h>
-#include <gdfe/limits.h>
+#include <limits.h>
 
 #if !defined(STBI_NO_LINEAR) || !defined(STBI_NO_HDR)
-#include <gdfe/math.h>  // ldexp, pow
+#include <math.h>  // ldexp, pow
 #endif
 
 #ifndef STBI_NO_STDIO
@@ -599,7 +599,7 @@ STBIDEF int   stbi_zlib_decode_noheader_buffer(char *obuffer, int olen, const ch
 #endif
 
 #ifndef STBI_ASSERT
-#include <gdfe/assert.h>
+#include <assert.h>
 #define STBI_ASSERT(x) assert(x)
 #endif
 
@@ -723,12 +723,12 @@ typedef unsigned char validate_uint32[sizeof(stbi__uint32)==4 ? 1 : -1];
 
 #if !defined(STBI_NO_SIMD) && (defined(STBI__X86_TARGET) || defined(STBI__X64_TARGET))
 #define STBI_SSE2
-#include <gdfe/emmintrin.h>
+#include <emmintrin.h>
 
 #ifdef _MSC_VER
 
 #if _MSC_VER >= 1400  // not VC6
-#include <gdfe/intrin.h> // __cpuid
+#include <intrin.h> // __cpuid
 static int stbi__cpuid3(void)
 {
    int info[4];

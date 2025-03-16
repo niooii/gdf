@@ -29,14 +29,19 @@ GDF_BOOL on_frame(const GDF_AppState* app_state, f64 delta_time, void* state) {
 
 int main()
 {
-    GameState* game = game_init();
+    Cube3State* game = game_init();
     GDF_InitInfo init = {
         .callbacks = {
             .on_frame = game_update,
             .on_frame_state = game,
-            .on_render_init = renderer_init,
-            .on_render_destroy = renderer_destroy,
-            .on_render = renderer_draw,
+            .render_callbacks = {
+                .on_render_init = renderer_init,
+                .on_render_state = game,
+                .on_render_destroy = renderer_destroy,
+                .on_render_destroy_state = game,
+                .on_render = renderer_draw,
+                .on_render_state = game
+            }
         },
         .config = {
             .fps_cap = 0,

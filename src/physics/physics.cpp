@@ -3,8 +3,10 @@
 #include <gdfe/collections/list.h>
 #include <game/events.h>
 
+using std::vector;
+
 typedef struct Physics_T {
-    GDF_LIST(Entity*) entities;
+    vector<Entity*> entities;
     
     f32 terminal_velocity;
     f32 air_drag;
@@ -13,10 +15,12 @@ typedef struct Physics_T {
     GDF_BOOL gravity_active; 
 } Physics_T;
 
+// TODO! ecs ecs ecs ecs
 PhysicsEngine physics_init(PhysicsCreateInfo create_info)
 {
-    PhysicsEngine physics = GDF_Malloc(sizeof(Physics_T), GDF_MEMTAG_APPLICATION);
-    physics->entities = GDF_LIST_Reserve(Entity*, 32);
+    PhysicsEngine physics = (Physics_T*)GDF_Malloc(sizeof(Physics_T), GDF_MEMTAG_APPLICATION);
+    new (&physics->entities) vector<Entity*>();
+    physics->entities.reserve(32);
     physics->gravity = create_info.gravity;
     physics->gravity_active = create_info.gravity_active;
     physics->air_drag = create_info.air_drag;
@@ -28,7 +32,7 @@ PhysicsEngine physics_init(PhysicsCreateInfo create_info)
 
 void physics_add_entity(PhysicsEngine engine, Entity* entity)
 {
-    GDF_LIST_Push(engine->entities, entity);
+    engine->entities.push_back(entity);
 }
 
 GDF_BOOL physics_update(PhysicsEngine engine, World* world, f64 dt)
@@ -37,7 +41,7 @@ GDF_BOOL physics_update(PhysicsEngine engine, World* world, f64 dt)
     vec3 effective_gravity = engine->gravity_active ? engine->gravity : vec3_zero();
     vec3 net_accel;
     
-    u32 len = GDF_LIST_GetLength(engine->entities);
+    u32 len = engine->entities.size();
     for (u32 i = 0; i < len; i++)
     {
         Entity* entity = engine->entities[i];
@@ -80,11 +84,10 @@ GDF_BOOL physics_update(PhysicsEngine engine, World* world, f64 dt)
         aabb_translate(&t_aabb, deltas);
         
         BlockTouchingResult results[64];
-        u32 results_len = world_get_blocks_touching(
-            world, 
+        u32 results_len = world->get_blocks_touching(
             &t_aabb,
             results,
-            sizeof(results) / sizeof(*results)
+            std::size(results)
         );
 
         // Check for floor (only if translated aabb's y is below the current one)
@@ -114,7 +117,7 @@ GDF_BOOL physics_update(PhysicsEngine engine, World* world, f64 dt)
                 }
                 // REPLACE WITH RAYCAST (or just handle slabs well)
                 ivec3 cc = world_pos_to_chunk_coord(corner);
-                Block* block = world_get_block_at(world, corner);
+                Block* block = world->get_block(corner);
                 if (block != NULL)
                 {
                     ground_found = GDF_TRUE;

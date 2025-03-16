@@ -1,5 +1,7 @@
 #include <graphics/chunkmesh.h>
 #include <gdfe/render/vk_utils.h>
+
+#include "gdfe/collections/hashmap.h"
 #include "graphics/renderer.h"
 
 // #define GDFP_DISABLE
@@ -184,7 +186,7 @@ void ChunkMesh::mesh()
                 // TODO! could replace this entire loop with just iterating through the chunks
                 // owned blocks, then 8 other for loops for the outer edges of the chunk (the neighboring stuff)
                 // TODO! filter blocks by visibility and solidness not existence
-                if (world_get_block_at(world, world_pos)) {
+                if (world->get_block(world_pos)) {
                     // z,y - x axis
                     axis_masks[AXIS_X][y][z] |= 1ULL << (u64)x;
                     // x,z - y axis
@@ -228,8 +230,7 @@ void ChunkMesh::mesh()
     // <block_type: u32, GDF_HashMap(axis_depth: u32, plane: u32[32])>
     // each inner map is of the pair:
     // <axis_depth: u32, plane: u32[32] (will be manually allocated when needed)>
-    // TODO! might as well just use a fucking flat array oml
-    // TODO! hey chat what if i make an option to create a non expandable hash table :>
+    // TODO! might as well just use a flat array oml
     map<u32, map<u32, array<u32, 32>>> planes[6] = {};
 
     for (u32 axis = 0; axis < 6; axis++) 
@@ -245,46 +246,48 @@ void ChunkMesh::mesh()
                 bits >>= 1;
                 bits &= ~(1ULL << CHUNK_SIZE);
 
-                while (bits != 0) 
+                while (bits != 0)
                 {
                     // where the face is (kinda)
                     // more like how deep it is along the axis
-                    u8 depth = __builtin_ctz(bits);
+                    u8 depth = CTZ64(bits);
                     bits &= bits - 1;
 
                     RelBlockCoord block_coord;
                     switch(axis) {
-                        case AXIS_X_ASC:
-                        case AXIS_X_DESC:
-                            block_coord.block_x = depth;
-                            block_coord.block_y = i;
-                            block_coord.block_z = j;
+                    case AXIS_X_ASC:
+                    case AXIS_X_DESC:
+                        block_coord.block_x = depth;
+                        block_coord.block_y = i;
+                        block_coord.block_z = j;
                         break;
-                        case AXIS_Y_ASC:
-                        case AXIS_Y_DESC:
-                            block_coord.block_x = j;
-                            block_coord.block_y = depth;
-                            block_coord.block_z = i;
+                    case AXIS_Y_ASC:
+                    case AXIS_Y_DESC:
+                        block_coord.block_x = j;
+                        block_coord.block_y = depth;
+                        block_coord.block_z = i;
                         break;
-                        case AXIS_Z_ASC:
-                        case AXIS_Z_DESC:
-                            block_coord.block_x = j;
-                            block_coord.block_y = i;
-                            block_coord.block_z = depth;
+                    case AXIS_Z_ASC:
+                    case AXIS_Z_DESC:
+                        block_coord.block_x = j;
+                        block_coord.block_y = i;
+                        block_coord.block_z = depth;
                         break;
                     }
 
-                    Block* block = chunk_get_block(chunk, block_coord);
+                    Block* block = chunk->get_block(block_coord);
 
                     if (!block) {
-                        LOG_FATAL("yea yo code is doodoo");
+                        LOG_FATAL("yea ur code is so bad");
+                        continue;
                     }
+                    using std::pair;
+                    // TODO! sigh emplace calls are incorrect
+                    planes[axis][block->data.type] = map<u32, array<u32, 32>>{};
+                    map<u32, array<u32, 32>>& depth_map = planes[axis][block->data.type];
+                    depth_map[depth] = array<u32, 32>{};
 
-                    auto type_entry  = planes[axis].emplace(block->data.type).first;
-                    map<u32, array<u32, 32>>& depth_map = type_entry->second;
-                    auto depth_entry = depth_map.emplace(depth).first;
-
-                    array<u32, 32>& plane = depth_entry->second;
+                    array<u32, 32>& plane = depth_map[depth];
                     plane[j] |= (u32)1 << i;
                 }
             }
@@ -296,22 +299,15 @@ void ChunkMesh::mesh()
     // need to be meshed at a specific depth. 
     for (u32 axis = 0; axis < 6; axis++) {
         BLOCK_FACE face = __axis_to_face(axis);
-        for (
-            HashmapEntry* type_map = GDF_HashmapIter(planes[axis]);
-            type_map != NULL;
-            GDF_HashmapIterAdvance(&type_map)
-        ) {
+        for (auto& type_entry : planes[axis]) {
             // no type chekcing is so scary help m,e
-            u32 block_type = *(u32*)type_map->key;
-            GDF_HashMap depth_map = *(GDF_HashMap*)type_map->val;
+            // update: c++...
+            u32 block_type = type_entry.first;
+            map<u32, array<u32, 32>>& depth_map = type_entry.second;
             
-            for (
-                HashmapEntry* depth_entry = GDF_HashmapIter(depth_map);
-                depth_entry != NULL;
-                GDF_HashmapIterAdvance(&depth_entry)
-            ) {
-                u32 depth = *(u32*)depth_entry->key;
-                u32* plane = *(u32**)depth_entry->val;
+            for (auto& depth_entry : depth_map) {
+                u32 depth = depth_entry.first;
+                 array<u32, 32>& plane = depth_entry.second;
 
                 // actual greedy meshing algorithim
                 // debugging stuff
@@ -325,11 +321,11 @@ void ChunkMesh::mesh()
                         // TODO! could we pregenerate this per chunk and then just update a few bits
                         // on each chunk change, then deep copy the data in this function?
                         // im p sure itll be faster
-                        x += __builtin_ctz((plane[row] >> x));
+                        x += CTZ64(plane[row] >> x);
                         if (x >= CHUNK_SIZE)
                             continue;
 
-                        u32 w = __builtin_ctz(~(plane[row] >> x));
+                        u32 w = CTZ64(~(plane[row] >> x));
                         // print_mask_32("mask: ", plane[row]);
                         // LOG_DEBUG("width: %d", w);
                         // account for overflow (where shifting is undefined SCARY!!)
@@ -354,41 +350,41 @@ void ChunkMesh::mesh()
                         ivec3 v2_pos = __get_actual_coord(depth, face, row + h, x + w);
                         ivec3 v3_pos = __get_actual_coord(depth, face, row, x + w);
                         u32 num_vertices = vertices_.size();
-                        vertices_.emplace_back({
-                            .block_type = block_type,
-                            .face_dir = face,
-                            .x_pos = v0_pos.x,
-                            .y_pos = v0_pos.y,
-                            .z_pos = v0_pos.z,
+                        vertices_.push_back((ChunkVertex){
+                            .block_type = (u16)block_type,
+                            .face_dir = (u8)face,
+                            .x_pos = (u8)v0_pos.x,
+                            .y_pos = (u8)v0_pos.y,
+                            .z_pos = (u8)v0_pos.z,
                             .u = 0,
                             .v = 0
                         });
-                        vertices_.emplace_back({
-                            .block_type = block_type,
-                            .face_dir = face,
-                            .x_pos = v1_pos.x,
-                            .y_pos = v1_pos.y,
-                            .z_pos = v1_pos.z,
-                            .u = h,
+                        vertices_.push_back((ChunkVertex){
+                            .block_type = (u16)block_type,
+                            .face_dir = (u8)face,
+                            .x_pos = (u8)v1_pos.x,
+                            .y_pos = (u8)v1_pos.y,
+                            .z_pos = (u8)v1_pos.z,
+                            .u = (u8)h,
                             .v = 0
                         });
-                        vertices_.emplace_back({
-                            .block_type = block_type,
-                            .face_dir = face,
-                            .x_pos = v2_pos.x,
-                            .y_pos = v2_pos.y,
-                            .z_pos = v2_pos.z,
-                            .u = h,
-                            .v = w
+                        vertices_.push_back((ChunkVertex){
+                            .block_type = (u16)block_type,
+                            .face_dir = (u8)face,
+                            .x_pos = (u8)v2_pos.x,
+                            .y_pos = (u8)v2_pos.y,
+                            .z_pos = (u8)v2_pos.z,
+                            .u = (u8)h,
+                            .v = (u8)w
                         });
-                        vertices_.emplace_back({
-                            .block_type = block_type,
-                            .face_dir = face,
-                            .x_pos = v3_pos.x,
-                            .y_pos = v3_pos.y,
-                            .z_pos = v3_pos.z,
+                        vertices_.push_back((ChunkVertex){
+                            .block_type = (u16)block_type,
+                            .face_dir = (u8)face,
+                            .x_pos = (u8)v3_pos.x,
+                            .y_pos = (u8)v3_pos.y,
+                            .z_pos = (u8)v3_pos.z,
                             .u = 0,
-                            .v = w
+                            .v = (u8)w
                         });
 
                         // push indices based on face dir for consistent winding
@@ -463,6 +459,11 @@ void ChunkMesh::mesh()
     GDFP_END();
 }
 
+u32 ChunkMesh::get_index_count()
+{
+    return indices_.size();
+}
+
 ChunkMesh::ChunkMesh(World* world, Chunk* chunk, ivec3 chunk_coord)
     : chunk_(chunk), world_(world), chunk_coord_(chunk_coord)
 {
@@ -496,46 +497,36 @@ ChunkMesh::ChunkMesh(World* world, Chunk* chunk, ivec3 chunk_coord)
     }
 }
 
-GDF_BOOL chunk_mesh_update_buffers(GDF_VkRenderContext* ctx, ChunkMesh* mesh, u16 i)
+ChunkMesh::~ChunkMesh()
 {
-    GDF_ASSERT_RETURN_FALSE(
-        GDF_VkBufferUpdate(
-            ctx, 
-            &mesh->buffers[i].vertex_buffer, 
-            vertices_,
-            GDF_LIST_GetLength(vertices_) * sizeof(ChunkVertex)
-        )
-    );
-    GDF_ASSERT_RETURN_FALSE(
-        GDF_VkBufferUpdate(
-            ctx, 
-            &mesh->buffers[i].index_buffer, 
-            indices_,
-            mesh->num_indices * sizeof(CHUNK_MESH_INDEX_TYPE)  
-        )
-    );
-    mesh->buffers[i].up_to_date = GDF_TRUE;
-    return GDF_TRUE;
-}
-
-GDF_BOOL chunk_mesh_update(ChunkMesh* mesh, ChunkMeshUpdates* updates)
-{
-    // wow chat. 
-    __mesh_chunk(mesh);
-    return GDF_TRUE;
-}
-
-void chunk_mesh_destroy(GDF_VkRenderContext* ctx, ChunkMesh* mesh) 
-{
-    GDF_LIST_Destroy(vertices_);
-    GDF_LIST_Destroy(indices_);
-
     for (u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         GDF_VkBufferDestroy(
-            &mesh->buffers[i].vertex_buffer
+            &buffers_[i].vertex_buffer
         );
         GDF_VkBufferDestroy(
-            &mesh->buffers[i].index_buffer
+            &buffers_[i].index_buffer
         );
     }
+}
+
+bool ChunkMesh::update_buffers(u32 frame_idx)
+{
+    if (buffers_[frame_idx].up_to_date)
+        return true;
+    if (!GDF_VkBufferUpdate(
+        &buffers_[frame_idx].vertex_buffer,
+        vertices_.data(),
+        vertices_.size() * sizeof(ChunkVertex)
+    ))
+        return false;
+
+    if (!GDF_VkBufferUpdate(
+        &buffers_[frame_idx].index_buffer,
+        indices_.data(),
+        indices_.size() * sizeof(CHUNK_MESH_INDEX_TYPE)
+    ))
+        return false;
+
+    buffers_[frame_idx].up_to_date = true;
+    return true;
 }

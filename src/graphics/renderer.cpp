@@ -1,18 +1,72 @@
 #include <graphics/renderer.h>
 
+#include "game/game.h"
 
-GDF_BOOL renderer_init(const GDF_VkRenderContext* vulkan_ctx, const GDF_AppState* app_state, void* state)
+GameRenderer::GameRenderer(const GDF_VkRenderContext* vk_ctx, World* world)
 {
+    this->world_renderer.world = world;
+    block_textures_init(vk_ctx, &this->block_textures);
+}
+
+GameRenderer::~GameRenderer()
+{
+    block_textures_destroy(&this->block_textures);
+}
+
+GDF_BOOL renderer_init(const GDF_VkRenderContext* vk_ctx, const GDF_AppState* app_state, void* state)
+{
+    Cube3State* game = (Cube3State*)state;
+    game->renderer = new GameRenderer(vk_ctx, game->world);
+    GameRenderer* renderer= game->renderer;
     return GDF_TRUE;
 }
 
-GDF_BOOL renderer_destroy(const GDF_VkRenderContext* vulkan_ctx, const GDF_AppState* app_state, void* state)
+GDF_BOOL renderer_destroy(const GDF_VkRenderContext* vk_ctx, const GDF_AppState* app_state, void* state)
 {
+    Cube3State* game = (Cube3State*)state;
+    GameRenderer* renderer= game->renderer;
     return GDF_TRUE;
 }
 
-GDF_BOOL renderer_draw(const GDF_VkRenderContext* vulkan_ctx, const GDF_AppState* app_state, void* state)
+GDF_BOOL renderer_draw(const GDF_VkRenderContext* vk_ctx, const GDF_AppState* app_state, void* state)
 {
+    Cube3State* game = (Cube3State*)state;
+    WorldRenderer* renderer = &game->renderer->world_renderer;
+    u32 frame_idx = vk_ctx->resource_idx;
+    VkCommandBuffer cmd_buf = vk_ctx->per_frame[frame_idx].cmd_buffer;
+
+    // vkCmdBindDescriptorSets(
+    //     cmd_buf,
+    //     VK_PIPELINE_BIND_POINT_GRAPHICS,
+    //     ctx->grid_pipeline.layout,
+    //     0,
+    //     1,
+    //     &core_per_frame->vp_ubo_set,
+    //     0,
+    //     NULL
+    // );
+
+    vkCmdBindPipeline(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, renderer->terrain_pipeline.handle);
+
+    for (auto& [cc, mesh] : renderer->chunk_meshes)
+    {
+        MeshBuffer* buffers = mesh.get_mesh_buffer(frame_idx);
+        if (!buffers->up_to_date && !mesh.update_buffers(frame_idx))
+        {
+            LOG_ERR("Failed to update chunk mesh buffers..?");
+            continue;
+        }
+
+        VkDeviceSize offsets[] = {0};
+
+        vkCmdBindVertexBuffers(cmd_buf, 0, 1, &buffers->vertex_buffer.handle, offsets);
+        vkCmdBindIndexBuffer(cmd_buf, buffers->index_buffer.handle, {}, VK_INDEX_TYPE_UINT16);
+
+        vkCmdDrawIndexed(cmd_buf, mesh.get_index_count(), 1, 0, 0, 0);
+    }
+
+    PerFrameResources* per_frame = &vk_ctx->per_frame[vk_ctx->resource_idx];
+    vkCmdDraw(per_frame->cmd_buffer, 3, 1, 0, 0);
     return GDF_TRUE;
 }
 

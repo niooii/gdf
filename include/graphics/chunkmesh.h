@@ -2,9 +2,7 @@
 
 #include <gdfe/core.h>
 #include <game/world.h>
-#include <gdfe/render/vk_types.h>
-
-#include "graphics/renderer.h"
+#include <gdfe/render/renderer.h>
 
 // holy wasteful man
 #define MAX_CHUNK_VERTICES (CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE * 8)
@@ -56,21 +54,18 @@ public:
     ~ChunkMesh();
 
     void mesh();
+    u32 get_index_count();
     bool update_buffers(u32 frame_idx);
-    MeshBuffer* get_mesh_buffer(u32 frame_idx);
+    FORCEINLINE MeshBuffer* get_mesh_buffer(u32 frame_idx)
+    {
+        return &buffers_[frame_idx];
+    }
 };
 
 // Changes per frame can be batched and updated all at once.
 typedef struct ChunkMeshUpdates {
     // GDF_HashMap(ivec3, Block*) created;
 } ChunkMeshUpdates; 
-
-GDF_BOOL chunk_mesh_init(GDF_VkRenderContext* ctx, World* world, Chunk* chunk, ChunkMesh* mesh);
-// for now this shit rebuilds the entire chunk lol but  please use it as implmeneted
-GDF_BOOL chunk_mesh_update(ChunkMesh* mesh, ChunkMeshUpdates* updates);
-void chunk_mesh_destroy(GDF_VkRenderContext* ctx, ChunkMesh* mesh);
-
-GDF_BOOL chunk_mesh_update_buffers(GDF_VkRenderContext* ctx, ChunkMesh* mesh, u16 buffer_idx);
 
 // no memory should be allocated, the data is static
 void get_vertex_attrs(VkVertexInputAttributeDescription** attrs, u32* len);

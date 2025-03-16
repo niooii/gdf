@@ -7,10 +7,9 @@
 #include <physics/raycast.h>
 
 static HumanoidEntity* player;
-
-GameState* game_init()
+Cube3State* game_init()
 {
-    GameState* game = (GameState*)GDF_Malloc(sizeof(GameState), GDF_MEMTAG_GAME);
+    Cube3State* game = (Cube3State*)GDF_Malloc(sizeof(Cube3State), GDF_MEMTAG_GAME);
     GDF_CameraCreateInfo camera_info = {
         .pos = vec3_new(0.0f, 0.0f, 0.0f),
         .pitch = 0.0f,
@@ -37,8 +36,8 @@ GameState* game_init()
         .chunk_simulate_distance = 16,
         .ticks_per_sec = 20,
     };
-    world_create(game->world, &world_info);
-    player = world_create_humanoid(game->world);
+    game->world = new World();
+    player = game->world->create_humanoid();
     physics_add_entity(game->world->physics_, &player->base);
     player->base.aabb.min = vec3_new(-0.375, 0, -0.375);
     player->base.aabb.max = vec3_new(0.375, 1.8, 0.375);
@@ -50,7 +49,7 @@ GameState* game_init()
 }
 
 // TODO! remove this from here prob
-void game_handle_input(GameState* game, f64 dt)
+void game_handle_input(Cube3State* game, f64 dt)
 {
     GDF_Camera camera = game->main_camera;
     {
@@ -162,7 +161,7 @@ void game_handle_input(GameState* game, f64 dt)
         if (result.status == RAYCAST_STATUS_HIT)
         {
             LOG_DEBUG("destroying block..");
-            world_destroy_block(game->world, result.block_world_pos, NULL);
+            game->world->destroy_block(result.block_world_pos, nullptr);
         }
     }
     else if (GDF_IsButtonDown(GDF_MBUTTON_RIGHT))
@@ -210,7 +209,7 @@ void game_handle_input(GameState* game, f64 dt)
                     .type = BLOCK_TYPE_Grass,
                     .world_pos = place_pos
                 };
-                world_set_block(game->world, &info);
+                game->world->set_block(info);
             }
         }
     }
@@ -218,10 +217,10 @@ void game_handle_input(GameState* game, f64 dt)
 
 GDF_BOOL game_update(const GDF_AppState* app_state, f64 dt, void* state)
 {
-    GameState* game = (GameState*)state;
+    Cube3State* game = (Cube3State*)state;
     // LOG_INFO("VEL: %f %f %f", player->base.vel.x, player->base.vel.y, player->base.vel.z);
     game_handle_input(game, dt);
-    world_update(game->world, dt);
+    game->world->update(dt);
 
     // LOG_DEBUG("pos: %f %f %f", player->base.aabb.min.x, player->base.aabb.min.y, player->base.aabb.min.z);
     // LOG_DEBUG("vel: %f %f %f", player_comp->vel.x, player_comp->vel.y, player_comp->vel.z);

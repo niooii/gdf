@@ -36,13 +36,13 @@ unsigned long client_accepting_thread_wrapper(void* args)
 
 GDF_BOOL world_server_init(WorldServerStartInfo* start_info, WorldServer* ctx)
 {
-    ctx->clients_mutex = GDF_CreateMutex();
-    ctx->clients = (ClientInfo*)GDF_LIST_Reserve(ClientInfo, ctx->max_clients);
-    // TODO! load world properly
-    WorldCreateInfo world_create_info = {
-        .ticks_per_sec = 5,
-        .chunk_simulate_distance = 16,
-    };  
+    // ctx->clients_mutex = GDF_CreateMutex();
+    // ctx->clients = (ClientInfo*)GDF_LIST_Reserve(ClientInfo, ctx->max_clients);
+    // // TODO! load world properly
+    // WorldCreateInfo world_create_info = {
+    //     .ticks_per_sec = 5,
+    //     .chunk_simulate_distance = 16,
+    // };
     // world_create(&ctx->world, &world_create_info);
 
     ctx->initialized = GDF_TRUE;
