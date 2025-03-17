@@ -16,14 +16,14 @@ GDF_BOOL renderer_init(const GDF_VkRenderContext* vk_ctx, const GDF_AppState* ap
 {
     Cube3State* game = (Cube3State*)state;
     game->renderer = new GameRenderer(vk_ctx, game->world);
-    GameRenderer* renderer= game->renderer;
+    GameRenderer* renderer = game->renderer;
     return GDF_TRUE;
 }
 
 GDF_BOOL renderer_destroy(const GDF_VkRenderContext* vk_ctx, const GDF_AppState* app_state, void* state)
 {
     Cube3State* game = (Cube3State*)state;
-    GameRenderer* renderer= game->renderer;
+    GameRenderer* renderer = game->renderer;
     return GDF_TRUE;
 }
 
@@ -46,6 +46,20 @@ GDF_BOOL renderer_draw(const GDF_VkRenderContext* vk_ctx, const GDF_AppState* ap
     // );
 
     vkCmdBindPipeline(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, renderer->terrain_pipeline.handle);
+    VkDescriptorSet terrain_pipeline_sets[] = {
+        vk_ctx->per_frame[frame_idx].vp_ubo_set,
+        renderer->terrain_pipeline.descriptor_sets[frame_idx]
+    };
+    vkCmdBindDescriptorSets(
+        cmd_buf,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        renderer->terrain_pipeline.layout,
+        0,
+        2,
+        terrain_pipeline_sets,
+        0,
+        NULL
+    );
 
     for (auto& [cc, mesh] : renderer->chunk_meshes)
     {
@@ -57,6 +71,15 @@ GDF_BOOL renderer_draw(const GDF_VkRenderContext* vk_ctx, const GDF_AppState* ap
         }
 
         VkDeviceSize offsets[] = {0};
+
+        vkCmdPushConstants(
+            cmd_buf,
+            renderer->terrain_pipeline.layout,
+            VK_SHADER_STAGE_VERTEX_BIT,
+            0,
+            sizeof(ivec3),
+            &cc
+        );
 
         vkCmdBindVertexBuffers(cmd_buf, 0, 1, &buffers->vertex_buffer.handle, offsets);
         vkCmdBindIndexBuffer(cmd_buf, buffers->index_buffer.handle, {}, VK_INDEX_TYPE_UINT16);

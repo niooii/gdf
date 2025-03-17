@@ -159,8 +159,6 @@ void ChunkMesh::mesh()
 {
     #include <gdfe/profiler.h>
 
-    GDFP_START();
-
     World* world = world_;
     Chunk* chunk = chunk_;
     vertices_.clear();
@@ -173,6 +171,8 @@ void ChunkMesh::mesh()
 
     GDF_MemSet(axis_masks, 0, sizeof(axis_masks));
     GDF_MemSet(axis_face_masks, 0, sizeof(axis_face_masks));
+
+    GDFP_START();
 
     // TODO! MAIN BOTTLENECK HELP
     for (i32 x = 0; x < CHUNK_SIZE_P; x++) 
@@ -281,11 +281,10 @@ void ChunkMesh::mesh()
                         LOG_FATAL("yea ur code is so bad");
                         continue;
                     }
-                    using std::pair;
-                    // TODO! sigh emplace calls are incorrect
-                    planes[axis][block->data.type] = map<u32, array<u32, 32>>{};
-                    map<u32, array<u32, 32>>& depth_map = planes[axis][block->data.type];
-                    depth_map[depth] = array<u32, 32>{};
+
+                    map<u32, array<u32, 32>>& depth_map =
+                        planes[axis].try_emplace(block->data.type).first->second;
+                    depth_map[depth] = depth_map.try_emplace(depth).first->second;
 
                     array<u32, 32>& plane = depth_map[depth];
                     plane[j] |= (u32)1 << i;
@@ -299,16 +298,10 @@ void ChunkMesh::mesh()
     // need to be meshed at a specific depth. 
     for (u32 axis = 0; axis < 6; axis++) {
         BLOCK_FACE face = __axis_to_face(axis);
-        for (auto& type_entry : planes[axis]) {
+        for (auto& [block_type, depth_map] : planes[axis]) {
             // no type chekcing is so scary help m,e
             // update: c++...
-            u32 block_type = type_entry.first;
-            map<u32, array<u32, 32>>& depth_map = type_entry.second;
-            
-            for (auto& depth_entry : depth_map) {
-                u32 depth = depth_entry.first;
-                 array<u32, 32>& plane = depth_entry.second;
-
+            for (auto& [depth, plane] : depth_map) {
                 // actual greedy meshing algorithim
                 // debugging stuff
                 // for (int k = 0; k < 32; k++) {

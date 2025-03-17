@@ -1,5 +1,6 @@
 #include <game/world.h>
 #include <game/events.h>
+#include <gdfe/profiler.h>
 #include <graphics/renderer.h>
 
 u32 chunk_hash(const u8* data, u32 len) {
@@ -137,7 +138,7 @@ Chunk* World::get_chunk(ivec3 chunk_coord)
     auto it = chunks_.find(chunk_coord);
     if (it == chunks_.end())
     {
-        LOG_ERR("NO CHUNK");
+        // LOG_ERR("NO CHUNK");
         return nullptr;
     }
 

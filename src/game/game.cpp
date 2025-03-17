@@ -22,6 +22,11 @@ Cube3State* game_init()
     };
     game->main_camera = GDF_CameraCreate(&camera_info);
 
+    return game;
+}
+
+void game_init_world(Cube3State* game)
+{
     // TODO! uncomment later, the game will be initilaized in world state for now.
     // game->current_screen = GDF_GAME_SCREEN_MAIN_MENU;
     // game->current_screen_type = GDF_GAME_SCREENTYPE_GUI_MENU;
@@ -31,7 +36,6 @@ Cube3State* game_init()
     game->current_screen = GDF_GAME_SCREEN_IN_WORLD;
     game->current_screen_type = GDF_GAME_SCREENTYPE_WORLD;
     // game->main_player = NULL;
-    game->world = (World*)GDF_Malloc(sizeof(World), GDF_MEMTAG_GAME);
     WorldCreateInfo world_info = {
         .chunk_simulate_distance = 16,
         .ticks_per_sec = 20,
@@ -44,8 +48,6 @@ Cube3State* game_init()
     aabb_translate(&player->base.aabb, vec3_new(1, 5, 1));
     player->base.health = 100;
     player->base.damagable = GDF_TRUE;
-
-    return game;
 }
 
 // TODO! remove this from here prob

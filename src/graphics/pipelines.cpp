@@ -217,7 +217,7 @@ bool terrain_pipeline_init(const GDF_VkRenderContext* vk_ctx, WorldRenderer* wor
     };
 
     VkDescriptorSetLayout descriptor_layouts[2] = {
-        context->global_vp_ubo_layouts[0],
+        vk_ctx->vp_ubo_layout,
         pipeline->descriptor_layout
     };
 
