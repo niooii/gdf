@@ -20,15 +20,15 @@ struct ChunkUnloadEvent : EventBase {
 
 };
 
-class EventManager {
+class ChunkEventsListener {
+	void onChunkLoad(const Chunk* chunk) {}
+	void onChunkUpdate(const Chunk* chunk) {}
+	void onChunkUnload(const Chunk* chunk) {}
+}
+
+// man wtf
+class GlobalEventsManager {
+
 public:
-    template<typename EventType>
-    void registerListener(std::function<void(EventType&)> handler) {
-
-    }
-
-    template<typename EventType>
-    void dispatchEvent(EventType& event) {
-
-    }
+	void dispatchChunkUpdate()
 };
