@@ -3,14 +3,13 @@
 #include "game/game.h"
 
 GameRenderer::GameRenderer(const GDF_VkRenderContext* vk_ctx, World* world)
+    : world_renderer{vk_ctx}
 {
     this->world_renderer.world = world;
-    block_textures_init(vk_ctx, &this->block_textures);
 }
 
 GameRenderer::~GameRenderer()
 {
-    block_textures_destroy(&this->block_textures);
 }
 
 GDF_BOOL renderer_init(const GDF_VkRenderContext* vk_ctx, const GDF_AppState* app_state, void* state)

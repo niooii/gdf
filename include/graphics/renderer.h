@@ -12,16 +12,15 @@ typedef struct WorldRenderer {
     ankerl::unordered_dense::map<ivec3, ChunkMesh> chunk_meshes{};
 
     terrain_pipeline terrain_pipeline;
+    block_textures block_textures;
 
-    WorldRenderer();
+    WorldRenderer(const GDF_VkRenderContext* vk_ctx);
     ~WorldRenderer();
 } WorldRenderer;
 
 typedef struct GameRenderer {
+    // contains everything needed to render a world
     WorldRenderer world_renderer;
-
-    // only wanna load once
-    block_textures block_textures;
 
     // TODO! this shouldnt accept the world at first.
     // need states for player in menu / in game

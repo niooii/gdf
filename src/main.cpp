@@ -36,7 +36,7 @@ int main()
             .on_frame_state = game,
             .render_callbacks = {
                 .on_render_init = renderer_init,
-                .on_render_state = game,
+                .on_render_init_state = game,
                 .on_render_destroy = renderer_destroy,
                 .on_render_destroy_state = game,
                 .on_render = renderer_draw,

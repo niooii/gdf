@@ -1,7 +1,9 @@
 #pragma once
 
+#include <vector>
 #include <gdfe/core.h>
 #include <gdfe/render/vk_types.h>
+
 #include "textures.h"
 
 typedef struct terrain_pipeline {
@@ -15,17 +17,16 @@ typedef struct terrain_pipeline {
     VkShaderModule frag;
 
     // Shader storage buffer, accessed through instancing.
-    GDF_VkBuffer face_data_ssbo;
+    // TODO! vertex/face pulling
+    // GDF_VkBuffer face_data_ssbo;
 
-    block_textures block_textures;
     GDF_VkBuffer block_lookup_ssbo;
     VkDescriptorPool descriptor_pool;
-    GDF_LIST(VkDescriptorSet) descriptor_sets;
-    VkDescriptorSetLayout descriptor_layouts;
+    std::vector<VkDescriptorSet> descriptor_sets;
+    VkDescriptorSetLayout descriptor_layout;
 } terrain_pipeline;
-//
-// GDF_BOOL pipelines_create_blocks(VkRenderContext* context);
-// // GDF_BOOL pipelines_create_lighting(VkRenderContext* context);
-// // GDF_BOOL pipelines_create_post_processing(VkRenderContext* context);
-// GDF_BOOL pipelines_create_grid(VkRenderContext* context);
-// GDF_BOOL pipelines_create_ui(VkRenderContext* context);
+
+typedef struct WorldRenderer WorldRenderer;
+
+bool terrain_pipeline_init(const GDF_VkRenderContext* vk_ctx, WorldRenderer* world_renderer);
+

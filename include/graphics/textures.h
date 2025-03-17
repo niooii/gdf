@@ -16,7 +16,7 @@ typedef enum GDF_TEXTURE_INDEX {
 } GDF_TEXTURE_INDEX;
 
 typedef struct block_textures {
-    GDF_VkDevice* device;
+    const GDF_VkDevice* device;
     VkAllocationCallbacks* allocator;
 
     GDF_VkImage texture_array;
