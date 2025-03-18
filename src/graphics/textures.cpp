@@ -4,6 +4,7 @@
 
 #include "gdfe/os/io.h"
 #include "gdfe/render/vk_utils.h"
+#include <vulkan/vulkan.h>
 
 #define TEXTURES_FOLDER "resources/textures/"
 static const char* __texture_paths[GDF_TEXTURE_INDEX_MAX] = {

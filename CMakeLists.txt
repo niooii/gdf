@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 set(CMAKE_CXX_COMPILER clang++)
-project(GameDevFinal
+project(gdf
     VERSION 1.0
     DESCRIPTION "Not really a game dev final..."
     LANGUAGES CXX)
@@ -49,18 +49,22 @@ SET_SOURCE_FILES_PROPERTIES(${SOURCE_FILES} ${EXTERN_SRC} PROPERTIES LANGUAGE CX
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${EXTERN_SRC})
 
 if(DEFINED ENV{VULKAN_SDK})
-    set(Vulkan_INCLUDE_DIRS "$ENV{VULKAN_SDK}/include")
-    set(Vulkan_LIBRARIES "$ENV{VULKAN_SDK}/lib")
+    if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+        set(Vulkan_INCLUDE_DIRS "$ENV{VULKAN_SDK}/Include")
+    else()
+        set(Vulkan_INCLUDE_DIRS "$ENV{VULKAN_SDK}/include")
+    endif()
     include_directories(${Vulkan_INCLUDE_DIRS})
-    link_directories(${Vulkan_LIBRARIES})
+    find_package(Vulkan REQUIRED)
 else()
     find_package(Vulkan REQUIRED)
     include_directories(${Vulkan_INCLUDE_DIRS})
-    target_link_libraries(${PROJECT_NAME}
-            PRIVATE
-            Vulkan::Vulkan
-    )
 endif()
+
+target_link_libraries(${PROJECT_NAME}
+        PRIVATE
+        Vulkan::Vulkan
+)
 
 target_link_libraries(${PROJECT_NAME}
         PRIVATE

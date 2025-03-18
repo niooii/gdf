@@ -14,13 +14,15 @@ Cube3State* game_init()
         .pos = vec3_new(0.0f, 0.0f, 0.0f),
         .pitch = DEG_TO_RAD(0.0f),
         .yaw = DEG_TO_RAD(0.0f),
-        .roll = DEG_TO_RAD(-45.0f),
+        .roll = DEG_TO_RAD(0.0f),
         .aspect_ratio = 1.77f,
         .fov = DEG_TO_RAD(45.f),
         .near_clip = 0.1f,
         .far_clip = 1000.0f,
     };
     game->main_camera = GDF_CameraCreate(&camera_info);
+    GDF_CameraSetGlobalAxis(game->main_camera, vec3_new(1, 1, 0));
+    GDF_CameraConstrainPitch(game->main_camera, -DEG_TO_RAD(90), DEG_TO_RAD(90));
 
     return game;
 }
@@ -58,7 +60,7 @@ void game_handle_input(Cube3State* game, f64 dt)
         ivec2 d;
         GDF_GetMouseDelta(&d);
         GDF_CameraAddYaw(camera, DEG_TO_RAD(d.x * 0.1));
-        GDF_CameraAddPitch(camera, -DEG_TO_RAD(d.y * 0.1));
+        GDF_CameraAddPitch(camera, DEG_TO_RAD(d.y * 0.1));
 
         // wrap around yaw
         // if (camera->yaw > 180)
@@ -83,8 +85,9 @@ void game_handle_input(Cube3State* game, f64 dt)
     }
 
     vec3 camera_forward, camera_right, camera_up;
+    vec3 global_up = GDF_CameraGetGlobalAxis(camera);
     GDF_CameraOrientation(camera, &camera_forward, &camera_right, &camera_up);
-    //
+
     // LOG_DEBUG("Camera forward: %f, %f, %f", camera_forward.x, camera_forward.y, camera_forward.z);
     // LOG_DEBUG("Camera right: %f, %f, %f", camera_right.x, camera_right.y, camera_right.z);
     // LOG_DEBUG("Camera up: %f, %f, %f", camera_up.x, camera_up.y, camera_up.z);
@@ -114,7 +117,7 @@ void game_handle_input(Cube3State* game, f64 dt)
     GDF_BOOL jumped = GDF_FALSE;
     if (GDF_IsKeyDown(GDF_KEYCODE_SPACE) && player->base.grounded)
     {
-        jump(player, camera_up, 1);
+        jump(player, global_up, 1);
         jumped = GDF_TRUE;
     }
 
