@@ -1,5 +1,5 @@
 #pragma once
-#include <gdfe/../../../gdfe/include/gdfe/core.h>
+#include <gdfe/core.h>
 #include <gdfe/os/socket.h>
 
 typedef struct GDF_TcpConnection {

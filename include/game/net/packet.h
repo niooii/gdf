@@ -1,5 +1,5 @@
 #pragma once
-#include <gdfe/../../../gdfe/include/gdfe/core.h>
+#include <gdfe/core.h>
 
 typedef enum GDF_PACKET_TYPE {
     GDF_PACKET_TYPE_ALIVE,

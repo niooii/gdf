@@ -10,7 +10,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-find_package(Vulkan REQUIRED)
 find_program(GLSLC glslc REQUIRED)
 add_subdirectory(gdfe)
 
@@ -49,16 +48,29 @@ SET_SOURCE_FILES_PROPERTIES(${SOURCE_FILES} ${EXTERN_SRC} PROPERTIES LANGUAGE CX
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${EXTERN_SRC})
 
+if(DEFINED ENV{VULKAN_SDK})
+    set(Vulkan_INCLUDE_DIRS "$ENV{VULKAN_SDK}/include")
+    set(Vulkan_LIBRARIES "$ENV{VULKAN_SDK}/lib")
+    include_directories(${Vulkan_INCLUDE_DIRS})
+    link_directories(${Vulkan_LIBRARIES})
+else()
+    find_package(Vulkan REQUIRED)
+    include_directories(${Vulkan_INCLUDE_DIRS})
+    target_link_libraries(${PROJECT_NAME}
+            PRIVATE
+            Vulkan::Vulkan
+    )
+endif()
+
+target_link_libraries(${PROJECT_NAME}
+        PRIVATE
+        gdfe
+)
+
 target_include_directories(${PROJECT_NAME}
     PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/extern"
-)
-
-target_link_libraries(${PROJECT_NAME}
-    PRIVATE
-        Vulkan::Vulkan
-        gdfe
 )
 
 set_target_properties(${PROJECT_NAME}
