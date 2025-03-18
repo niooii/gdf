@@ -1,7 +1,7 @@
 #include <physics/physics.h>
 #include <game/world.h>
 #include <gdfe/collections/list.h>
-#include <game/events.h>
+#include <events.h>
 
 using std::vector;
 
@@ -147,7 +147,7 @@ GDF_BOOL physics_update(PhysicsEngine engine, World* world, f64 dt)
                 // (avoids some weird issues with edge collisions)
                 if (ground_found && r->box.max.y == ground_y)
                 {
-                    GDF_EventFire(GDF_EVENT_BLOCK_TOUCHED, r->block, ctx);
+                    // GDF_EventFire(GDF_EVENT_BLOCK_TOUCHED, r->block, ctx);
                     continue;
                 }
 
@@ -169,7 +169,7 @@ GDF_BOOL physics_update(PhysicsEngine engine, World* world, f64 dt)
                 GDF_EventContext ctx = {
                     .data.u64[0] = (u64)entity
                 };
-                GDF_EventFire(GDF_EVENT_BLOCK_TOUCHED, r->block, ctx);
+                // GDF_EventFire(GDF_EVENT_BLOCK_TOUCHED, r->block, ctx);
             }
         }
         // update grounded status

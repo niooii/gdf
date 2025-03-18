@@ -24,11 +24,11 @@ class ChunkEventsListener {
 	void onChunkLoad(const Chunk* chunk) {}
 	void onChunkUpdate(const Chunk* chunk) {}
 	void onChunkUnload(const Chunk* chunk) {}
-}
+};
 
 // man wtf
 class GlobalEventsManager {
 
 public:
-	void dispatchChunkUpdate()
+	void dispatchChunkUpdate();
 };

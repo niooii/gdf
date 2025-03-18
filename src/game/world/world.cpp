@@ -1,5 +1,5 @@
 #include <game/world.h>
-#include <game/events.h>
+#include <events.h>
 #include <gdfe/profiler.h>
 #include <graphics/renderer.h>
 
@@ -201,7 +201,7 @@ Block* World::set_block(BlockCreateInfo& create_info)
     // chunk update queue remesh stuff
     RelBlockCoord bc = info.bc;
 
-    GDF_EventFire(GDF_EVENT_CHUNK_UPDATE, c, (GDF_EventContext){});
+    // GDF_EventFire(GDF_EVENT_CHUNK_UPDATE, c, (GDF_EventContext){});
 
     return b;
 }
@@ -216,7 +216,7 @@ void World::destroy_block(vec3 pos, Block* destroyed)
     // or better yet through the use of actual structured event data. PLEASE!!
     // OR MAYBE JUST MAEK THE EVENT SYSTEM TO POOL CHANGES . YES.,
 
-    GDF_EventFire(GDF_EVENT_CHUNK_UPDATE, c, (GDF_EventContext){});
+    // GDF_EventFire(GDF_EVENT_CHUNK_UPDATE, c, (GDF_EventContext){});
 }
 
 // Gets the blocks that is touching an AABB.

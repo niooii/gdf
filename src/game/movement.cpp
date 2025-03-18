@@ -1,10 +1,10 @@
 #include <game/movement.h>
 #include <game/entity/humanoid.h>
 
-void jump(HumanoidEntity* humanoid, f32 jump_power)
+void jump(HumanoidEntity* humanoid, vec3 up_vec, f32 jump_power)
 {
     Entity* entity = &humanoid->base;
-    entity->vel.y = 7 * jump_power;
+    vec3_add_to(&entity->vel, vec3_mul_scalar(up_vec, 7.0*jump_power));
 }
 
 // Set to 1 for max

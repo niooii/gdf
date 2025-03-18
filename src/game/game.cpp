@@ -12,9 +12,9 @@ Cube3State* game_init()
     Cube3State* game = (Cube3State*)GDF_Malloc(sizeof(Cube3State), GDF_MEMTAG_GAME);
     GDF_CameraCreateInfo camera_info = {
         .pos = vec3_new(0.0f, 0.0f, 0.0f),
-        .pitch = 0.0f,
-        .yaw = 0.0f,
-        .roll = 0.0f,
+        .pitch = DEG_TO_RAD(0.0f),
+        .yaw = DEG_TO_RAD(0.0f),
+        .roll = DEG_TO_RAD(-45.0f),
         .aspect_ratio = 1.77f,
         .fov = DEG_TO_RAD(45.f),
         .near_clip = 0.1f,
@@ -84,6 +84,10 @@ void game_handle_input(Cube3State* game, f64 dt)
 
     vec3 camera_forward, camera_right, camera_up;
     GDF_CameraOrientation(camera, &camera_forward, &camera_right, &camera_up);
+    //
+    // LOG_DEBUG("Camera forward: %f, %f, %f", camera_forward.x, camera_forward.y, camera_forward.z);
+    // LOG_DEBUG("Camera right: %f, %f, %f", camera_right.x, camera_right.y, camera_right.z);
+    // LOG_DEBUG("Camera up: %f, %f, %f", camera_up.x, camera_up.y, camera_up.z);
 
     i8 z_input = 0;
     i8 x_input = 0;
@@ -110,7 +114,7 @@ void game_handle_input(Cube3State* game, f64 dt)
     GDF_BOOL jumped = GDF_FALSE;
     if (GDF_IsKeyDown(GDF_KEYCODE_SPACE) && player->base.grounded)
     {
-        jump(player, 1);
+        jump(player, camera_up, 1);
         jumped = GDF_TRUE;
     }
 

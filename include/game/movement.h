@@ -6,7 +6,7 @@
 typedef struct HumanoidEntity HumanoidEntity;
 
 // 1 is default
-void jump(HumanoidEntity* humanoid, f32 jump_power);
+void jump(HumanoidEntity* humanoid, vec3 up_vec, f32 jump_power);
 
 void player_apply_movement(
     HumanoidEntity* humanoid, 
