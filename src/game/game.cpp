@@ -21,7 +21,7 @@ Cube3State* game_init()
         .far_clip = 1000.0f,
     };
     game->main_camera = GDF_CameraCreate(&camera_info);
-    GDF_CameraSetGlobalAxis(game->main_camera, vec3_new(1, 1, 0));
+    GDF_CameraSetGlobalAxis(game->main_camera, vec3_new(1, 0.5, 0));
     GDF_CameraConstrainPitch(game->main_camera, -DEG_TO_RAD(90), DEG_TO_RAD(90));
 
     return game;

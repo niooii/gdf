@@ -134,9 +134,9 @@ GDF_BOOL physics_update(PhysicsEngine engine, World* world, f64 dt)
             }
         }
 
-        GDF_EventContext ctx = {
-            .data.u64[0] = (u64)entity
-        };
+        // GDF_EventContext ctx = {
+        //     .data.u64[0] = (u64)entity
+        // };
         for (u32 i = 0; i < results_len; i++)
         {
             BlockTouchingResult* r = results + i;
@@ -166,9 +166,9 @@ GDF_BOOL physics_update(PhysicsEngine engine, World* world, f64 dt)
                 {
                     entity->vel.z = 0;
                 }
-                GDF_EventContext ctx = {
-                    .data.u64[0] = (u64)entity
-                };
+                // GDF_EventContext ctx = {
+                //     .data.u64[0] = (u64)entity
+                // };
                 // GDF_EventFire(GDF_EVENT_BLOCK_TOUCHED, r->block, ctx);
             }
         }

@@ -27,8 +27,14 @@ GDF_BOOL on_frame(const GDF_AppState* app_state, f64 delta_time, void* state) {
     return GDF_TRUE;
 }
 
+void test_events()
+{
+
+}
+
 int main()
 {
+    test_events();
     Cube3State* game = game_init();
     GDF_InitInfo init = {
         .callbacks = {
