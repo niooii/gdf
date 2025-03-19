@@ -1,7 +1,7 @@
 #pragma once
 
 #include <gdfe/core.h>
-#include <physics/physics.h>
+#include <game/physics/physics.h>
 
 typedef struct HumanoidEntity HumanoidEntity;
 

@@ -2,9 +2,11 @@
 #include <gdfe/input.h>
 #include <gdfe/math/math.h>
 #include <gdfe/math/math.h>
-#include <graphics/renderer.h>
+#include <client/graphics/renderer.h>
 #include <game/movement.h>
-#include <physics/raycast.h>
+#include <game/physics/raycast.h>
+
+#include "events.h"
 
 static HumanoidEntity* player;
 Cube3State* game_init()
@@ -230,6 +232,9 @@ GDF_BOOL game_update(const GDF_AppState* app_state, f64 dt, void* state)
     // LOG_INFO("VEL: %f %f %f", player->base.vel.x, player->base.vel.y, player->base.vel.z);
     game_handle_input(game, dt);
     game->world->update(dt);
+
+    auto& events = GlobalEventManager::get_instance();
+    events.flush<ChunkLoadEvent>();
 
     // LOG_DEBUG("pos: %f %f %f", player->base.aabb.min.x, player->base.aabb.min.y, player->base.aabb.min.z);
     // LOG_DEBUG("vel: %f %f %f", player_comp->vel.x, player_comp->vel.y, player_comp->vel.z);

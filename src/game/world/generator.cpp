@@ -1,4 +1,5 @@
 #include <game/world.h>
+#include <events.h>
 
 Generator::Generator(World* world) : world{world}
 {
@@ -41,4 +42,12 @@ void Generator::gen_chunk(ivec3 cc, Chunk& chunk)
             }
         }
     }
+
+    auto& events = GlobalEventManager::get_instance();
+    ChunkLoadEvent event = {
+        .chunk_coord = cc
+    };
+    event.source = EventSource::Server;
+    event.replication = EventReplication::ToClients;
+    events.dispatch(event);
 }

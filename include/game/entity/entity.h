@@ -1,7 +1,7 @@
 #pragma once
 
 #include <gdfe/core.h>
-#include <physics/aabb.h>
+#include <game/physics/aabb.h>
 
 typedef enum ENTITY_TYPE {
     ENTITY_TYPE_BASE = 0,

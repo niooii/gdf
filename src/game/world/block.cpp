@@ -1,5 +1,5 @@
 #include <game/world.h>
-#include <graphics/textures.h>
+#include <client/graphics/textures.h>
 
 const StaticBlockLookupData STATIC_BLOCK_LOOKUP_TABLE[] = {
     [BLOCK_TYPE_Grass] = {

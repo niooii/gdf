@@ -1,8 +1,8 @@
-#include <graphics/chunkmesh.h>
+#include <client/graphics/chunkmesh.h>
 #include <gdfe/render/vk_utils.h>
 
 #include "gdfe/collections/hashmap.h"
-#include "graphics/renderer.h"
+#include <client/graphics/renderer.h>
 
 // #define GDFP_DISABLE
 

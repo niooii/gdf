@@ -1,4 +1,4 @@
-#include <graphics/renderer.h>
+#include <client/graphics/renderer.h>
 
 #include "game/game.h"
 

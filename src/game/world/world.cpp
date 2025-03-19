@@ -2,7 +2,7 @@
 #include <events.h>
 #include <gdfe/event.h>
 #include <gdfe/profiler.h>
-#include <graphics/renderer.h>
+#include <client/graphics/renderer.h>
 
 u32 chunk_hash(const u8* data, u32 len) {
 

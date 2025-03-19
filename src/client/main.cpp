@@ -2,9 +2,10 @@
 #include <gdfe/core.h>
 #include <game/server.h>
 #include <gdfe/collections/hashmap.h>
-#include <graphics/renderer.h>
+#include <client/graphics/renderer.h>
 
-#include "../gdfe/include/gdfe/gdfe.h"
+#include "events.h"
+#include "../../gdfe/include/gdfe/gdfe.h"
 #include "gdfe/input.h"
 
 unsigned long server_thread_wrapper(void* args)
@@ -27,14 +28,13 @@ GDF_BOOL on_frame(const GDF_AppState* app_state, f64 delta_time, void* state) {
     return GDF_TRUE;
 }
 
-void test_events()
+struct InvalidEvent
 {
 
-}
+};
 
 int main()
 {
-    test_events();
     Cube3State* game = game_init();
     GDF_InitInfo init = {
         .callbacks = {

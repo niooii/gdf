@@ -6,7 +6,7 @@
 
 #include <gdfe/gdfe.h>
 
-#include "graphics/renderer.h"
+#include <client/graphics/renderer.h>
 
 typedef enum GDF_GAME_SCREEN {
     GDF_GAME_SCREEN_MAIN_MENU,

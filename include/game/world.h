@@ -2,8 +2,8 @@
 
 #include <gdfe/core.h>
 #include <game/entity/humanoid.h>
-#include <physics/physics.h>
-#include <physics/aabb.h>
+#include <game/physics/physics.h>
+#include <game/physics/aabb.h>
 #include <gdf_math.h>
 #include <unordered_dense.h>
 

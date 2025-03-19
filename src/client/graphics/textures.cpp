@@ -1,6 +1,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
-#include <graphics/textures.h>
+#include <client/graphics/textures.h>
 
 #include "gdfe/os/io.h"
 #include "gdfe/render/vk_utils.h"
