@@ -157,8 +157,8 @@ FORCEINLINE ivec3 __get_actual_coord(u32 axis_depth, BLOCK_FACE face, u32 rel_x,
 // WARNING: this is a very specific impl that only works for 32x32x32. take a look later..
 void ChunkMesh::mesh()
 {
+// #define GDFP_DISABLE
     #include <gdfe/profiler.h>
-
     World* world = world_;
     Chunk* chunk = chunk_;
     vertices_.clear();
@@ -314,13 +314,12 @@ void ChunkMesh::mesh()
                         // TODO! could we pregenerate this per chunk and then just update a few bits
                         // on each chunk change, then deep copy the data in this function?
                         // im p sure itll be faster
-                        x += CTZ64(plane[row] >> x);
+                        x += CTZ(plane[row] >> x);
                         if (x >= CHUNK_SIZE)
                             continue;
 
-                        u32 w = CTZ64(~(plane[row] >> x));
-                        // print_mask_32("mask: ", plane[row]);
-                        // LOG_DEBUG("width: %d", w);
+                        u32 w = CTZ(~(plane[row] >> x));
+
                         // account for overflow (where shifting is undefined SCARY!!)
                         u32 w_mask = ((w >= 32) ? 0xFFFFFFFF : ((1ULL << w) - 1)) << x;
 
@@ -492,12 +491,12 @@ ChunkMesh::ChunkMesh(World* world, Chunk* chunk, ivec3 chunk_coord)
 
 ChunkMesh::~ChunkMesh()
 {
-    for (u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    for (auto& buffer : buffers_) {
         GDF_VkBufferDestroy(
-            &buffers_[i].vertex_buffer
+            &buffer.vertex_buffer
         );
         GDF_VkBufferDestroy(
-            &buffers_[i].index_buffer
+            &buffer.index_buffer
         );
     }
 }

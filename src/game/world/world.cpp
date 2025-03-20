@@ -68,7 +68,7 @@ World::World()
     chunks_.reserve(128);
     humanoids_.reserve(128);
     PhysicsCreateInfo physics_info = {
-        .gravity = {0, -20, 0},
+        .gravity = vec3_mul_scalar(vec3_new(0, -1, 0), 20),
         .gravity_active = GDF_TRUE,
         .air_drag = 3.f,
         .ground_drag = 12.f,
@@ -85,11 +85,11 @@ World::World()
     upd_stopwatch_ = GDF_StopwatchCreate();
 
     // Create chunks
-    for (i32 chunk_x = -4; chunk_x <= 4; chunk_x++)
+    for (i32 chunk_x = -1; chunk_x <= 1; chunk_x++)
     {
-        for (i32 chunk_y = -2; chunk_y < 2; chunk_y++)
+        for (i32 chunk_y = -1; chunk_y < 1; chunk_y++)
         {
-            for (i32 chunk_z = -4; chunk_z <= 4; chunk_z++)
+            for (i32 chunk_z = -1; chunk_z <= 1; chunk_z++)
             {
                 ivec3 cc = {
                     .x = chunk_x,
@@ -101,17 +101,6 @@ World::World()
             }
         }
     }
-
-    // for (u32 i = 0; i < num_chunks; i++)
-    // {
-    //     // renderer_register_chunk(created_chunks[i]);
-    // }
-
-    // TODO! make events a SET of listeners not a list no problem
-    // GDF_ASSERT(GDF_EventRegister(GDF_EVENT_BLOCK_TOUCHED, out_world, __on_block_touch));
-    // GDF_ASSERT(GDF_EventRegister(GDF_EVENT_CHUNK_LOAD, out_world, __on_chunk_load));
-    // GDF_ASSERT(GDF_EventRegister(GDF_EVENT_CHUNK_UNLOAD, out_world, __on_chunk_unload));
-    // GDF_ASSERT(GDF_EventRegister(GDF_EVENT_CHUNK_UPDATE, out_world, __on_chunk_update));
 }
 
 World::~World()
@@ -197,6 +186,12 @@ Block* World::set_block(BlockCreateInfo& create_info)
     Chunk* c = this->get_or_create_chunk(info.cc);
     Block* b = c->set_block(create_info.type, info.bc);
 
+    ChunkUpdateEvent update = {
+        .chunk_coord = info.cc
+    };
+    auto& events = GlobalEventManager::get_instance();
+    events.dispatch(update);
+
     // TODO! remove this please find a way to fit this inside the chunk functions directly.
     // or better yet through the use of actual structured event data. PLEASE!!
     // chunk update queue remesh stuff
@@ -211,13 +206,14 @@ void World::destroy_block(vec3 pos, Block* destroyed)
 {
     ChunkBlockPosTuple info = world_pos_to_chunk_block_tuple(pos);
     Chunk* c = this->get_or_create_chunk(info.cc);
-    c->destroy_block(info.bc, nullptr);
 
-    // TODO! remove this please find a way to fit this inside the chunk functions directly.
-    // or better yet through the use of actual structured event data. PLEASE!!
-    // OR MAYBE JUST MAEK THE EVENT SYSTEM TO POOL CHANGES . YES.,
+    c->destroy_block(info.bc, destroyed);
 
-    // GDF_EventFire(GDF_EVENT_CHUNK_UPDATE, c, (GDF_EventContext){});
+    ChunkUpdateEvent update = {
+        .chunk_coord = info.cc
+    };
+    auto& events = GlobalEventManager::get_instance();
+    events.dispatch(update);
 }
 
 // Gets the blocks that is touching an AABB.

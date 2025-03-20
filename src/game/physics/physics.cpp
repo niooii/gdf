@@ -36,7 +36,11 @@ void physics_add_entity(PhysicsEngine engine, Entity* entity)
 }
 
 GDF_BOOL physics_update(PhysicsEngine engine, World* world, f64 dt)
-{   
+{
+    // TODO! stupid hack for now to test with absurd chunk loading times and not
+    // fall thru the ground
+    if (dt > 0.5)
+        dt = 0.5;
     // TODO! optimize, look into SIMD
     vec3 effective_gravity = engine->gravity_active ? engine->gravity : vec3_zero();
     vec3 net_accel;

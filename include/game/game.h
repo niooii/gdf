@@ -31,6 +31,5 @@ typedef struct Cube3State {
 } Cube3State;
 
 Cube3State* game_init();
-void game_init_world(Cube3State* game);
 void game_destroy();
 GDF_BOOL game_update(const GDF_AppState* app_state, f64 delta_time, void* state);

@@ -2,7 +2,8 @@
 
 #include "events.h"
 
-WorldRenderer::WorldRenderer(const GDF_VkRenderContext* vk_ctx)
+WorldRenderer::WorldRenderer(const GDF_VkRenderContext* vk_ctx, World* world)
+    : world{world}
 {
     block_textures_init(vk_ctx, &this->block_textures);
     terrain_pipeline_init(vk_ctx, this);
@@ -11,13 +12,31 @@ WorldRenderer::WorldRenderer(const GDF_VkRenderContext* vk_ctx)
     chunk_meshes.reserve(128);
 
     auto& events = GlobalEventManager::get_instance();
+
     events.subscribe<ChunkLoadEvent>([this](const auto& events)
     {
         for (const auto& event : events)
         {
             ivec3 cc = event.chunk_coord;
             LOG_DEBUG("loaded chunk at %d, %d, %d", cc.x, cc.y, cc.z);
-            // chunk_meshes.insert_or_assign(cc, std::move(ChunkMesh{}));
+            if (chunk_meshes.contains(cc))
+            {
+                continue;
+            }
+            chunk_meshes[cc] = new ChunkMesh{this->world, this->world->get_chunk(cc), cc};
+        }
+    });
+
+    events.subscribe<ChunkUpdateEvent>([this](const auto& events)
+    {
+        for (const auto& event : events)
+        {
+            ivec3 cc = event.chunk_coord;
+
+            if (chunk_meshes.contains(cc))
+            {
+                chunk_meshes[cc]->mesh();
+            }
         }
     });
 }

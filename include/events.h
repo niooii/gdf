@@ -2,25 +2,41 @@
 #include <functional>
 #include <gdfe/math/math.h>
 
-enum class EventReplication {
-	Local,
-	ToServer,		// Client → Server
-	ToClients,		// Server → Clients
-	Bidirectional	// Client → Server → Client
-};
+/*
+ * There is room for optimization here, but for now
+ * forget about it
+ */
 
-enum class EventSource {
-	Client,
+enum class ProgramType {
+	Client = 0,
 	Server
 };
 
+enum class EventSendMode {
+	// Calls local handlers
+	Local = 0,
+	// Client → Server
+	Server,
+	// Client → Server, then calls local handlers
+	ServerAndLocal,
+#ifdef GDF_SERVER_BUILD
+	// Server → Clients, then calls server handlers.
+	// Should only be specified on the server.
+	ToClients,
+#endif
+};
+
 struct EventBase {
-	EventSource source = EventSource::Client;
-	EventReplication replication = EventReplication::Local;
+	ProgramType source = ProgramType::Client;
+	EventSendMode replication = EventSendMode::Local;
 };
 
 // These can be defined in individual files, or not idk
 struct ChunkLoadEvent : EventBase {
+	ivec3 chunk_coord;
+};
+
+struct ChunkUpdateEvent : EventBase {
 	ivec3 chunk_coord;
 };
 
@@ -32,11 +48,14 @@ class EventDispatcher {
 	std::vector<std::function<void(const std::vector<EventT>&)>> handlers;
 	std::vector<std::function<void(const EventT&)>> immediate_handlers;
 
-	// should have a separate way to get realtime events, not just buffered
-	// also use smart pointers instead of copying data
-	std::vector<EventT> event_buffer = std::vector<EventT>(32);
+	// TODO! use smart pointers instead of copying data or something along those lines
+	std::vector<EventT> event_buffer;
 
 public:
+	EventDispatcher() {
+		event_buffer.reserve(32);
+	}
+
 	// Subscribers will be notified when the event manager is flushed
 	// Flushing will happen every frame after input is updated and
 	// before rendering.
@@ -61,7 +80,6 @@ public:
 		event_buffer.push_back(event);
 	}
 
-	// Should be called every frame.
 	void flush() {
 		for (auto& handler : handlers) {
 			handler(event_buffer);
@@ -71,13 +89,27 @@ public:
 };
 
 class GlobalEventManager {
-	GlobalEventManager() = default;
+	std::vector<void(*)()> flush_functions;
+
+	template<typename T>
+	static void flusher() {
+		get_dispatcher<T>().flush();
+	}
 
 	template<typename T>
 	static EventDispatcher<T>& get_dispatcher() {
 		static EventDispatcher<T> dispatcher;
+		static bool registered = false;
+
+		if (!registered) {
+			registered = true;
+			get_instance().flush_functions.push_back(&flusher<T>);
+		}
+
 		return dispatcher;
 	}
+
+	GlobalEventManager() = default;
 
 public:
 	GlobalEventManager(const GlobalEventManager&) = delete;
@@ -103,10 +135,9 @@ public:
 		get_dispatcher<T>().subscribe_immediate(std::move(handler));
 	}
 
-	// TODO! how to global flush lol gg
-	// add global flush fn
-	template<typename T>
 	void flush() {
-		get_dispatcher<T>().flush();
+		for (auto flush_fn : flush_functions) {
+			flush_fn();
+		}
 	}
 };

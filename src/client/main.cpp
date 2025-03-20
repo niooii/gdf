@@ -57,8 +57,6 @@ int main()
     if (!app_state)
         return 1;
 
-    game_init_world(game);
-
     GDF_RendererSetActiveCamera(app_state->renderer, game->main_camera);
 
     f64 time_ran_for = GDF_Run();

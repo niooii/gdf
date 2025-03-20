@@ -3,9 +3,8 @@
 #include "game/game.h"
 
 GameRenderer::GameRenderer(const GDF_VkRenderContext* vk_ctx, World* world)
-    : world_renderer{vk_ctx}
+    : world_renderer{vk_ctx, world}
 {
-    this->world_renderer.world = world;
 }
 
 GameRenderer::~GameRenderer()
@@ -45,7 +44,9 @@ GDF_BOOL renderer_draw(const GDF_VkRenderContext* vk_ctx, const GDF_AppState* ap
     //     NULL
     // );
 
-    vkCmdBindPipeline(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, renderer->terrain_pipeline.handle);
+    VkPipeline terrain_vk_pipeline = renderer->terrain_pipeline.wireframe_handle;
+
+    vkCmdBindPipeline(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, terrain_vk_pipeline);
     VkDescriptorSet terrain_pipeline_sets[] = {
         vk_ctx->per_frame[frame_idx].vp_ubo_set,
         renderer->terrain_pipeline.descriptor_sets[frame_idx]
@@ -63,8 +64,9 @@ GDF_BOOL renderer_draw(const GDF_VkRenderContext* vk_ctx, const GDF_AppState* ap
 
     for (auto& [cc, mesh] : renderer->chunk_meshes)
     {
-        MeshBuffer* buffers = mesh.get_mesh_buffer(frame_idx);
-        if (!buffers->up_to_date && !mesh.update_buffers(frame_idx))
+        // LOG_INFO("rendering %d, %d, %d", cc.x, cc.y, cc.z);
+        MeshBuffer* buffers = mesh->get_mesh_buffer(frame_idx);
+        if (!buffers->up_to_date && !mesh->update_buffers(frame_idx))
         {
             LOG_ERR("Failed to update chunk mesh buffers..?");
             continue;
@@ -84,7 +86,7 @@ GDF_BOOL renderer_draw(const GDF_VkRenderContext* vk_ctx, const GDF_AppState* ap
         vkCmdBindVertexBuffers(cmd_buf, 0, 1, &buffers->vertex_buffer.handle, offsets);
         vkCmdBindIndexBuffer(cmd_buf, buffers->index_buffer.handle, {}, VK_INDEX_TYPE_UINT16);
 
-        vkCmdDrawIndexed(cmd_buf, mesh.get_index_count(), 1, 0, 0, 0);
+        vkCmdDrawIndexed(cmd_buf, mesh->get_index_count(), 1, 0, 0, 0);
     }
 
     PerFrameResources* per_frame = &vk_ctx->per_frame[vk_ctx->resource_idx];

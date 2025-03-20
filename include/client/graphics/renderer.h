@@ -9,12 +9,12 @@
 typedef struct WorldRenderer {
     World* world;
     ankerl::unordered_dense::set<ivec3> queued_remeshes{};
-    ankerl::unordered_dense::map<ivec3, ChunkMesh> chunk_meshes{};
+    ankerl::unordered_dense::map<ivec3, ChunkMesh*> chunk_meshes{};
 
     terrain_pipeline terrain_pipeline;
     block_textures block_textures;
 
-    WorldRenderer(const GDF_VkRenderContext* vk_ctx);
+    WorldRenderer(const GDF_VkRenderContext* vk_ctx, World* world);
     ~WorldRenderer();
 } WorldRenderer;
 

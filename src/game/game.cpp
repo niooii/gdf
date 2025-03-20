@@ -23,14 +23,9 @@ Cube3State* game_init()
         .far_clip = 1000.0f,
     };
     game->main_camera = GDF_CameraCreate(&camera_info);
-    GDF_CameraSetGlobalAxis(game->main_camera, vec3_new(1, 0.5, 0));
+    GDF_CameraSetGlobalAxis(game->main_camera, vec3_new(0, 1, 0));
     GDF_CameraConstrainPitch(game->main_camera, -DEG_TO_RAD(90), DEG_TO_RAD(90));
 
-    return game;
-}
-
-void game_init_world(Cube3State* game)
-{
     // TODO! uncomment later, the game will be initilaized in world state for now.
     // game->current_screen = GDF_GAME_SCREEN_MAIN_MENU;
     // game->current_screen_type = GDF_GAME_SCREENTYPE_GUI_MENU;
@@ -52,6 +47,8 @@ void game_init_world(Cube3State* game)
     aabb_translate(&player->base.aabb, vec3_new(1, 5, 1));
     player->base.health = 100;
     player->base.damagable = GDF_TRUE;
+
+    return game;
 }
 
 // TODO! remove this from here prob
@@ -234,7 +231,7 @@ GDF_BOOL game_update(const GDF_AppState* app_state, f64 dt, void* state)
     game->world->update(dt);
 
     auto& events = GlobalEventManager::get_instance();
-    events.flush<ChunkLoadEvent>();
+    events.flush();
 
     // LOG_DEBUG("pos: %f %f %f", player->base.aabb.min.x, player->base.aabb.min.y, player->base.aabb.min.z);
     // LOG_DEBUG("vel: %f %f %f", player_comp->vel.x, player_comp->vel.y, player_comp->vel.z);

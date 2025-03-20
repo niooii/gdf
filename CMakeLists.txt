@@ -46,7 +46,9 @@ find_src_files(EXTERN_SRC "${CMAKE_CURRENT_SOURCE_DIR}/extern")
 
 SET_SOURCE_FILES_PROPERTIES(${SOURCE_FILES} ${EXTERN_SRC} PROPERTIES LANGUAGE CXX)
 
-add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${EXTERN_SRC})
+add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${EXTERN_SRC}
+        include/ecs.h
+        include/hfsm.h)
 
 if(DEFINED ENV{VULKAN_SDK})
     if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
