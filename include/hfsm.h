@@ -17,6 +17,10 @@ public:
     // User input should be handled here too, probably
     // Return a state to transition, or just return nullptr
     virtual State* update(Entity& e, f32 dt) {}
+
+    // i lowkey want this to have a function that returns the state type,
+    // so children can change behavior based on the parent state. but how?
+    // wanan try to avoid runtmie overhead if possbile
 };
 
 // so how do i do this
@@ -60,6 +64,8 @@ class StateMachine {
 	
 public:
 	StateMachine(State* entry, Entity e) : curr{entry}, e{e} {};
+	// delete all states
+	~StateMachine();
 
 	// also consider an add_transition(std::function<State* transition(State* curr, f32 dt)>) where the fn
 	// returns a new state or nothing. but calling a shit ton of functions doesnt seem that performant
