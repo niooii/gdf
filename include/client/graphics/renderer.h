@@ -30,4 +30,4 @@ typedef struct GameRenderer {
 
 GDF_BOOL renderer_init(const GDF_VkRenderContext* vulkan_ctx, const GDF_AppState* app_state, void* state);
 GDF_BOOL renderer_destroy(const GDF_VkRenderContext* vulkan_ctx, const GDF_AppState* app_state, void* state);
-GDF_BOOL renderer_draw(const GDF_VkRenderContext* vulkan_ctx, const GDF_AppState* app_state, void* state);
+GDF_BOOL renderer_draw(const GDF_VkRenderContext* vulkan_ctx, GDF_RENDER_MODE mode, const GDF_AppState* app_state, void* state);

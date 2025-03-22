@@ -26,7 +26,7 @@ GDF_BOOL renderer_destroy(const GDF_VkRenderContext* vk_ctx, const GDF_AppState*
     return GDF_TRUE;
 }
 
-GDF_BOOL renderer_draw(const GDF_VkRenderContext* vk_ctx, const GDF_AppState* app_state, void* state)
+GDF_BOOL renderer_draw(const GDF_VkRenderContext* vk_ctx, GDF_RENDER_MODE mode, const GDF_AppState* app_state, void* state)
 {
     Cube3State* game = (Cube3State*)state;
     WorldRenderer* renderer = &game->renderer->world_renderer;
@@ -44,7 +44,7 @@ GDF_BOOL renderer_draw(const GDF_VkRenderContext* vk_ctx, const GDF_AppState* ap
     //     NULL
     // );
 
-    VkPipeline terrain_vk_pipeline = renderer->terrain_pipeline.wireframe_handle;
+    VkPipeline terrain_vk_pipeline = mode == GDF_RENDER_MODE_WIREFRAME ? renderer->terrain_pipeline.wireframe_handle : renderer->terrain_pipeline.handle;
 
     vkCmdBindPipeline(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, terrain_vk_pipeline);
     VkDescriptorSet terrain_pipeline_sets[] = {

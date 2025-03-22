@@ -18,7 +18,7 @@ Cube3State* game_init()
         .yaw = DEG_TO_RAD(0.0f),
         .roll = DEG_TO_RAD(0.0f),
         .aspect_ratio = 1.77f,
-        .fov = DEG_TO_RAD(45.f),
+        .fov = DEG_TO_RAD(75.f),
         .near_clip = 0.1f,
         .far_clip = 1000.0f,
     };
@@ -139,7 +139,7 @@ void game_handle_input(Cube3State* game, f64 dt)
     // cam is in center of players head
     vec3 camera_pos = vec3_new(
         (player->base.aabb.min.x + player->base.aabb.max.x) / 2.0,
-        player->base.aabb.max.y - 0.5,
+        player->base.aabb.max.y - 0.25,
         (player->base.aabb.min.z + player->base.aabb.max.z) / 2.0
     );
     GDF_CameraSetPosition(
