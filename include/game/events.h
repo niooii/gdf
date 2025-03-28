@@ -32,6 +32,7 @@ struct EventBase {
 	ProgramType source = ProgramType::Client;
 	EventSendMode replication = EventSendMode::Local;
 
+	// Intended for use when we store the base class only. Slightly slower
 	virtual void dispatch_self(GlobalEventManager& manager) const = 0;
 };
 

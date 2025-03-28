@@ -1,15 +1,25 @@
 #pragma once
 #include "enet.h"
 #include <game/events.h>
+#include <gdfe/os/thread.h>
 
-class Server {
+struct ServerNetworkManager {
     ENetHost* host;
     std::vector<ENetPeer> peers;
     std::vector<EventBase> incoming_queue;
     std::vector<EventBase> dispatch_queue;
+    u16 port;
 
-public:
-    Server(u16 port, u16 max_clients);
+    GDF_Mutex cont_listening_lock;
+    bool continue_listening;
+
+    ServerNetworkManager(u16 port, u16 max_clients);
+    ~ServerNetworkManager();
     void broadcast();
+
+    // Dispatches all the incoming events locally and then
+    // dispatches the oens in the dispatch queue to the proper
+    // clients.
+    void dispatch_events();
 };
 
