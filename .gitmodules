@@ -2,3 +2,6 @@
 	path = gdfe
 	url = https://github.com/niooii/gdfe.git
 	branch = main
+[submodule "extern/ser20"]
+	path = extern/ser20
+	url = https://github.com/royjacobson/ser20
