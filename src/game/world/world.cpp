@@ -1,5 +1,5 @@
 #include <game/world.h>
-#include <events.h>
+#include <game/events.h>
 #include <gdfe/event.h>
 #include <gdfe/profiler.h>
 #include <client/graphics/renderer.h>

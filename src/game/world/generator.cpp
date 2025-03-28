@@ -1,5 +1,5 @@
 #include <game/world.h>
-#include <events.h>
+#include <game/events.h>
 
 Generator::Generator(World* world) : world{world}
 {

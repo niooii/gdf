@@ -1,4 +1,4 @@
-#include <events.h>
+#include <game/events.h>
 
 typedef enum GAME_EVENT {
     CHUNK_LOAD,
