@@ -26,18 +26,13 @@ enum class EventSendMode {
 #endif
 };
 
+class GlobalEventManager;
+
 struct EventBase {
 	ProgramType source = ProgramType::Client;
 	EventSendMode replication = EventSendMode::Local;
-};
 
-// These can be defined in individual files, or not idk
-struct ChunkLoadEvent : EventBase {
-	ivec3 chunk_coord;
-};
-
-struct ChunkUpdateEvent : EventBase {
-	ivec3 chunk_coord;
+	virtual void dispatch_self(GlobalEventManager& manager) const = 0;
 };
 
 template<typename EventT>
@@ -140,4 +135,25 @@ public:
 			flush_fn();
 		}
 	}
+};
+
+template<typename Derived>
+struct EventBaseT : EventBase {
+	void dispatch_self(GlobalEventManager& manager) const override {
+		manager.dispatch(static_cast<const Derived&>(*this));
+	}
+};
+
+// These can be defined in individual files, or not idk
+struct ChunkLoadEvent : EventBaseT<ChunkLoadEvent> {
+	ivec3 chunk_coord;
+};
+
+// These can be defined in individual files, or not idk
+struct TestTextEvent : EventBaseT<TestTextEvent> {
+	char* text;
+};
+
+struct ChunkUpdateEvent : EventBaseT<ChunkUpdateEvent> {
+	ivec3 chunk_coord;
 };

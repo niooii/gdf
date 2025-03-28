@@ -46,10 +46,7 @@ find_src_files(EXTERN_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/extern")
 
 SET_SOURCE_FILES_PROPERTIES(${GAME_SRC} ${CLIENT_SRC} ${SERVER_SRC} ${EXTERN_SRC} PROPERTIES LANGUAGE CXX)
 
-add_library(gdf_common STATIC ${GAME_SRC} ${EXTERN_SRC}
-        include/ecs.h
-        include/hfsm.h
-        extern/enet.h)
+add_library(gdf_common STATIC ${GAME_SRC} ${EXTERN_SRC})
 
 add_executable(client ${CLIENT_SRC})
 

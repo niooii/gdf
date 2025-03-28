@@ -1,6 +1,6 @@
 #include <server/net.h>
 
-ServerNetManager::ServerNetManager(u16 port, u16 max_clients) {
+Server::Server(u16 port, u16 max_clients) {
     ENetAddress addr = {
             .port = port,
             .host = ENET_HOST_ANY

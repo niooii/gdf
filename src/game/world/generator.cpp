@@ -44,9 +44,8 @@ void Generator::gen_chunk(ivec3 cc, Chunk& chunk)
     }
 
     auto& events = GlobalEventManager::get_instance();
-    ChunkLoadEvent event = {
-        .chunk_coord = cc
-    };
+    ChunkLoadEvent event{};
+    event.chunk_coord = cc;
     event.source = ProgramType::Server;
     event.replication = EventSendMode::Local;
     events.dispatch(event);

@@ -2,15 +2,8 @@
 #define ENET_IMPLEMENTATION
 #include <enet.h>
 #include <stdexcept>
+#include <server/net.h>
 
-struct Server {
-    Server(u16 port, u16 max_clients)
-    {
-
-
-        LOG_INFO("Listening on port %d...", port);
-    }
-};
 
 GDF_BOOL server_loop(const GDF_AppState* app_state, f64 delta_time, void* _state)
 {

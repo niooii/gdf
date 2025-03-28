@@ -186,9 +186,8 @@ Block* World::set_block(BlockCreateInfo& create_info)
     Chunk* c = this->get_or_create_chunk(info.cc);
     Block* b = c->set_block(create_info.type, info.bc);
 
-    ChunkUpdateEvent update = {
-        .chunk_coord = info.cc
-    };
+    ChunkUpdateEvent update{};
+    update.chunk_coord = info.cc;
     auto& events = GlobalEventManager::get_instance();
     events.dispatch(update);
 
@@ -209,9 +208,8 @@ void World::destroy_block(vec3 pos, Block* destroyed)
 
     c->destroy_block(info.bc, destroyed);
 
-    ChunkUpdateEvent update = {
-        .chunk_coord = info.cc
-    };
+    ChunkUpdateEvent update{};
+    update.chunk_coord = info.cc;
     auto& events = GlobalEventManager::get_instance();
     events.dispatch(update);
 }

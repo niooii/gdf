@@ -6,7 +6,7 @@
 #include <game/movement.h>
 #include <game/physics/raycast.h>
 
-#include "events.h"
+#include <game/events.h>
 
 static HumanoidEntity* player;
 Cube3State* game_init()
