@@ -1,21 +1,46 @@
 #include <gdfe/gdfe.h>
+#include <enet.h>
+#include <stdexcept>
 
-struct ServerState {
+struct Server {
+    Server(u16 port, u16 max_clients)
+    {
+        ENetAddress addr = {
+            .port = port,
+            .host = ENET_HOST_ANY
+        };
 
+        if (enet_initialize() != 0) {
+            throw std::runtime_error("An error occurred while initializing ENet.\n");
+        }
+
+        ENetHost* host = enet_host_create(
+            &addr,
+            max_clients,
+            2,
+            0,
+            0
+        );
+
+        if (host == NULL)
+        {
+            throw std::runtime_error("An error occurred while creating the server host.\n");
+        }
+
+        LOG_INFO("Listening on port %d...", port);
+    }
 };
 
 GDF_BOOL server_loop(const GDF_AppState* app_state, f64 delta_time, void* _state)
 {
     LOG_INFO("type shi");
-    ServerState* state = (ServerState*)_state;
+    Server* server = (Server*)_state;
     return GDF_TRUE;
 }
 
 int main()
 {
-    ServerState server_state = {
-
-    };
+    Server server{25566, 64};
 
     GDF_InitInfo info = {
         .config = {
@@ -24,7 +49,7 @@ int main()
         },
         .callbacks = {
             .on_loop = server_loop,
-            .on_loop_state = &server_state
+            .on_loop_state = &server
         }
     };
     GDF_Init(info);
