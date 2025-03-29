@@ -1,6 +1,9 @@
 #pragma once
 #include <functional>
+#include <memory>
 #include <gdfe/math/math.h>
+#include <unordered_dense.h>
+#include <game/events/type_ids.h>
 
 /*
  * There is room for optimization here, but for now
@@ -26,14 +29,19 @@ enum class EventSendMode {
 #endif
 };
 
-class GlobalEventManager;
+
+
+class EventManager;
 
 struct EventBase {
 	ProgramType source = ProgramType::Client;
 	EventSendMode replication = EventSendMode::Local;
 
+	EventTypeId type;
+
 	// Intended for use when we store the base class only. Slightly slower
-	virtual void dispatch_self(GlobalEventManager& manager) const = 0;
+	virtual void dispatch_self(EventManager& manager) const = 0;
+	// [[nodiscard]] virtual EventTypeId get_type() const = 0;
 };
 
 template<typename EventT>
@@ -84,49 +92,65 @@ public:
 	}
 };
 
-class GlobalEventManager {
+class EventManager {
 	std::vector<void(*)()> flush_functions;
 
-	template<typename T>
+	// For generating polymorphic EventBase instances
+	using GenerateEventBase = std::function<std::unique_ptr<EventBase>()>;
+	GenerateEventBase generators[(u32)EventTypeId::MaxEvent]{};
+
+	template<EventType T>
 	static void flusher() {
 		get_dispatcher<T>().flush();
 	}
 
-	template<typename T>
-	static EventDispatcher<T>& get_dispatcher() {
-		static EventDispatcher<T> dispatcher;
+	template<EventType EventT>
+	static EventDispatcher<EventT>& get_dispatcher() {
+		static EventDispatcher<EventT> dispatcher;
 		static bool registered = false;
 
 		if (!registered) {
 			registered = true;
-			get_instance().flush_functions.push_back(&flusher<T>);
+			get_instance().flush_functions.push_back(&flusher<EventT>);
+
+			// TODO! this stupid hack
+			EventT tmp = EventT{};
+			const u32 id = (u32)(tmp.type);
+			get_instance().generators[id] = [] { return std::make_unique<EventT>(); };
 		}
 
 		return dispatcher;
 	}
 
-	GlobalEventManager() = default;
+	EventManager() = default;
 
 public:
-	GlobalEventManager(const GlobalEventManager&) = delete;
-	GlobalEventManager& operator=(const GlobalEventManager&) = delete;
+	EventManager(const EventManager&) = delete;
+	EventManager& operator=(const EventManager&) = delete;
 
-	static GlobalEventManager& get_instance() {
-		static GlobalEventManager instance;
+	static EventManager& get_instance() {
+		static EventManager instance;
 		return instance;
 	}
 
-	template<typename T>
+	std::unique_ptr<EventBase> create_event(EventTypeId type_id) {
+		if (auto generator = generators[(u32)type_id]) {
+			return generator();
+		}
+		return nullptr;
+	}
+
+	template<EventType T>
 	void dispatch(const T& event) {
 		get_dispatcher<T>().dispatch(event);
 	}
 
-	template<typename T>
+	template<EventType T>
 	void subscribe(std::function<void(const std::vector<T>&)> handler) {
 		get_dispatcher<T>().subscribe(std::move(handler));
 	}
 
-	template<typename T>
+	template<EventType T>
 	void subscribe_immediate(std::function<void(const T&)> handler) {
 		get_dispatcher<T>().subscribe_immediate(std::move(handler));
 	}
@@ -138,23 +162,3 @@ public:
 	}
 };
 
-template<typename Derived>
-struct EventBaseT : EventBase {
-	void dispatch_self(GlobalEventManager& manager) const override {
-		manager.dispatch(static_cast<const Derived&>(*this));
-	}
-};
-
-// These can be defined in individual files, or not idk
-struct ChunkLoadEvent : EventBaseT<ChunkLoadEvent> {
-	ivec3 chunk_coord;
-};
-
-// These can be defined in individual files, or not idk
-struct TestTextEvent : EventBaseT<TestTextEvent> {
-	char* text;
-};
-
-struct ChunkUpdateEvent : EventBaseT<ChunkUpdateEvent> {
-	ivec3 chunk_coord;
-};

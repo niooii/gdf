@@ -5,6 +5,8 @@ unsigned long handle_incoming(void* args) {
     ServerNetworkManager* server = (ServerNetworkManager*) args;
     GDF_InitThreadLogging("Net");
 
+
+
     LOG_INFO("Listening for incoming connections on port %d", server->port);
     ENetEvent event;
     for (;;)

@@ -1,6 +1,6 @@
 #include <client/graphics/renderer.h>
-
-#include "events.h"
+#include <game/prelude.h>
+#include <game/events.h>
 
 WorldRenderer::WorldRenderer(const GDF_VkRenderContext* vk_ctx, World* world)
     : world{world}
@@ -11,7 +11,7 @@ WorldRenderer::WorldRenderer(const GDF_VkRenderContext* vk_ctx, World* world)
     queued_remeshes.reserve(32);
     chunk_meshes.reserve(128);
 
-    auto& events = GlobalEventManager::get_instance();
+    auto& events = EventManager::get_instance();
 
     events.subscribe<ChunkLoadEvent>([this](const auto& events)
     {

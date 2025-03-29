@@ -1,8 +1,8 @@
 #include <game/game.h>
 #include <gdfe/core.h>
 #include <client/graphics/renderer.h>
+#include <game/prelude.h>
 
-#include "events.h"
 #include "gdfe/input.h"
 
 GDF_BOOL on_frame(const GDF_AppState* app_state, f64 delta_time, void* state) {
@@ -12,11 +12,6 @@ GDF_BOOL on_frame(const GDF_AppState* app_state, f64 delta_time, void* state) {
 
     return GDF_TRUE;
 }
-
-struct InvalidEvent
-{
-
-};
 
 int main()
 {

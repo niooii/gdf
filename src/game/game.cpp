@@ -230,7 +230,7 @@ GDF_BOOL game_update(const GDF_AppState* app_state, f64 dt, void* state)
     game_handle_input(game, dt);
     game->world->update(dt);
 
-    auto& events = GlobalEventManager::get_instance();
+    auto& events = EventManager::get_instance();
     events.flush();
 
     // LOG_DEBUG("pos: %f %f %f", player->base.aabb.min.x, player->base.aabb.min.y, player->base.aabb.min.z);

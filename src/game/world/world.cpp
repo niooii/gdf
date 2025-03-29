@@ -4,6 +4,8 @@
 #include <gdfe/profiler.h>
 #include <client/graphics/renderer.h>
 
+#include <game/prelude.h>
+
 u32 chunk_hash(const u8* data, u32 len) {
 
 }
@@ -188,7 +190,7 @@ Block* World::set_block(BlockCreateInfo& create_info)
 
     ChunkUpdateEvent update{};
     update.chunk_coord = info.cc;
-    auto& events = GlobalEventManager::get_instance();
+    auto& events = EventManager::get_instance();
     events.dispatch(update);
 
     // TODO! remove this please find a way to fit this inside the chunk functions directly.
@@ -210,7 +212,7 @@ void World::destroy_block(vec3 pos, Block* destroyed)
 
     ChunkUpdateEvent update{};
     update.chunk_coord = info.cc;
-    auto& events = GlobalEventManager::get_instance();
+    auto& events = EventManager::get_instance();
     events.dispatch(update);
 }
 
