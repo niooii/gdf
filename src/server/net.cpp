@@ -2,7 +2,11 @@
 #include <gdfe/os/thread.h>
 #include <game/prelude.h>
 
-static unsigned long recv_thread(void* args) {
+// TODO! throttled thread execution function in gdfe.
+// make it now.
+// or some horrible horrible macro
+// this should execute at a max fixed rate lol
+static unsigned long recv_thread_fn(void* args) {
     ServerNetworkManager* server = (ServerNetworkManager*) args;
     GDF_InitThreadLogging("Net");
 
@@ -11,11 +15,10 @@ static unsigned long recv_thread(void* args) {
     auto& event_manager = EventManager::get_instance();
     for (;;)
     {
-        GDF_LockMutex(server->cont_listening_lock);
         if (!server->continue_listening)
             return 0;
 
-        while (enet_host_service(server->host, &event, 1000) > 0) {
+        while (enet_host_service(server->host, &event, 0) > 0) {
             switch (event.type) {
             case ENET_EVENT_TYPE_CONNECT:
                 printf("A new client connected from %x:%u.\n",
@@ -52,8 +55,6 @@ static unsigned long recv_thread(void* args) {
                 break;
             }
         }
-
-        GDF_ReleaseMutex(server->cont_listening_lock);
     }
 }
 
@@ -63,7 +64,6 @@ ServerNetworkManager::ServerNetworkManager(u16 port, u16 max_clients) {
         .host = ENET_HOST_ANY
     };
 
-    cont_listening_lock = GDF_CreateMutex();
     continue_listening = true;
     this->port = port;
 
@@ -84,14 +84,15 @@ ServerNetworkManager::ServerNetworkManager(u16 port, u16 max_clients) {
         LOG_FATAL("An error occurred while creating the server host");
     }
 
-    GDF_CreateThread(recv_thread, this);
+    recv_thread = GDF_CreateThread(recv_thread_fn, this);
 }
 
 ServerNetworkManager::~ServerNetworkManager()
 {
-    GDF_LockMutex(cont_listening_lock);
     continue_listening = false;
-    GDF_ReleaseMutex(cont_listening_lock);
+
+    GDF_JoinThread(recv_thread);
+    GDF_DestroyThread(recv_thread);
 
     enet_host_destroy(host);
 }

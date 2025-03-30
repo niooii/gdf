@@ -9,13 +9,14 @@ struct EventBase;
 struct ServerNetworkManager {
     ENetHost* host;
     std::vector<ENetPeer> peers;
+
+    GDF_Thread recv_thread;
     std::vector<std::unique_ptr<EventBase>> incoming_queue;
+    std::atomic_bool continue_listening;
+
     // std::vector<std::unique_ptr<EventBase>> dispatch_queue;
 
     u16 port;
-
-    GDF_Mutex cont_listening_lock;
-    bool continue_listening;
 
     ServerNetworkManager(u16 port, u16 max_clients);
     ~ServerNetworkManager();

@@ -7,6 +7,9 @@
 #define ENET_IMPLEMENTATION
 #include <client/net.h>
 #include <game/events/structs.h>
+#include <server/net.h>
+#include <server/server.h>
+
 #include "gdfe/input.h"
 
 GDF_BOOL on_frame(const GDF_AppState* app_state, f64 delta_time, void* state) {
@@ -18,6 +21,25 @@ GDF_BOOL on_frame(const GDF_AppState* app_state, f64 delta_time, void* state) {
     game_update(app_state, delta_time, state);
 
     return GDF_TRUE;
+}
+
+extern GDF_BOOL server_loop(const GDF_AppState* app_state, f64 delta_time, void* _state);
+
+std::thread start_dev_world_server(const GDF_AppState* app_state)
+{
+    GDF_ThreadSleep(100);
+    return std::thread([app_state]
+    {
+        ServerNetworkManager nwm{GDF_SERVER_PORT, 64};
+        for(;;)
+        {
+            // get more precise later if needed
+            f32 dt = 0.010;
+            // throttle a bit
+            GDF_ThreadSleep(10);
+            server_loop(app_state, dt, &nwm);
+        }
+    });
 }
 
 int main()
@@ -44,11 +66,13 @@ int main()
     if (!app_state)
         return 1;
 
-    ServerConnection connection{"127.0.0.1", 25566};
-    connection.send(std::make_unique<TestTextEvent>());
+    // TODO! the server here is for fast iteration during development.
+    // should be removed in release builds
+    auto t = start_dev_world_server(app_state);
 
-    GDF_ThreadSleep(1000);
-    return 0;
+    ServerConnection connection{"127.0.0.1", GDF_SERVER_PORT};
+    connection.send(std::make_unique<TestTextEvent>());
+    LOG_INFO("ITS SO PEAK...");
 
     GDF_RendererSetActiveCamera(app_state->renderer, game->main_camera);
 

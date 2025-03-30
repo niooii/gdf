@@ -152,14 +152,13 @@ public:
 		return nullptr;
 	}
 
-	std::vector<char> serialize(const std::unique_ptr<EventBase>& event) {
+	std::string serialize(const std::unique_ptr<EventBase>& event) {
 		std::ostringstream os;
 
 		ser20::BinaryOutputArchive archive{os};
 		archive(event);
 
-		std::string str = os.str();
-		return {str.begin(), str.end()};
+		return os.str();
 	}
 
 	std::unique_ptr<EventBase> deserialize(const std::span<char>& data) {

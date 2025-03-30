@@ -5,19 +5,21 @@
 #include <vector>
 #include <gdfe/core.h>
 #include <gdfe/os/thread.h>
+#include <atomic>
 
 struct EventBase;
 struct ServerConnection {
     ENetHost* client;
     ENetPeer* peer;
+
+    GDF_Thread recv_thread;
     std::vector<std::unique_ptr<EventBase>> incoming_queue;
+    std::atomic_bool continue_listening;
+
     // std::vector<std::unique_ptr<EventBase>> dispatch_queue;
 
     const char* addr;
     u16 port;
-
-    GDF_Mutex cont_listening_lock;
-    bool continue_listening;
 
     ServerConnection(const char* addr, u16 port);
     ~ServerConnection();
