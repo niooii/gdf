@@ -1,9 +1,13 @@
 #pragma once
 #include <functional>
 #include <memory>
-#include <gdfe/math/math.h>
+#include <span>
 #include <unordered_dense.h>
 #include <game/events/type_ids.h>
+#include <ser20/ser20.hpp>
+#include <ser20/archives/binary.hpp>
+#include <spanstream>
+#include <ser20/types/polymorphic.hpp>
 
 /*
  * There is room for optimization here, but for now
@@ -34,6 +38,8 @@ enum class EventSendMode {
 class EventManager;
 
 struct EventBase {
+	virtual ~EventBase() = default;
+
 	ProgramType source = ProgramType::Client;
 	EventSendMode replication = EventSendMode::Local;
 
@@ -41,8 +47,14 @@ struct EventBase {
 
 	// Intended for use when we store the base class only. Slightly slower
 	virtual void dispatch_self(EventManager& manager) const = 0;
-	// [[nodiscard]] virtual EventTypeId get_type() const = 0;
+
+	template<class Archive>
+	void serialize(Archive& ar) {
+		ar(source, replication, type);
+	}
 };
+
+SER20_REGISTER_TYPE(EventBase)
 
 template<typename EventT>
 concept EventType = std::is_base_of_v<EventBase, EventT>;
@@ -138,6 +150,27 @@ public:
 			return generator();
 		}
 		return nullptr;
+	}
+
+	std::vector<char> serialize(const std::unique_ptr<EventBase>& event) {
+		std::ostringstream os;
+
+		ser20::BinaryOutputArchive archive{os};
+		archive(event);
+
+		std::string str = os.str();
+		return {str.begin(), str.end()};
+	}
+
+	std::unique_ptr<EventBase> deserialize(const std::span<char>& data) {
+		std::unique_ptr<EventBase> event;
+
+		std::ispanstream stream{data};
+
+		ser20::BinaryInputArchive archive{stream};
+		archive(event);
+
+		return event;
 	}
 
 	template<EventType T>

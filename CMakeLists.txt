@@ -6,12 +6,13 @@ project(gdf
         DESCRIPTION "Not really a game dev final..."
         LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_program(GLSLC glslc REQUIRED)
 add_subdirectory(gdfe)
+add_subdirectory(extern/ser20)
 
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
 
@@ -22,10 +23,10 @@ endif()
 
 set(NO_WARNING_FLAGS "-Wno-unused-parameter -Wno-missing-braces -Wno-unused-variable -Wno-ignored-qualifiers -Wno-missing-field-initializers")
 
-set(CMAKE_CXX_FLAGS "-Wall -W -Wextra ${NO_WARNING_FLAGS} -ffast-math -march=native -mavx2 -fcolor-diagnostics -fno-exceptions")
+set(CMAKE_CXX_FLAGS "-Wall -W -Wextra ${NO_WARNING_FLAGS} -ffast-math -march=native -mavx2 -fcolor-diagnostics")
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     set(PROFILE_DIR "release")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -fno-plt -fuse-ld=lld -funroll-loops -finline-functions -fomit-frame-pointer -fno-exceptions -ftree-vectorize -fvectorize -fslp-vectorize -DNDEBUG -DGDF_RELEASE")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -fno-plt -fuse-ld=lld -funroll-loops -finline-functions -fomit-frame-pointer -ftree-vectorize -fvectorize -fslp-vectorize -DNDEBUG -DGDF_RELEASE")
 else()
     set(PROFILE_DIR "debug")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -O0 -fno-omit-frame-pointer -DDEBUG")
@@ -46,7 +47,8 @@ find_src_files(EXTERN_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/extern")
 
 SET_SOURCE_FILES_PROPERTIES(${GAME_SRC} ${CLIENT_SRC} ${SERVER_SRC} ${EXTERN_SRC} PROPERTIES LANGUAGE CXX)
 
-add_library(gdf_common STATIC ${GAME_SRC} ${EXTERN_SRC})
+add_library(gdf_common STATIC ${GAME_SRC} ${EXTERN_SRC}
+        include/game/events/defs.h)
 
 add_executable(client ${CLIENT_SRC}
         include/game/events/defs.h
@@ -54,7 +56,8 @@ add_executable(client ${CLIENT_SRC}
         include/game/events/defs.h
         include/game/events/defs.h)
 
-add_executable(server ${SERVER_SRC})
+add_executable(server ${SERVER_SRC}
+        include/game/events/defs.h)
 
 if(DEFINED ENV{VULKAN_SDK})
     if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
@@ -80,6 +83,7 @@ target_link_libraries(gdf_common
         PUBLIC
         Vulkan::Vulkan
         gdfe
+        ser20
 )
 
 target_link_libraries(client

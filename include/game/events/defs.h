@@ -1,24 +1,43 @@
 #include <gdfe/def.h>
 
+#define FIELDS(...) __VA_ARGS__
 #ifndef DEFINE_EVENT
-#define DEFINE_EVENT(name, fields)
+#define DEFINE_EVENT(name, fields, ...)
 #endif
 
+
+/* WORLD EVENTS */
 DEFINE_EVENT(
     ChunkLoadEvent,
-    ivec3 chunk_coord;
+    FIELDS(
+        ivec3 chunk_coord;
+    ),
+    chunk_coord
 )
+
 DEFINE_EVENT(
     ChunkUpdateEvent,
-    ivec3 chunk_coord;
+    FIELDS(
+        ivec3 chunk_coord;
+    ),
+    chunk_coord
 )
+
 DEFINE_EVENT(
     PlayerMoveEvent,
-    vec3 pos;
+    FIELDS(
+        vec3 pos;
+    ),
+    pos
 )
+
+/* Temporary test events */
 DEFINE_EVENT(
     TestTextEvent,
-    const char* message = nullptr;
+    FIELDS(
+        std::string message;
+    ),
+    message
 )
 
 #undef DEFINE_EVENT

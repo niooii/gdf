@@ -1,7 +1,6 @@
 #include <gdfe/gdfe.h>
-#define ENET_IMPLEMENTATION
-#include <enet.h>
 #include <stdexcept>
+#define ENET_IMPLEMENTATION
 #include <server/net.h>
 
 
