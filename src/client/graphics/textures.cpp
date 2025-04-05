@@ -12,6 +12,7 @@ static const char* __texture_paths[GDF_TEXTURE_INDEX_MAX] = {
     [GDF_TEXTURE_INDEX_GRASS_TOP] = TEXTURES_FOLDER "grass_top.png",
     [GDF_TEXTURE_INDEX_GRASS_SIDE] = TEXTURES_FOLDER "grass_side.png",
     [GDF_TEXTURE_INDEX_STONE] = TEXTURES_FOLDER "stone.png",
+    [GDF_TEXTURE_INDEX_WOOD_PLANK] = TEXTURES_FOLDER "wood_plank.png",
 };
 
 bool block_textures_init(const GDF_VkRenderContext* context, block_textures* out_textures)
@@ -120,17 +121,17 @@ bool block_textures_init(const GDF_VkRenderContext* context, block_textures* out
             return GDF_FALSE;
         }
         u32 byte_size = width * height * channels;
-        if (byte_size != image_size)
-        {
-            LOG_ERR(
-                "Expected block texture to be %d bytes, got %d instead (%s)",
-                image_size,
-                byte_size,
-                img_path
-            );
-            stbi_image_free(pixels);
-            return GDF_FALSE;
-        }
+        // if (byte_size != image_size)
+        // {
+        //     LOG_ERR(
+        //         "Expected block texture to be %d bytes, got %d instead (%s)",
+        //         image_size,
+        //         byte_size,
+        //         img_path
+        //     );
+        //     stbi_image_free(pixels);
+        //     return GDF_FALSE;
+        // }
 
         GDF_MemCopy((byte*)texture_data + i * image_size, pixels, image_size);
         LOG_DEBUG("Loaded texture id %u into staging buffer.", i);

@@ -51,7 +51,8 @@ add_library(gdf_common STATIC ${GAME_SRC} ${EXTERN_SRC}
         include/game/events/defs.h)
 
 # TODO! remove later, server src for now is for easy development
-add_executable(client ${CLIENT_SRC} ${SERVER_SRC})
+add_executable(client ${CLIENT_SRC} ${SERVER_SRC}
+        include/constants.h)
 target_compile_definitions(client PRIVATE GDF_CLIENT_BUILD)
 
 add_executable(server ${SERVER_SRC}

@@ -3,21 +3,15 @@
 #include <client/graphics/renderer.h>
 #include <game/prelude.h>
 
-#define ENET_DEBUG
 #define ENET_IMPLEMENTATION
 #include <client/net.h>
 #include <game/events/structs.h>
 #include <server/net.h>
 #include <server/server.h>
 
-#include "gdfe/input.h"
-
 GDF_BOOL on_frame(const GDF_AppState* app_state, f64 delta_time, void* state) {
-    if (GDF_IsKeyDown(GDF_KEYCODE_D)) {
-        LOG_DEBUG("YAY!!");
-    }
-
     Cube3State* game = (Cube3State*)state;
+
     game_update(app_state, delta_time, state);
 
     return GDF_TRUE;
@@ -30,6 +24,7 @@ std::thread start_dev_world_server(const GDF_AppState* app_state)
     GDF_ThreadSleep(100);
     return std::thread([app_state]
     {
+        GDF_InitThreadLogging("DevServer");
         ServerNetworkManager nwm{GDF_SERVER_PORT, 64};
         for(;;)
         {
@@ -71,8 +66,9 @@ int main()
     auto t = start_dev_world_server(app_state);
 
     ServerConnection connection{"127.0.0.1", GDF_SERVER_PORT};
-    connection.send(std::make_unique<TestTextEvent>());
-    LOG_INFO("ITS SO PEAK...");
+    auto test_event = std::make_unique<TestTextEvent>();
+    test_event->message = "HELLO SERVER!";
+    connection.send(std::move(test_event));
 
     GDF_RendererSetActiveCamera(app_state->renderer, game->main_camera);
 

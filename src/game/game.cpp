@@ -52,6 +52,8 @@ Cube3State* game_init()
 }
 
 // TODO! remove this from here prob
+// temporary input controls. will switch to registering different input handlers
+// later.
 void game_handle_input(Cube3State* game, f64 dt)
 {
     GDF_Camera camera = game->main_camera;
@@ -214,7 +216,7 @@ void game_handle_input(Cube3State* game, f64 dt)
             AxisAlignedBoundingBox block = block_get_aabb(place_pos);
             if (!aabb_intersects(&block, &player->base.aabb)) {
                 BlockCreateInfo info = {
-                    .type = BLOCK_TYPE_Grass,
+                    .type = BLOCK_TYPE_WoodPlank,
                     .world_pos = place_pos
                 };
                 game->world->set_block(info);

@@ -6,28 +6,45 @@
 // make it now.
 // or some horrible horrible macro
 // this should execute at a max fixed rate lol
-static unsigned long recv_thread_fn(void* args) {
+static unsigned long io_thread(void* args) {
     ServerNetworkManager* server = (ServerNetworkManager*) args;
-    GDF_InitThreadLogging("Net");
+    GDF_InitThreadLogging("Server:Net");
 
     LOG_INFO("Listening on port %d", server->port);
     ENetEvent event;
     auto& event_manager = EventManager::get_instance();
     for (;;)
     {
-        if (!server->continue_listening)
+        if (!server->io_active)
             return 0;
+
+        GDF_LockMutex(server->outgoing_mutex);
+        for (auto& outgoing : server->outgoing_queue)
+        {
+            std::string serialized {event_manager.serialize(outgoing)};
+
+            ENetPacket* packet = enet_packet_create(
+                serialized.c_str(),
+                serialized.length() + 1,
+                ENET_PACKET_FLAG_RELIABLE
+            );
+
+            // enet_peer_send(server->peer, 0, packet);
+            LOG_WARN("Packets sent!!! (not really actually send packets now)");
+        }
+        server->outgoing_queue.clear();
+        GDF_ReleaseMutex(server->outgoing_mutex);
 
         while (enet_host_service(server->host, &event, 0) > 0) {
             switch (event.type) {
             case ENET_EVENT_TYPE_CONNECT:
-                printf("A new client connected from %x:%u.\n",
+                LOG_DEBUG("A new client connected from %x:%u.\n",
                     event.peer->address.host, event.peer->address.port);
                 break;
 
             case ENET_EVENT_TYPE_RECEIVE:
                 {
-                    printf("A packet of length %u containing %s was received from %s on channel %u.\n",
+                    LOG_DEBUG("A packet of length %u containing %s was received from %s on channel %u.\n",
                         event.packet->dataLength,
                         event.packet->data,
                         (char*) event.peer->data,
@@ -41,14 +58,22 @@ static unsigned long recv_thread_fn(void* args) {
                     }
                     );
 
-                    server->incoming_queue.push_back(std::move(recv_event));
-
                     enet_packet_destroy(event.packet);
+
+                    if (recv_event->source != ProgramType::Client)
+                    {
+                        LOG_WARN("Rejected packet for invalid packet source.");
+                        continue;
+                    }
+
+                    GDF_LockMutex(server->incoming_mutex);
+                    server->incoming_queue.push_back(std::move(recv_event));
+                    GDF_ReleaseMutex(server->incoming_mutex);
                 }
                 break;
 
             case ENET_EVENT_TYPE_DISCONNECT:
-                printf("%s disconnected.\n", (char*) event.peer->data);
+                LOG_DEBUG("%s disconnected.\n", (char*) event.peer->data);
                 break;
 
             case ENET_EVENT_TYPE_NONE:
@@ -64,8 +89,16 @@ ServerNetworkManager::ServerNetworkManager(u16 port, u16 max_clients) {
         .host = ENET_HOST_ANY
     };
 
-    continue_listening = true;
+    EventManager::get_instance().subscribe_immediate<TestTextEvent>([](auto& event)
+    {
+        LOG_INFO("Words from client: \"%s\"", event.message.c_str());
+    });
+
+    io_active = true;
     this->port = port;
+
+    incoming_mutex = GDF_CreateMutex();
+    outgoing_mutex = GDF_CreateMutex();
 
     if (enet_initialize() != 0) {
         LOG_FATAL("An error occurred while initializing ENet");
@@ -84,15 +117,32 @@ ServerNetworkManager::ServerNetworkManager(u16 port, u16 max_clients) {
         LOG_FATAL("An error occurred while creating the server host");
     }
 
-    recv_thread = GDF_CreateThread(recv_thread_fn, this);
+    recv_thread = GDF_CreateThread(io_thread, this);
 }
 
 ServerNetworkManager::~ServerNetworkManager()
 {
-    continue_listening = false;
+    io_active = false;
 
     GDF_JoinThread(recv_thread);
     GDF_DestroyThread(recv_thread);
 
+    GDF_DestroyMutex(incoming_mutex);
+    GDF_DestroyMutex(outgoing_mutex);
+
     enet_host_destroy(host);
+}
+
+void ServerNetworkManager::dispatch_incoming()
+{
+    EventManager& events = EventManager::get_instance();
+
+    GDF_LockMutex(incoming_mutex);
+    for (auto& event : incoming_queue)
+    {
+        event->dispatch_self(events);
+    }
+
+    incoming_queue.clear();
+    GDF_ReleaseMutex(incoming_mutex);
 }

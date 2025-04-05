@@ -48,6 +48,5 @@ void Generator::gen_chunk(ivec3 cc, Chunk& chunk)
     ChunkLoadEvent event{};
     event.chunk_coord = cc;
     event.source = ProgramType::Server;
-    event.replication = EventSendMode::Local;
     events.dispatch(event);
 }

@@ -18,6 +18,7 @@ typedef enum BLOCK_TYPE {
     BLOCK_TYPE_Dirt,
     BLOCK_TYPE_Grass,
     BLOCK_TYPE_Glass,
+    BLOCK_TYPE_WoodPlank,
 } BLOCK_TYPE;
 
 typedef struct StaticBlockLookupData {

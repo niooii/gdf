@@ -11,10 +11,14 @@ struct ServerNetworkManager {
     std::vector<ENetPeer> peers;
 
     GDF_Thread recv_thread;
-    std::vector<std::unique_ptr<EventBase>> incoming_queue;
-    std::atomic_bool continue_listening;
 
-    // std::vector<std::unique_ptr<EventBase>> dispatch_queue;
+    std::vector<std::unique_ptr<EventBase>> incoming_queue;
+    GDF_Mutex incoming_mutex;
+
+    std::vector<std::unique_ptr<EventBase>> outgoing_queue;
+    GDF_Mutex outgoing_mutex;
+
+    std::atomic_bool io_active;
 
     u16 port;
 

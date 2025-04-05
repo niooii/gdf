@@ -44,7 +44,7 @@ GDF_BOOL physics_update(PhysicsEngine engine, World* world, f64 dt)
     // TODO! optimize, look into SIMD
     vec3 effective_gravity = engine->gravity_active ? engine->gravity : vec3_zero();
     vec3 net_accel;
-    
+
     u32 len = engine->entities.size();
     for (u32 i = 0; i < len; i++)
     {
@@ -59,9 +59,9 @@ GDF_BOOL physics_update(PhysicsEngine engine, World* world, f64 dt)
             entity->vel.x *= drag_factor;
             entity->vel.z *= drag_factor;
         }
-        
+
         net_accel = vec3_add(entity->accel, effective_gravity);
-        
+
         vec3 deltas = vec3_new(
             entity->vel.x * dt + 0.5f * net_accel.x * dt * dt,
             entity->vel.y * dt + 0.5f * net_accel.y * dt * dt,
@@ -86,7 +86,7 @@ GDF_BOOL physics_update(PhysicsEngine engine, World* world, f64 dt)
 
         AxisAlignedBoundingBox t_aabb = entity->aabb;
         aabb_translate(&t_aabb, deltas);
-        
+
         BlockTouchingResult results[64];
         u32 results_len = world->get_blocks_touching(
             &t_aabb,
@@ -96,7 +96,7 @@ GDF_BOOL physics_update(PhysicsEngine engine, World* world, f64 dt)
 
         // Check for floor (only if translated aabb's y is below the current one)
         GDF_BOOL ground_found = GDF_FALSE;
-        GDF_BOOL should_check_ground = 
+        GDF_BOOL should_check_ground =
             t_aabb.min.y <= entity->aabb.min.y;
         f32 ground_y = 0;
         if (should_check_ground)
@@ -166,7 +166,7 @@ GDF_BOOL physics_update(PhysicsEngine engine, World* world, f64 dt)
                 {
                     entity->vel.y = 0;
                 }
-                if (resolution.z != 0) 
+                if (resolution.z != 0)
                 {
                     entity->vel.z = 0;
                 }

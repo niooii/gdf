@@ -258,12 +258,9 @@ u32 World::get_blocks_touching(
     return i;
 }
 
-void __process_tick_events();
-
 void world_tick(World* world)
 {
     LOG_INFO("something tick world");
-    __process_tick_events();
     // update chunk simulations
     // for (CHUNK IN CHUNKS)
 }

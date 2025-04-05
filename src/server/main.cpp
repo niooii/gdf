@@ -11,6 +11,7 @@
 GDF_BOOL server_loop(const GDF_AppState* app_state, f64 delta_time, void* _state)
 {
     ServerNetworkManager* server = (ServerNetworkManager*)_state;
+    server->dispatch_incoming();
     return GDF_TRUE;
 }
 

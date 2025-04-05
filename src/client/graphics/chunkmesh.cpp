@@ -4,7 +4,7 @@
 #include "gdfe/collections/hashmap.h"
 #include <client/graphics/renderer.h>
 
-// #define GDFP_DISABLE
+#define GDFP_DISABLE
 
 static const VkVertexInputAttributeDescription vertex_attrs[] = {
     {

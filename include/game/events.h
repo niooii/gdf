@@ -19,19 +19,19 @@ enum class ProgramType {
 	Server
 };
 
-enum class EventSendMode {
-	// Calls local handlers
-	Local = 0,
-	// Client → Server
-	Server,
-	// Client → Server, then calls local handlers
-	ServerAndLocal,
-#ifdef GDF_SERVER_BUILD
-	// Server → Clients, then calls server handlers.
-	// Should only be specified on the server.
-	ToClients,
-#endif
-};
+// enum class DispatchMode {
+// 	// Calls local handlers only
+// 	Local = 0,
+// 	// Client → Server only, no local handlers are called
+// 	PureReplicated,
+// 	// Client → Server, then calls local handlers
+// 	Replicated,
+// // #ifdef GDF_SERVER_BUILD
+// // 	// Server → Clients, then calls server handlers.
+// // 	// Should only be specified on the server.
+// // 	ToClients,
+// // #endif
+// };
 
 
 
@@ -41,7 +41,7 @@ struct EventBase {
 	virtual ~EventBase() = default;
 
 	ProgramType source = ProgramType::Client;
-	EventSendMode replication = EventSendMode::Local;
+	// DispatchMode replication = DispatchMode::Local;
 
 	EventTypeId type;
 
@@ -50,7 +50,7 @@ struct EventBase {
 
 	template<class Archive>
 	void serialize(Archive& ar) {
-		ar(source, replication, type);
+		ar(source/*, replication*/, type);
 	}
 };
 
@@ -61,8 +61,14 @@ concept EventType = std::is_base_of_v<EventBase, EventT>;
 
 template<EventType EventT>
 class EventDispatcher {
+	// TODO! should separate deferred and immediate events. do this later
+	// Deferred handlers
 	std::vector<std::function<void(const std::vector<EventT>&)>> handlers;
+	// Instant handlers, called immediately on dispatch
 	std::vector<std::function<void(const EventT&)>> immediate_handlers;
+
+	// TODO! unused for now
+	std::vector<std::function<bool(const EventT&)>> reject_conditions;
 
 	// TODO! use smart pointers instead of copying data or something along those lines
 	std::vector<EventT> event_buffer;
@@ -108,6 +114,7 @@ class EventManager {
 	std::vector<void(*)()> flush_functions;
 
 	// For generating polymorphic EventBase instances
+	// TODO! trhiws is actually not needed
 	using GenerateEventBase = std::function<std::unique_ptr<EventBase>()>;
 	GenerateEventBase generators[(u32)EventTypeId::MaxEvent]{};
 
@@ -185,6 +192,13 @@ public:
 	template<EventType T>
 	void subscribe_immediate(std::function<void(const T&)> handler) {
 		get_dispatcher<T>().subscribe_immediate(std::move(handler));
+	}
+
+	template<EventType T>
+	// Add a condition to reject the dispatching of an event if true.
+	// TODO! unused for now
+	void reject_dispatch_if(std::function<bool(const T&)> reject_condition) {
+
 	}
 
 	void flush() {
