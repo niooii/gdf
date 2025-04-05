@@ -253,25 +253,25 @@ void ChunkMesh::mesh()
                     u8 depth = CTZ64(bits);
                     bits &= bits - 1;
 
-                    RelBlockCoord block_coord;
+                    u8vec3 block_coord;
                     switch(axis) {
                     case AXIS_X_ASC:
                     case AXIS_X_DESC:
-                        block_coord.block_x = depth;
-                        block_coord.block_y = i;
-                        block_coord.block_z = j;
+                        block_coord.x = depth;
+                        block_coord.y = i;
+                        block_coord.z = j;
                         break;
                     case AXIS_Y_ASC:
                     case AXIS_Y_DESC:
-                        block_coord.block_x = j;
-                        block_coord.block_y = depth;
-                        block_coord.block_z = i;
+                        block_coord.x = j;
+                        block_coord.y = depth;
+                        block_coord.z = i;
                         break;
                     case AXIS_Z_ASC:
                     case AXIS_Z_DESC:
-                        block_coord.block_x = j;
-                        block_coord.block_y = i;
-                        block_coord.block_z = depth;
+                        block_coord.x = j;
+                        block_coord.y = i;
+                        block_coord.z = depth;
                         break;
                     }
 

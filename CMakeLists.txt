@@ -48,14 +48,17 @@ find_src_files(EXTERN_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/extern")
 SET_SOURCE_FILES_PROPERTIES(${GAME_SRC} ${CLIENT_SRC} ${SERVER_SRC} ${EXTERN_SRC} PROPERTIES LANGUAGE CXX)
 
 add_library(gdf_common STATIC ${GAME_SRC} ${EXTERN_SRC}
+        include/game/events/defs.h
         include/game/events/defs.h)
 
 # TODO! remove later, server src for now is for easy development
 add_executable(client ${CLIENT_SRC} ${SERVER_SRC}
-        include/constants.h)
+        include/constants.h
+        include/game/events/defs.h)
 target_compile_definitions(client PRIVATE GDF_CLIENT_BUILD)
 
 add_executable(server ${SERVER_SRC}
+        include/game/events/defs.h
         include/game/events/defs.h)
 
 if(DEFINED ENV{VULKAN_SDK})

@@ -196,7 +196,7 @@ Block* World::set_block(BlockCreateInfo& create_info)
     // TODO! remove this please find a way to fit this inside the chunk functions directly.
     // or better yet through the use of actual structured event data. PLEASE!!
     // chunk update queue remesh stuff
-    RelBlockCoord bc = info.bc;
+    u8vec3 bc = info.bc;
 
     // GDF_EventFire(GDF_EVENT_CHUNK_UPDATE, c, (GDF_EventContext){});
 

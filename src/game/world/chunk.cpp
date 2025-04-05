@@ -13,13 +13,13 @@ Chunk::~Chunk()
 }
 
 static FORCEINLINE i32 __to_idx(
-    RelBlockCoord bc
+    u8vec3 bc
 )
 {
-    return bc.block_x + (bc.block_y * CHUNK_SIZE) + (bc.block_z * CHUNK_SIZE * CHUNK_SIZE);
+    return bc.x + (bc.y * CHUNK_SIZE) + (bc.z * CHUNK_SIZE * CHUNK_SIZE);
 }
 
-Block* Chunk::set_block(BLOCK_TYPE type, RelBlockCoord block_coord)
+Block* Chunk::set_block(BLOCK_TYPE type, u8vec3 block_coord)
 {
     Block* block = &block_arr[
         __to_idx(
@@ -29,16 +29,16 @@ Block* Chunk::set_block(BLOCK_TYPE type, RelBlockCoord block_coord)
 
     block->exists = true;
     block->data.type = type;
-    block->x_rel = block_coord.block_x;
-    block->y_rel = block_coord.block_y;
-    block->z_rel = block_coord.block_z;
+    block->x_rel = block_coord.x;
+    block->y_rel = block_coord.y;
+    block->z_rel = block_coord.z;
 
     block_list.push_back(block);
 
     return block;
 }
 
-Block* Chunk::get_block(RelBlockCoord bc)
+Block* Chunk::get_block(u8vec3 bc)
 {
     Block* chunk_block = &block_arr[
         __to_idx(
@@ -52,7 +52,7 @@ Block* Chunk::get_block(RelBlockCoord bc)
     return chunk_block;
 }
 
-void Chunk::destroy_block(RelBlockCoord bc, Block* out)
+void Chunk::destroy_block(u8vec3 bc, Block* out)
 {
     Block* block = &block_arr[
         __to_idx(

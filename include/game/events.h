@@ -43,14 +43,14 @@ struct EventBase {
 	ProgramType source = ProgramType::Client;
 	// DispatchMode replication = DispatchMode::Local;
 
-	EventTypeId type;
+	// EventTypeId type;
 
 	// Intended for use when we store the base class only. Slightly slower
 	virtual void dispatch_self(EventManager& manager) const = 0;
 
 	template<class Archive>
 	void serialize(Archive& ar) {
-		ar(source/*, replication*/, type);
+		ar(source/*, replication*/);
 	}
 };
 
@@ -133,9 +133,9 @@ class EventManager {
 			get_instance().flush_functions.push_back(&flusher<EventT>);
 
 			// TODO! this stupid hack
-			EventT tmp = EventT{};
-			const u32 id = (u32)(tmp.type);
-			get_instance().generators[id] = [] { return std::make_unique<EventT>(); };
+			// EventT tmp = EventT{};
+			// const u32 id = (u32)(tmp.type);
+			// get_instance().generators[id] = [] { return std::make_unique<EventT>(); };
 		}
 
 		return dispatcher;

@@ -6,6 +6,7 @@
 #include <game/physics/aabb.h>
 #include <gdf_math.h>
 #include <unordered_dense.h>
+#include "types.h"
 
 u32 chunk_hash(const u8* data, u32 len);
 
@@ -31,12 +32,6 @@ const extern u32 STATIC_BLOCK_LOOKUP_TABLE_SIZE;
 typedef struct BlockData {
     BLOCK_TYPE type;
 } BlockData;
-
-typedef struct RelBlockCoord {
-    u8 block_x; 
-    u8 block_y; 
-    u8 block_z;
-} RelBlockCoord;
 
 typedef struct BlockCreateInfo {
     BLOCK_TYPE type;
@@ -94,9 +89,9 @@ public:
     Chunk();
     ~Chunk();
 
-    Block* set_block(BLOCK_TYPE type, RelBlockCoord block_coord);
-    Block* get_block(RelBlockCoord block_coord);
-    void destroy_block(RelBlockCoord block_coord, Block* out);
+    Block* set_block(BLOCK_TYPE type, u8vec3 block_coord);
+    Block* get_block(u8vec3 block_coord);
+    void destroy_block(u8vec3 block_coord, Block* out);
 };
 
 // A terrain generator_
@@ -186,7 +181,7 @@ FORCEINLINE vec3 chunk_coord_to_world_pos(ivec3 coord) {
 
 typedef struct ChunkBlockPosTuple {
     ivec3 cc;
-    RelBlockCoord bc;
+    u8vec3 bc;
 } ChunkBlockPosTuple;
 
 FORCEINLINE ChunkBlockPosTuple world_pos_to_chunk_block_tuple(vec3 world_pos)
@@ -194,10 +189,10 @@ FORCEINLINE ChunkBlockPosTuple world_pos_to_chunk_block_tuple(vec3 world_pos)
     ivec3 cc = world_pos_to_chunk_coord(world_pos);
 
     return (ChunkBlockPosTuple) {
-        .bc = (RelBlockCoord) { 
-            .block_x = (u8)(world_pos.x - cc.x * CHUNK_SIZE),
-            .block_y = (u8)(world_pos.y - cc.y * CHUNK_SIZE),
-            .block_z = (u8)(world_pos.z - cc.z * CHUNK_SIZE)
+        .bc = (u8vec3) {
+            .x = (u8)(world_pos.x - cc.x * CHUNK_SIZE),
+            .y = (u8)(world_pos.y - cc.y * CHUNK_SIZE),
+            .z = (u8)(world_pos.z - cc.z * CHUNK_SIZE)
         },
         .cc = cc
     };

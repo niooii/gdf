@@ -20,10 +20,10 @@ void Generator::gen_chunk(ivec3 cc, Chunk& chunk)
     // {
     //     return;
     // }
-    RelBlockCoord bc = {
-        .block_x = 0,
-        .block_y = 5,
-        .block_z = 0,
+    u8vec3 bc = {
+        .x = 0,
+        .y = 5,
+        .z = 0,
     };
     BLOCK_TYPE type = BLOCK_TYPE_Grass;
 
@@ -33,9 +33,9 @@ void Generator::gen_chunk(ivec3 cc, Chunk& chunk)
         {
             for (u8 z = 0; z < CHUNK_SIZE; z++)
             {
-                bc.block_x = x;
-                bc.block_y = y;
-                bc.block_z = z;
+                bc.x = x;
+                bc.y = y;
+                bc.z = z;
 
                 type = (BLOCK_TYPE)0;
 

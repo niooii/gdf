@@ -5,7 +5,6 @@
 
 #define ENET_IMPLEMENTATION
 #include <client/net.h>
-#include <game/events/structs.h>
 #include <server/net.h>
 #include <server/server.h>
 
