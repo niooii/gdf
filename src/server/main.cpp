@@ -5,6 +5,7 @@
 #define ENET_IMPLEMENTATION
 #endif
 
+#include <gdfe/strutils.h>
 #include <server/net.h>
 
 GDF_BOOL server_loop(const GDF_AppState* app_state, f64 delta_time, void* _state)
@@ -14,6 +15,7 @@ GDF_BOOL server_loop(const GDF_AppState* app_state, f64 delta_time, void* _state
     return GDF_TRUE;
 }
 
+#include <gdfe/collections/list.h>
 #ifndef GDF_CLIENT_BUILD
 int main(int argc, char** argv)
 {
