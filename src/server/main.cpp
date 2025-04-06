@@ -15,8 +15,17 @@ GDF_BOOL server_loop(const GDF_AppState* app_state, f64 delta_time, void* _state
 }
 
 #ifndef GDF_CLIENT_BUILD
-int main()
+int main(int argc, char** argv)
 {
+    if (argc < 2)
+    {
+        // ran as standalone program
+    }
+    else
+    {
+        const char* semaphore_name = argv[1];
+    }
+
     GDF_InitSubsystems();
 
     ServerNetworkManager* server = new ServerNetworkManager{GDF_SERVER_PORT, 64};
@@ -32,8 +41,6 @@ int main()
         }
     };
     GDF_Init(info);
-
-
 
     GDF_Run();
 }
