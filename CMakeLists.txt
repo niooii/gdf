@@ -25,10 +25,10 @@ set(NO_WARNING_FLAGS "-Wno-unused-parameter -Wno-missing-braces -Wno-unused-vari
 
 set(CMAKE_CXX_FLAGS "-Wall -W -Wextra ${NO_WARNING_FLAGS} -ffast-math -march=native -mavx2 -fcolor-diagnostics")
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    set(PROFILE_DIR "release")
+#    set(PROFILE_DIR "release")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -fno-plt -fuse-ld=lld -funroll-loops -finline-functions -fomit-frame-pointer -ftree-vectorize -fvectorize -fslp-vectorize -DNDEBUG -DGDF_RELEASE")
 else()
-    set(PROFILE_DIR "debug")
+#    set(PROFILE_DIR "debug")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -O0 -fno-omit-frame-pointer -DDEBUG")
 endif()
 
@@ -101,7 +101,7 @@ target_link_libraries(server
 foreach(TARGET gdf_common client server)
     set_target_properties(${TARGET}
             PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${PROFILE_DIR}/"
+            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
             LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
             ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
     )
@@ -116,7 +116,7 @@ endfunction()
 function(get_spv_output_path SHADER_PATH OUTPUT_PATH)
     get_filename_component(SHADER_NAME ${SHADER_PATH} NAME)
 
-    set(SPV_PATH "${CMAKE_BINARY_DIR}/${PROFILE_DIR}/resources/shaders/${SHADER_NAME}.spv")
+    set(SPV_PATH "${CMAKE_BINARY_DIR}/resources/shaders/${SHADER_NAME}.spv")
 
     set(${OUTPUT_PATH} ${SPV_PATH} PARENT_SCOPE)
 endfunction()
@@ -146,7 +146,7 @@ endforeach()
 add_custom_target(copy_resources
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/resources
-        ${CMAKE_BINARY_DIR}/${PROFILE_DIR}/resources
+        ${CMAKE_BINARY_DIR}/resources
 )
 
 add_dependencies(compile_shaders copy_resources)

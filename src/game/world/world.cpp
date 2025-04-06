@@ -6,63 +6,6 @@
 
 #include <game/prelude.h>
 
-u32 chunk_hash(const u8* data, u32 len) {
-
-}
-//
-// static GDF_BOOL __on_chunk_load(u16 event_code, void* sender, void* listener_instance, GDF_EventContext ctx)
-// {
-//     LOG_DEBUG("CHUNK LOAD");
-//     World* world = (World*)listener_instance;
-//     Chunk* chunk = (Chunk*)sender;
-//
-//     renderer_register_chunk(chunk);
-//     for (u32 i = 0; i < 6; i++) {
-//         ivec3 adj = ivec3_add(chunk->cc, ivec3_adjacent_offsets[i]);
-//         renderer_queue_chunk_remesh(adj);
-//     }
-//
-//     return GDF_FALSE;
-// }
-//
-// static GDF_BOOL __on_chunk_unload(u16 event_code, void* sender, void* listener_instance, GDF_EventContext ctx)
-// {
-//     LOG_DEBUG("CHUNK UNLOAD...");
-//     World* world = (World*)listener_instance;
-//
-//     Chunk* chunk = (Chunk*)sender;
-//     renderer_queue_chunk_remesh(chunk->cc);
-//
-//     GDF_ASSERT(renderer_remove_chunk(chunk->cc));
-//
-//     return GDF_FALSE;
-// }
-//
-// // TODO!
-// static GDF_BOOL __on_chunk_update(u16 event_code, void* sender, void* listener_instance, GDF_EventContext ctx)
-// {
-//     LOG_DEBUG("CHUNK UPDATE");
-//     World* world = (World*)listener_instance;
-//     Chunk* chunk = (Chunk*)sender;
-//
-//     renderer_queue_chunk_remesh(chunk->cc);
-//
-//     return GDF_FALSE;
-// }
-
-static GDF_BOOL __on_block_touch(u16 event_code, void* sender, void* listener_instance, GDF_EventContext ctx)
-{
-    World* world = (World*)listener_instance;
-    Block* block = (Block*)sender;
-    Entity* entity = (Entity*)(ctx.data.u64[0]);
-    if (entity->type != ENTITY_TYPE_HUMANOID)
-        return GDF_FALSE;
-
-    // HumanoidEntity* hum = entity->parent;
-
-    return GDF_FALSE;
-}
-
 // TODO! make customizable
 World::World()
     : generator_{this}

@@ -5,13 +5,42 @@
 #include <client/graphics/renderer.h>
 #include <game/movement.h>
 #include <game/physics/raycast.h>
-
 #include <game/events.h>
+#include <gdfe/os/thread.h>
+#include <server/net.h>
+#include <server/server.h>
 
-static HumanoidEntity* player;
-Cube3State* game_init()
+#include "game/events/defs.h"
+
+
+extern GDF_BOOL server_loop(const GDF_AppState* app_state, f64 delta_time, void* _state);
+
+std::thread start_dev_world_server(const GDF_AppState* app_state)
 {
-    Cube3State* game = (Cube3State*)GDF_Malloc(sizeof(Cube3State), GDF_MEMTAG_GAME);
+    GDF_ThreadSleep(100);
+    return std::thread([app_state]
+    {
+        GDF_InitThreadLogging("DevServer");
+        ServerNetworkManager nwm{GDF_SERVER_PORT, 64};
+        for(;;)
+        {
+            // get more precise later if needed
+            f32 dt = 0.010;
+            // throttle a bit
+            GDF_ThreadSleep(10);
+            server_loop(app_state, dt, &nwm);
+        }
+    });
+}
+
+static std::thread t;
+static HumanoidEntity* player;
+ClientState* game_init(ClientState* game)
+{
+    // TODO! the server here is for fast iteration during development.
+    // should be removed in release builds
+    // t = start_dev_world_server(NULL);
+
     GDF_CameraCreateInfo camera_info = {
         .pos = vec3_new(0.0f, 0.0f, 0.0f),
         .pitch = DEG_TO_RAD(0.0f),
@@ -24,7 +53,7 @@ Cube3State* game_init()
     };
     game->main_camera = GDF_CameraCreate(&camera_info);
     GDF_CameraSetGlobalAxis(game->main_camera, vec3_new(0, 1, 0));
-    GDF_CameraConstrainPitch(game->main_camera, -DEG_TO_RAD(90), DEG_TO_RAD(90));
+    GDF_CameraConstrainPitch(game->main_camera, -DEG_TO_RAD(89.9), DEG_TO_RAD(89.9));
 
     // TODO! uncomment later, the game will be initilaized in world state for now.
     // game->current_screen = GDF_GAME_SCREEN_MAIN_MENU;
@@ -54,7 +83,7 @@ Cube3State* game_init()
 // TODO! remove this from here prob
 // temporary input controls. will switch to registering different input handlers
 // later.
-void game_handle_input(Cube3State* game, f64 dt)
+void game_handle_input(ClientState* game, f64 dt)
 {
     GDF_Camera camera = game->main_camera;
     {
@@ -227,12 +256,19 @@ void game_handle_input(Cube3State* game, f64 dt)
 
 GDF_BOOL game_update(const GDF_AppState* app_state, f64 dt, void* state)
 {
-    Cube3State* game = (Cube3State*)state;
+    ClientState* game = (ClientState*)state;
     // LOG_INFO("VEL: %f %f %f", player->base.vel.x, player->base.vel.y, player->base.vel.z);
     game_handle_input(game, dt);
     game->world->update(dt);
 
     auto& events = EventManager::get_instance();
+
+    // TODO! remove
+    auto move = std::make_unique<PlayerMoveEvent>();
+    move->pos = player->base.aabb.min;
+
+
+
     events.flush();
 
     // LOG_DEBUG("pos: %f %f %f", player->base.aabb.min.x, player->base.aabb.min.y, player->base.aabb.min.z);

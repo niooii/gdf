@@ -29,14 +29,23 @@ WorldRenderer::WorldRenderer(const GDF_VkRenderContext* vk_ctx, World* world)
 
     events.subscribe<ChunkUpdateEvent>([this](const auto& events)
     {
+        ankerl::unordered_dense::set<ivec3> to_remesh{};
+
         for (const auto& event : events)
         {
             ivec3 cc = event.chunk_coord;
 
             if (chunk_meshes.contains(cc))
             {
-                chunk_meshes[cc]->mesh();
+                to_remesh.insert(cc);
+                // TODO! add adjacent
+                // if ()
             }
+        }
+
+        for (const auto& cc : to_remesh)
+        {
+            this->chunk_meshes[cc]->mesh();
         }
     });
 }

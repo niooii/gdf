@@ -45,8 +45,8 @@ MAKE_SERIALIZABLE(TestTextEvent)
 DECL_EVENT(ChunkUpdateEvent)
 {
     ivec3 chunk_coord;
-    std::vector<std::pair<u8vec3, u8vec3>> updated;
-    SERIALIZE_FIELDS(chunk_coord)
+    u8vec3 updated;
+    SERIALIZE_FIELDS(chunk_coord, updated)
 };
 MAKE_SERIALIZABLE(ChunkUpdateEvent)
 

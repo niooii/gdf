@@ -7,7 +7,6 @@
 
 #include <server/net.h>
 
-
 GDF_BOOL server_loop(const GDF_AppState* app_state, f64 delta_time, void* _state)
 {
     ServerNetworkManager* server = (ServerNetworkManager*)_state;
@@ -18,7 +17,10 @@ GDF_BOOL server_loop(const GDF_AppState* app_state, f64 delta_time, void* _state
 #ifndef GDF_CLIENT_BUILD
 int main()
 {
-    ServerNetworkManager* server;
+    GDF_InitSubsystems();
+
+    ServerNetworkManager* server = new ServerNetworkManager{GDF_SERVER_PORT, 64};
+
     GDF_InitInfo info = {
         .config = {
             .max_updates_per_sec = 20,
@@ -31,7 +33,7 @@ int main()
     };
     GDF_Init(info);
 
-    server = new ServerNetworkManager{GDF_SERVER_PORT, 64};
+
 
     GDF_Run();
 }

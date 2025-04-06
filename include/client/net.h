@@ -1,5 +1,4 @@
 #pragma once
-#define ENET_DEBUG
 #include <enet.h>
 #include <memory>
 #include <vector>
