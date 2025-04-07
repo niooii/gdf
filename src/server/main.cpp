@@ -15,7 +15,6 @@ GDF_BOOL server_loop(const GDF_AppState* app_state, f64 delta_time, void* _state
     return GDF_TRUE;
 }
 
-#include <gdfe/collections/list.h>
 #ifndef GDF_CLIENT_BUILD
 int main(int argc, char** argv)
 {
@@ -26,9 +25,12 @@ int main(int argc, char** argv)
     else
     {
         const char* semaphore_name = argv[1];
+
     }
 
     GDF_InitSubsystems();
+    // GDF_Process proc = GDF_CreateProcess("vkcube.exe", NULL, NULL, NULL);
+    // GDF_TerminateProcess(proc);
 
     ServerNetworkManager* server = new ServerNetworkManager{GDF_SERVER_PORT, 64};
 

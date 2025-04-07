@@ -1,53 +1,63 @@
-#include <game/game.h>
 #include <gdfe/core.h>
 #include <client/graphics/renderer.h>
 #include <game/prelude.h>
 
 #define ENET_IMPLEMENTATION
+#include <client/app.h>
 #include <client/net.h>
 #include <server/net.h>
 #include <server/server.h>
 
-GDF_BOOL on_frame(const GDF_AppState* app_state, f64 delta_time, void* state) {
-    ClientState* game = (ClientState*)state;
-
-    game_update(app_state, delta_time, state);
-
-    return GDF_TRUE;
-}
-
 int main()
 {
     GDF_InitSubsystems();
-    ClientState game = {};
-    game_init(&game);
+    if (enet_initialize() != 0) {
+        LOG_FATAL("An error occurred while initializing ENet");
+    }
+
+    AppState app = {};
+    app_init(&app);
     GDF_InitInfo init = {
         .callbacks = {
-            .on_loop = on_frame,
-            .on_loop_state = &game,
+            .on_loop = app_update,
+            .on_loop_state = &app,
             .render_callbacks = {
                 .on_render_init = renderer_init,
-                .on_render_init_state = &game,
+                .on_render_init_state = &app,
                 .on_render_destroy = renderer_destroy,
-                .on_render_destroy_state = &game,
+                .on_render_destroy_state = &app,
                 .on_render = renderer_draw,
-                .on_render_state = &game
+                .on_render_state = &app
             }
         },
         .config = {
             .max_updates_per_sec = 0,
         }
     };
+
     GDF_AppState* app_state = GDF_Init(init);
     if (!app_state)
         return 1;
+
+    char server_path[300];
+    GDF_MemZero(server_path, sizeof(server_path));
+    snprintf(server_path, sizeof(server_path), "%s\\server.exe", GDF_GetExecutablePath());
+
+    GDF_Process server_proc = GDF_CreateProcess(
+        server_path,
+        NULL,
+        NULL,
+        NULL
+    );
+
+    GDF_ThreadSleep(500);
 
     ServerConnection connection{"127.0.0.1", GDF_SERVER_PORT};
     auto test_event = std::make_unique<TestTextEvent>();
     test_event->message = "HELLO SERVER!";
     connection.send(std::move(test_event));
 
-    GDF_RendererSetActiveCamera(app_state->renderer, game.main_camera);
+    GDF_RendererSetActiveCamera(app_state->renderer, app.main_camera);
 
     LOG_DEBUG("running path: %s", GDF_GetExecutablePath());
     f64 time_ran_for = GDF_Run();
@@ -60,5 +70,6 @@ int main()
         LOG_ERR("yikes....\n");
     }
     logging_flush_buffer();
+    enet_deinitialize();
     return 0;
 }

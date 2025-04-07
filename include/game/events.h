@@ -33,8 +33,6 @@ enum class ProgramType {
 // // #endif
 // };
 
-
-
 class EventManager;
 
 struct EventBase {
@@ -56,22 +54,39 @@ struct EventBase {
 
 SER20_REGISTER_TYPE(EventBase)
 
-template<typename EventT>
-concept EventType = std::is_base_of_v<EventBase, EventT>;
+typedef u64 SubscriptionId;
 
-template<EventType EventT>
+template<typename T>
+concept EventType = std::is_base_of_v<EventBase, T>;
+
+template<EventType>
+struct Subscription {
+	enum class Type {
+		Immediate,
+		Deferred
+	} type = Type::Deferred;
+
+	SubscriptionId id;
+
+	void unsubscribe();
+};
+
+template<EventType T>
 class EventDispatcher {
 	// TODO! should separate deferred and immediate events. do this later
 	// Deferred handlers
-	std::vector<std::function<void(const std::vector<EventT>&)>> handlers;
-	// Instant handlers, called immediately on dispatch
-	std::vector<std::function<void(const EventT&)>> immediate_handlers;
+	ankerl::unordered_dense::map<SubscriptionId, std::function<void(const std::vector<T>&)>>
+		handlers;
+
+	// Immediate handlers get fired immediately
+	ankerl::unordered_dense::map<SubscriptionId, std::function<void(const T&)>>
+		immediate_handlers;
 
 	// TODO! unused for now
-	std::vector<std::function<bool(const EventT&)>> reject_conditions;
+	std::vector<std::function<bool(const T&)>> reject_conditions;
 
 	// TODO! use smart pointers instead of copying data or something along those lines
-	std::vector<EventT> event_buffer;
+	std::vector<T> event_buffer;
 
 public:
 	EventDispatcher() {
@@ -81,8 +96,17 @@ public:
 	// Subscribers will be notified when the event manager is flushed
 	// Flushing will happen every frame after input is updated and
 	// before rendering.
-	void subscribe(std::function<void(const std::vector<EventT>&)> handler) {
-		handlers.push_back(std::move(handler));
+	Subscription<T> subscribe(std::function<void(const std::vector<T>&)> handler) {
+		static SubscriptionId next_id;
+
+		SubscriptionId id = next_id++;
+		handlers[id] = std::move(handler);
+
+		Subscription<T> s;
+		s.type = Subscription<T>::Type::Deferred;
+		s.id = id;
+
+		return s;
 	}
 
 	// Subscribers will be notified immediately when an event is dispatched.
@@ -90,20 +114,39 @@ public:
 	// guarenteed to fire at most once a frame.
 	// Using this for events that may happen more than once a frame
 	// may drastically decrease performance.
-	void subscribe_immediate(std::function<void(const EventT&)> handler) {
-		immediate_handlers.push_back(std::move(handler));
+	Subscription<T> subscribe_immediate(std::function<void(const T&)> handler) {
+		static SubscriptionId next_id;
+
+		SubscriptionId id = next_id++;
+		immediate_handlers.emplace(id, std::move(handler));
+
+		Subscription<T> s;
+		s.type = Subscription<T>::Type::Immediate;
+		s.id = id;
+
+		return s;
 	}
 
-	void dispatch(const EventT& event) {
+	void unsubscribe(SubscriptionId id)
+	{
+		handlers.erase(id);
+	}
+
+	void unsubscribe_immediate(SubscriptionId id)
+	{
+		immediate_handlers.erase(id);
+	}
+
+	void dispatch(const T& event) {
 		if (!immediate_handlers.empty())
-			for (auto& handler : immediate_handlers)
+			for (auto& [_k, handler] : immediate_handlers)
 				handler(event);
 
 		event_buffer.push_back(event);
 	}
 
 	void flush() {
-		for (auto& handler : handlers) {
+		for (auto& [_k, handler] : handlers) {
 			handler(event_buffer);
 		}
 		event_buffer.clear();
@@ -111,6 +154,9 @@ public:
 };
 
 class EventManager {
+	template<EventType T>
+	friend struct Subscription;
+
 	std::vector<void(*)()> flush_functions;
 
 	// For generating polymorphic EventBase instances
@@ -185,13 +231,13 @@ public:
 	}
 
 	template<EventType T>
-	void subscribe(std::function<void(const std::vector<T>&)> handler) {
-		get_dispatcher<T>().subscribe(std::move(handler));
+	Subscription<T> subscribe(std::function<void(const std::vector<T>&)> handler) {
+		return get_dispatcher<T>().subscribe(std::move(handler));
 	}
 
 	template<EventType T>
-	void subscribe_immediate(std::function<void(const T&)> handler) {
-		get_dispatcher<T>().subscribe_immediate(std::move(handler));
+	Subscription<T> subscribe_immediate(std::function<void(const T&)> handler) {
+		return get_dispatcher<T>().subscribe_immediate(std::move(handler));
 	}
 
 	template<EventType T>
@@ -208,3 +254,11 @@ public:
 	}
 };
 
+template <EventType T>
+void Subscription<T>::unsubscribe()
+{
+	if (type == Type::Deferred)
+		EventManager::get_dispatcher<T>().unsubscribe(id);
+	else
+		EventManager::get_dispatcher<T>().unsubscribe_immediate(id);
+}

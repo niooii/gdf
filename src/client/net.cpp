@@ -83,10 +83,6 @@ ServerConnection::ServerConnection(const char* addr, u16 port)
     incoming_mutex = GDF_CreateMutex();
     outgoing_mutex = GDF_CreateMutex();
 
-    if (enet_initialize() != 0) {
-        LOG_FATAL("An error occurred while initializing ENet");
-    }
-
     constexpr u32 channels = 2;
 
     client = enet_host_create(NULL, 1, channels, 0, 0);
@@ -103,19 +99,17 @@ ServerConnection::ServerConnection(const char* addr, u16 port)
     if (this->peer == NULL) {
         LOG_ERR("No available peers for initiating an ENet connection");
         enet_host_destroy(client);
-        enet_deinitialize();
         throw std::runtime_error("Connection to server failed");
     }
 
     ENetEvent event;
-    if (enet_host_service(client, &event, 5000) > 0 &&
+    if (enet_host_service(client, &event, 25) > 0 &&
         event.type == ENET_EVENT_TYPE_CONNECT) {
         LOG_INFO("Connection to server succeeded");
     }
     else {
         enet_peer_reset(peer);
         enet_host_destroy(client);
-        enet_deinitialize();
         throw std::runtime_error("Connection to server failed");
     }
 
@@ -136,7 +130,6 @@ ServerConnection::~ServerConnection()
     enet_peer_disconnect_now(peer, 0);
 
     enet_host_destroy(client);
-    enet_deinitialize();
 }
 
 void ServerConnection::send(std::unique_ptr<EventBase> unique_ptr)

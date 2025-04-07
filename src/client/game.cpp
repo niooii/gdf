@@ -1,4 +1,4 @@
-#include <game/game.h>
+#include <client/app.h>
 #include <gdfe/input.h>
 #include <gdfe/math/math.h>
 #include <gdfe/math/math.h>
@@ -12,30 +12,8 @@
 
 #include "game/events/defs.h"
 
-
-extern GDF_BOOL server_loop(const GDF_AppState* app_state, f64 delta_time, void* _state);
-
-std::thread start_dev_world_server(const GDF_AppState* app_state)
-{
-    GDF_ThreadSleep(100);
-    return std::thread([app_state]
-    {
-        GDF_InitThreadLogging("DevServer");
-        ServerNetworkManager nwm{GDF_SERVER_PORT, 64};
-        for(;;)
-        {
-            // get more precise later if needed
-            f32 dt = 0.010;
-            // throttle a bit
-            GDF_ThreadSleep(10);
-            server_loop(app_state, dt, &nwm);
-        }
-    });
-}
-
-static std::thread t;
 static HumanoidEntity* player;
-ClientState* game_init(ClientState* game)
+AppState* app_init(AppState* game)
 {
     // TODO! the server here is for fast iteration during development.
     // should be removed in release builds
@@ -83,7 +61,7 @@ ClientState* game_init(ClientState* game)
 // TODO! remove this from here prob
 // temporary input controls. will switch to registering different input handlers
 // later.
-void game_handle_input(ClientState* game, f64 dt)
+void game_handle_input(AppState* game, f64 dt)
 {
     GDF_Camera camera = game->main_camera;
     {
@@ -254,9 +232,9 @@ void game_handle_input(ClientState* game, f64 dt)
     }
 }
 
-GDF_BOOL game_update(const GDF_AppState* app_state, f64 dt, void* state)
+GDF_BOOL app_update(const GDF_AppState* app_state, f64 dt, void* state)
 {
-    ClientState* game = (ClientState*)state;
+    AppState* game = (AppState*)state;
     // LOG_INFO("VEL: %f %f %f", player->base.vel.x, player->base.vel.y, player->base.vel.z);
     game_handle_input(game, dt);
     game->world->update(dt);
@@ -266,8 +244,6 @@ GDF_BOOL game_update(const GDF_AppState* app_state, f64 dt, void* state)
     // TODO! remove
     auto move = std::make_unique<PlayerMoveEvent>();
     move->pos = player->base.aabb.min;
-
-
 
     events.flush();
 
