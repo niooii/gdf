@@ -59,17 +59,18 @@ typedef u64 SubscriptionId;
 template<typename T>
 concept EventType = std::is_base_of_v<EventBase, T>;
 
-template<EventType>
 struct Subscription {
 	enum class Type {
 		Immediate,
 		Deferred
 	} type = Type::Deferred;
-
 	SubscriptionId id;
 
-	void unsubscribe();
+	virtual void unsubscribe() const = 0;
 };
+
+template<EventType>
+struct SubscriptionT : Subscription {};
 
 template<EventType T>
 class EventDispatcher {
@@ -96,17 +97,17 @@ public:
 	// Subscribers will be notified when the event manager is flushed
 	// Flushing will happen every frame after input is updated and
 	// before rendering.
-	Subscription<T> subscribe(std::function<void(const std::vector<T>&)> handler) {
+	std::unique_ptr<Subscription> subscribe(std::function<void(const std::vector<T>&)> handler) {
 		static SubscriptionId next_id;
 
 		SubscriptionId id = next_id++;
 		handlers[id] = std::move(handler);
 
-		Subscription<T> s;
-		s.type = Subscription<T>::Type::Deferred;
-		s.id = id;
+		auto s = std::make_unique<SubscriptionT<T>>();
+		s->type = Subscription::Type::Deferred;
+		s->id = id;
 
-		return s;
+		return std::move(s);
 	}
 
 	// Subscribers will be notified immediately when an event is dispatched.
@@ -114,17 +115,17 @@ public:
 	// guarenteed to fire at most once a frame.
 	// Using this for events that may happen more than once a frame
 	// may drastically decrease performance.
-	Subscription<T> subscribe_immediate(std::function<void(const T&)> handler) {
+	std::unique_ptr<Subscription> subscribe_immediate(std::function<void(const T&)> handler) {
 		static SubscriptionId next_id;
 
 		SubscriptionId id = next_id++;
 		immediate_handlers.emplace(id, std::move(handler));
 
-		Subscription<T> s;
-		s.type = Subscription<T>::Type::Immediate;
-		s.id = id;
+		auto s = std::make_unique<SubscriptionT<T>>();
+		s->type = Subscription::Type::Immediate;
+		s->id = id;
 
-		return s;
+		return std::move(s);
 	}
 
 	void unsubscribe(SubscriptionId id)
@@ -205,6 +206,7 @@ public:
 		return nullptr;
 	}
 
+	// TODO can i attach these to event base instances maybe? idk.  
 	std::string serialize(const std::unique_ptr<EventBase>& event) {
 		std::ostringstream os;
 
@@ -255,7 +257,7 @@ public:
 };
 
 template <EventType T>
-void Subscription<T>::unsubscribe()
+void SubscriptionT<T>::unsubscribe() const override
 {
 	if (type == Type::Deferred)
 		EventManager::get_dispatcher<T>().unsubscribe(id);
