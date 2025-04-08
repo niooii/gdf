@@ -70,7 +70,9 @@ struct Subscription {
 };
 
 template<EventType>
-struct SubscriptionT : Subscription {};
+struct SubscriptionT : Subscription {
+	void unsubscribe() const override;
+};
 
 template<EventType T>
 class EventDispatcher {
@@ -156,7 +158,7 @@ public:
 
 class EventManager {
 	template<EventType T>
-	friend struct Subscription;
+	friend struct SubscriptionT;
 
 	std::vector<void(*)()> flush_functions;
 
@@ -233,12 +235,12 @@ public:
 	}
 
 	template<EventType T>
-	Subscription<T> subscribe(std::function<void(const std::vector<T>&)> handler) {
+	std::unique_ptr<Subscription> subscribe(std::function<void(const std::vector<T>&)> handler) {
 		return get_dispatcher<T>().subscribe(std::move(handler));
 	}
 
 	template<EventType T>
-	Subscription<T> subscribe_immediate(std::function<void(const T&)> handler) {
+	std::unique_ptr<Subscription> subscribe_immediate(std::function<void(const T&)> handler) {
 		return get_dispatcher<T>().subscribe_immediate(std::move(handler));
 	}
 
@@ -257,7 +259,7 @@ public:
 };
 
 template <EventType T>
-void SubscriptionT<T>::unsubscribe() const override
+void SubscriptionT<T>::unsubscribe() const
 {
 	if (type == Type::Deferred)
 		EventManager::get_dispatcher<T>().unsubscribe(id);
