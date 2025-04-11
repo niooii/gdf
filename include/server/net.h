@@ -6,7 +6,7 @@
 #include <gdfe/os/thread.h>
 
 struct EventBase;
-struct ServerNetworkManager {
+struct NetworkManager {
     ENetHost* host;
     std::vector<ENetPeer> peers;
 
@@ -22,8 +22,8 @@ struct ServerNetworkManager {
 
     u16 port;
 
-    ServerNetworkManager(u16 port, u16 max_clients);
-    ~ServerNetworkManager();
+    NetworkManager(u16 port, u16 max_clients);
+    ~NetworkManager();
     void broadcast();
 
     // Dispatches all the incoming events locally and then

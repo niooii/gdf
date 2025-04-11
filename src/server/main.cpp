@@ -1,23 +1,28 @@
 #include <gdfe/gdfe.h>
 #include <stdexcept>
-#include <server/server.h>
-#ifndef GDF_CLIENT_BUILD
 #define ENET_IMPLEMENTATION
-#endif
+#include <server/server.h>
 
+#include <game/events.h>
 #include <gdfe/strutils.h>
 #include <server/net.h>
 
+#include "game/events/defs.h"
+
 GDF_BOOL server_loop(const GDF_AppState* app_state, f64 delta_time, void* _state)
 {
-    ServerNetworkManager* server = (ServerNetworkManager*)_state;
-    server->dispatch_incoming();
+    WorldServer* server = (WorldServer*)_state;
+    server->tick();
+    EventManager::get_instance().flush();
     return GDF_TRUE;
 }
 
-#ifndef GDF_CLIENT_BUILD
 int main(int argc, char** argv)
 {
+    WorldServerCreateInfo server_info = {
+
+    };
+
     if (argc < 2)
     {
         // ran as standalone program
@@ -25,14 +30,17 @@ int main(int argc, char** argv)
     else
     {
         const char* semaphore_name = argv[1];
-
+        server_info.global_semaphore_name = argv[1];
     }
 
     GDF_InitSubsystems();
+    if (enet_initialize() != 0) {
+        LOG_FATAL("An error occurred while initializing ENet");
+    }
     // GDF_Process proc = GDF_CreateProcess("vkcube.exe", NULL, NULL, NULL);
     // GDF_TerminateProcess(proc);
 
-    ServerNetworkManager* server = new ServerNetworkManager{GDF_SERVER_PORT, 64};
+    WorldServer server{server_info};
 
     GDF_InitInfo info = {
         .config = {
@@ -41,11 +49,16 @@ int main(int argc, char** argv)
         },
         .callbacks = {
             .on_loop = server_loop,
-            .on_loop_state = server
+            .on_loop_state = &server
         }
     };
     GDF_Init(info);
 
+    EventManager::get_instance().reject_dispatch_if<ChunkUpdateEvent>(
+        [](auto event) {
+        return event.source == ProgramType::Client;
+    });
+
     GDF_Run();
+    enet_deinitialize();
 }
-#endif

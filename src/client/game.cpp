@@ -43,10 +43,8 @@ AppState* app_init(AppState* game)
     game->current_screen_type = GDF_GAME_SCREENTYPE_WORLD;
     // game->main_player = NULL;
     WorldCreateInfo world_info = {
-        .chunk_simulate_distance = 16,
-        .ticks_per_sec = 20,
     };
-    game->world = new World();
+    game->world = new World(world_info);
     player = game->world->create_humanoid();
     physics_add_entity(game->world->physics_, &player->base);
     player->base.aabb.min = vec3_new(-0.375, 0, -0.375);

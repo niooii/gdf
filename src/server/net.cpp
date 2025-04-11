@@ -7,7 +7,7 @@
 // or some horrible horrible macro
 // this should execute at a max fixed rate lol
 static unsigned long io_thread(void* args) {
-    ServerNetworkManager* server = (ServerNetworkManager*) args;
+    NetworkManager* server = (NetworkManager*) args;
     GDF_InitThreadLogging("Server:Net");
 
     LOG_INFO("Listening on port %d", server->port);
@@ -83,13 +83,13 @@ static unsigned long io_thread(void* args) {
     }
 }
 
-ServerNetworkManager::ServerNetworkManager(u16 port, u16 max_clients) {
+NetworkManager::NetworkManager(u16 port, u16 max_clients) {
     ENetAddress addr = {
         .port = port,
         .host = ENET_HOST_ANY
     };
 
-    EventManager::get_instance().subscribe_immediate<TestTextEvent>([](auto& event)
+    EventManager::get_instance().subscribe<TestTextEvent>([](auto& event)
     {
         LOG_INFO("Words from client: \"%s\"", event.message.c_str());
     });
@@ -120,7 +120,7 @@ ServerNetworkManager::ServerNetworkManager(u16 port, u16 max_clients) {
     recv_thread = GDF_CreateThread(io_thread, this);
 }
 
-ServerNetworkManager::~ServerNetworkManager()
+NetworkManager::~NetworkManager()
 {
     io_active = false;
 
@@ -133,7 +133,7 @@ ServerNetworkManager::~ServerNetworkManager()
     enet_host_destroy(host);
 }
 
-void ServerNetworkManager::dispatch_incoming()
+void NetworkManager::dispatch_incoming()
 {
     EventManager& events = EventManager::get_instance();
 

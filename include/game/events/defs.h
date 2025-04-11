@@ -30,8 +30,8 @@ SER20_REGISTER_POLYMORPHIC_RELATION(EventBase, struct_name)
 
 DECL_EVENT(ChunkLoadEvent)
 {
-    ivec3 chunk_coord;
-    SERIALIZE_FIELDS(chunk_coord)
+    std::vector<ivec3> loaded_chunks;
+    SERIALIZE_FIELDS(loaded_chunks)
 };
 MAKE_SERIALIZABLE(ChunkLoadEvent)
 

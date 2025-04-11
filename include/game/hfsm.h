@@ -1,85 +1,131 @@
-// #pragma once
-//
-// class State {
-// // need a way to store children states. maybe templates will come in clutch
-// // or do i even need to store children?
-// protected:
-// 	State* parent;
-//
-// public:
-// 	State(State* parent) : parent{parent} {
-//
-// 	};
-//
-//     virtual void enter(Entity& e) {}
-//     virtual void exit(Entity& e) {}
-//
-//     // User input should be handled here too, probably
-//     // Return a state to transition, or just return nullptr
-//     virtual State* update(Entity& e, f32 dt) {}
-//
-//     // i lowkey want this to have a function that returns the state type,
-//     // so children can change behavior based on the parent state. but how?
-//     // wanan try to avoid runtmie overhead if possbile
-// };
-//
-// // so how do i do this
-//
-// // example models
-//
-// class AirborneState : State {
-//
-// }
-//
-// class JumpingState : AirborneState {
-//
-// }
-//
-// class FallingState : AirborneState {
-//
-// }
-//
-// class GroundedState : State {
-// public:
-// 	void enter(Entity& e) override {
-//
-// 	}
-//
-// 	void exit(Entity& e) override {
-//
-// 	}
-//
-// 	State* update(Entity& e, f32 dt) override {
-// 		if (GDF_IsKeyPressed(GDF_KEYCODE_SPACE)) {
-// 			// now how do i set the parent state accordingly damn this is hard
-// 			return new JumpingState();
-// 		}
-// 	}
-// }
-//
-// // this could actually belong to an entity as a component - look more into that later
-// class StateMachine {
-// 	Entity e;
-// 	State* curr;
-//
-// public:
-// 	StateMachine(State* entry, Entity e) : curr{entry}, e{e} {};
-// 	// delete all states
-// 	~StateMachine();
-//
-// 	// also consider an add_transition(std::function<State* transition(State* curr, f32 dt)>) where the fn
-// 	// returns a new state or nothing. but calling a shit ton of functions doesnt seem that performant
-// 	// however itll make things so much more clear
-// 	// however thats basically already the update function man just ff
-// 	void add_state(State* state);
-//
-// 	// something like this
-// 	void update(f32 dt) {
-// 		State* new_state = curr->update(e, dt);
-// 		if (curr != new_state) {
-// 			curr->exit(e);
-// 			curr = new_state;
-// 			curr->enter(e);
-// 		}
-// 	}
-// }
+#pragma once
+#include <game/events.h>
+#include <typeinfo>
+
+template <typename Derived, typename Parent = void>
+class State;
+
+template <typename InitialState>
+class StateMachine;
+
+template <typename T>
+struct has_parent : std::false_type {};
+
+template <typename D, typename P>
+struct has_parent<State<D, P>> : std::true_type {};
+
+template <typename Derived>
+class State<Derived, void> {
+
+public:
+    void enter() { static_cast<Derived*>(this)->on_enter(); }
+    void update(f32 dt) { static_cast<Derived*>(this)->on_update(dt); }
+    void exit() { static_cast<Derived*>(this)->on_exit(); }
+
+    template <typename StateT>
+    void transition() {
+        if (state_machine) {
+            static_cast<StateMachine*>(state_machine)->TransitionTo<StateT>();
+        }
+    }
+
+    void set_fsm_ptr(void* machine) {
+        state_machine = machine;
+    }
+
+protected:
+    void on_enter() {}
+    void on_update(f32 dt) {}
+    void on_exit() {}
+
+    void* state_machine = nullptr;
+
+    std::vector<std::unique_ptr<Subscription>> subscriptions;
+
+    template <EventType T>
+    void subscribe_event(std::function<void(const T&)> handler) {
+        auto& manager = EventManager::get_instance();
+        subscriptions.push_back(
+            std::move(
+                manager.subscribe<T>(std::move(handler))
+            )
+        );
+    }
+
+    void unsubscribe_events() {
+        for (const auto& sub : subscriptions) {
+            sub->unsubscribe();
+        }
+        subscriptions.clear();
+    }
+};
+
+template <typename Derived, typename Parent>
+class State<Derived, Parent> : public Parent {
+
+public:
+    void enter() {
+        Parent::enter();
+        static_cast<Derived*>(this)->on_enter();
+    }
+    
+    void update(float dt) { 
+        Parent::update(dt);
+        static_cast<Derived*>(this)->on_update(dt);
+    }
+    
+    void exit() {
+        static_cast<Derived*>(this)->on_exit();
+        Parent::exit();
+    }
+
+protected:
+    void on_enter() {}
+    void on_update(f32 dt) {}
+    void on_exit() {}
+};
+
+template <typename InitialState>
+class StateMachine {
+public:
+    StateMachine() {
+        current_state_ptr = &initial_state;
+        current_state_ptr->set_fsm_ptr(this);
+        current_state_ptr->enter();
+    }
+    
+    ~StateMachine() {
+        if (current_state_ptr) {
+            current_state_ptr->exit();
+        }
+    }
+    
+    void update(float dt) {
+        if (current_state_ptr) {
+            current_state_ptr->update(dt);
+        }
+    }
+    
+    template <typename NewStateT>
+    void transition() {
+        if (current_state_ptr) {
+            current_state_ptr->exit();
+            current_state_ptr->unsubscribe_events();
+        }
+
+        // TODO!
+
+    }
+    
+    // Check if in a specific state or its parent states
+    // TODO!
+    template <typename StateT>
+    bool is_in_state() const {
+        return false;
+    }
+    
+private:
+    InitialState initial_state;
+    
+    State<InitialState, void>* current_state_ptr = nullptr;
+};

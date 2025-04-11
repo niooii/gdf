@@ -7,8 +7,7 @@
 #include <game/prelude.h>
 
 // TODO! make customizable
-World::World()
-    : generator_{this}
+World::World(WorldCreateInfo& create_info)
 {
     chunks_.reserve(128);
     humanoids_.reserve(128);
@@ -29,6 +28,10 @@ World::World()
 
     upd_stopwatch_ = GDF_StopwatchCreate();
 
+    auto& events = EventManager::get_instance();
+    auto chunk_load_event = events.create_event<ChunkLoadEvent>();
+    chunk_load_event->source = ProgramType::Client;
+
     // Create chunks
     for (i32 chunk_x = -1; chunk_x <= 1; chunk_x++)
     {
@@ -43,9 +46,59 @@ World::World()
                 };
                 chunks_[cc] = new Chunk();
                 generator_.gen_chunk(cc, *chunks_[cc]);
+                chunk_load_event->loaded_chunks.push_back(cc);
             }
         }
     }
+
+    events.queue_dispatch(*chunk_load_event);
+}
+
+// TODO! actually implement loading and saving
+World::World(const char* folder_path)
+{
+    chunks_.reserve(128);
+    humanoids_.reserve(128);
+    PhysicsCreateInfo physics_info = {
+        .gravity = vec3_mul_scalar(vec3_new(0, -1, 0), 20),
+        .gravity_active = GDF_TRUE,
+        .air_drag = 3.f,
+        .ground_drag = 12.f,
+        .terminal_velocity = -50.f
+    };
+
+    chunk_sim_dist_ = 8;
+    chunk_view_dist_ = 8;
+
+    physics_ = physics_init(physics_info);
+    ticks_per_sec_ = 20;
+
+    upd_stopwatch_ = GDF_StopwatchCreate();
+
+    auto& events = EventManager::get_instance();
+    auto chunk_load_event = events.create_event<ChunkLoadEvent>();
+    chunk_load_event->source = ProgramType::Client;
+
+    // Create chunks
+    for (i32 chunk_x = -1; chunk_x <= 1; chunk_x++)
+    {
+        for (i32 chunk_y = -1; chunk_y < 1; chunk_y++)
+        {
+            for (i32 chunk_z = -1; chunk_z <= 1; chunk_z++)
+            {
+                ivec3 cc = {
+                    .x = chunk_x,
+                    .y = chunk_y,
+                    .z = chunk_z
+                };
+                chunks_[cc] = new Chunk();
+                generator_.gen_chunk(cc, *chunks_[cc]);
+                chunk_load_event->loaded_chunks.push_back(cc);
+            }
+        }
+    }
+
+    events.queue_dispatch(*chunk_load_event);
 }
 
 World::~World()
@@ -103,19 +156,8 @@ HumanoidEntity* World::create_humanoid()
     return hum;
 }
 
-// Will not create a new chunk if it doesn't exist.
-Block* World::get_block(vec3 pos)
-{
-    auto [cc, bc] = world_pos_to_chunk_block_tuple(pos);
-    Chunk* chunk = this->get_chunk(cc);
-    if (!chunk)
-        return nullptr;
-
-    return chunk->get_block(bc);
-}
-
 // Will create a new chunk if it doesn't exist.
-Block* World::get_block_gen_chunk(vec3 pos)
+Block* World::get_block(vec3 pos)
 {
     auto [cc, bc] = world_pos_to_chunk_block_tuple(pos);
     Chunk* chunk = this->get_or_create_chunk(cc);

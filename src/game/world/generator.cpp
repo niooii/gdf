@@ -2,7 +2,7 @@
 
 #include <game/world.h>
 
-Generator::Generator(World* world) : world{world}
+Generator::Generator()
 {
 
 }
@@ -43,10 +43,4 @@ void Generator::gen_chunk(ivec3 cc, Chunk& chunk)
             }
         }
     }
-
-    auto& events = EventManager::get_instance();
-    ChunkLoadEvent event{};
-    event.chunk_coord = cc;
-    event.source = ProgramType::Server;
-    events.dispatch(event);
 }

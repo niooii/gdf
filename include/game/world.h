@@ -98,10 +98,14 @@ public:
 class Generator {
     World* world;
 public:
-    Generator(World* world);
+    Generator();
     ~Generator();
 
     void gen_chunk(ivec3 chunk_coord, Chunk& chunk);
+};
+
+struct WorldCreateInfo {
+
 };
 
 typedef struct BlockTouchingResult {
@@ -126,8 +130,14 @@ public:
     // temp
     PhysicsEngine physics_;
 
-    World();
+    // Creates a new world with the given parameters.
+    World(WorldCreateInfo& create_info);
+    // Loads a world from the specified folder
+    World(const char* folder_path);
+
     ~World();
+
+    bool save(const char* folder_path);
 
     void update(f64 dt);
     // Will load it from somewhere or return nullptr if nothing
@@ -135,10 +145,8 @@ public:
     Chunk* get_or_create_chunk(ivec3 chunk_coord);
     HumanoidEntity* create_humanoid();
 
-    // Will not create a new chunk if it doesn't exist.
-    Block* get_block(vec3 pos);
     // Will create a new chunk if it doesn't exist.
-    Block* get_block_gen_chunk(vec3 pos);
+    Block* get_block(vec3 pos);
 
     Block* set_block(BlockCreateInfo& create_info);
 
@@ -197,11 +205,6 @@ FORCEINLINE ChunkBlockPosTuple world_pos_to_chunk_block_tuple(vec3 world_pos)
         .cc = cc
     };
 }
-
-typedef struct WorldCreateInfo {
-    u8 chunk_simulate_distance;
-    u16 ticks_per_sec;
-} WorldCreateInfo;
 
 // Called every world tick by world_update()
 void world_tick(World* world);
