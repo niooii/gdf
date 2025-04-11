@@ -9,6 +9,13 @@ typedef enum ENTITY_TYPE {
     ENTITY_TYPE_HUMANOID
 } ENTITY_TYPE;
 
+namespace Components
+{
+    struct Health {
+        f32 val;
+    };
+}
+
 typedef struct Entity {
     f32 health;
     GDF_BOOL damagable;

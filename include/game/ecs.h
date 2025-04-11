@@ -1,16 +1,12 @@
 #pragma once
 #include <vector>
+#include <entt/entt.hpp>
 
-template<typename Component>
-class ComponentRegistry {
-    std::vector<Component> components;
-public:
-
-    void uhh_idk() {
-
-    }
-};
-
-class EntityComponentSystem {
-
-};
+/* These are aliases for ENTT's types, in case I implement my own somewhere down the line */
+namespace ecs
+{
+    using Entity = entt::entity;
+    using Registry = entt::registry;
+    using EntityRegistry = entt::registry;
+    using ComponentTypeId = entt::id_type;
+}

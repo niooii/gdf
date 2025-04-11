@@ -5,3 +5,6 @@
 [submodule "extern/ser20"]
 	path = extern/ser20
 	url = https://github.com/royjacobson/ser20
+[submodule "extern/entt"]
+	path = extern/entt
+	url = https://github.com/skypjack/entt.git

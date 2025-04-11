@@ -1,90 +1,69 @@
-#include <game/physics/physics.h>
-#include <game/world.h>
-#include <gdfe/collections/list.h>
-#include <game/events.h>
+#include <game/physics/engine.h>
 
-using std::vector;
-
-typedef struct Physics_T {
-    vector<Entity*> entities;
-    
-    f32 terminal_velocity;
-    f32 air_drag;
-    f32 ground_drag;
-    vec3 gravity;
-    GDF_BOOL gravity_active; 
-} Physics_T;
-
-// TODO! ecs ecs ecs ecs
-PhysicsEngine physics_init(PhysicsCreateInfo create_info)
+PhysicsSimulation::PhysicsSimulation(const SimulationCreateInfo& info, const World* world)
+    : world{world}
 {
-    PhysicsEngine physics = (Physics_T*)GDF_Malloc(sizeof(Physics_T), GDF_MEMTAG_APPLICATION);
-    new (&physics->entities) vector<Entity*>();
-    physics->entities.reserve(32);
-    physics->gravity = create_info.gravity;
-    physics->gravity_active = create_info.gravity_active;
-    physics->air_drag = create_info.air_drag;
-    physics->ground_drag = create_info.ground_drag;
-    physics->terminal_velocity = create_info.terminal_velocity;
-
-    return physics;
+    gravity_ = info.gravity;
+    gravity_active_ = info.gravity_active;
+    air_drag_ = info.air_drag;
+    ground_drag_ = info.ground_drag;
+    terminal_velocity_ = info.terminal_velocity;
+    registry_ = info.entity_registry_p;
 }
 
-void physics_add_entity(PhysicsEngine engine, Entity* entity)
-{
-    engine->entities.push_back(entity);
-}
-
-GDF_BOOL physics_update(PhysicsEngine engine, World* world, f64 dt)
+void PhysicsSimulation::update(f32 dt)
 {
     // TODO! stupid hack for now to test with absurd chunk loading times and not
     // fall thru the ground
     if (dt > 0.5)
         dt = 0.5;
+    
     // TODO! optimize, look into SIMD
-    vec3 effective_gravity = engine->gravity_active ? engine->gravity : vec3_zero();
+    vec3 effective_gravity = gravity_active_ ? gravity_ : vec3_zero();
     vec3 net_accel;
 
-    u32 len = engine->entities.size();
-    for (u32 i = 0; i < len; i++)
-    {
-        Entity* entity = engine->entities[i];
+    auto view = registry_->view<Components::Velocity, Components::AabbCollider>();
 
-        f32 drag = entity->grounded ? engine->ground_drag : engine->air_drag;
+    for(auto [entity, vel_comp, collider]: view.each())
+    {
+        vec3& vel = vel_comp.vec;
+        f32 drag = collider.is_grounded ? ground_drag_ : air_drag_;
         // TODO! this aint quite right..
-        if (engine->gravity_active)
+        if (gravity_active_)
         {
             f32 drag_factor = 1.0f - (drag * dt);
             drag_factor = MAX(0, drag_factor);
-            entity->vel.x *= drag_factor;
-            entity->vel.z *= drag_factor;
+            vel.x *= drag_factor;
+            vel.z *= drag_factor;
         }
 
-        net_accel = vec3_add(entity->accel, effective_gravity);
+        // TODO! acceleration component
+        vec3 accel = vec3_zero();
+        net_accel = vec3_add(accel, effective_gravity);
 
         vec3 deltas = vec3_new(
-            entity->vel.x * dt + 0.5f * net_accel.x * dt * dt,
-            entity->vel.y * dt + 0.5f * net_accel.y * dt * dt,
-            entity->vel.z * dt + 0.5f * net_accel.z * dt * dt
+            vel.x * dt + 0.5f * net_accel.x * dt * dt,
+            vel.y * dt + 0.5f * net_accel.y * dt * dt,
+            vel.z * dt + 0.5f * net_accel.z * dt * dt
         );
 
-        entity->vel.x = entity->vel.x + net_accel.x * dt;
+        vel.x = vel.x + net_accel.x * dt;
         // cap velocity gain at a terminal velocity
-        // TODO! should this be for all axis? (and both y directions?)
-        if (entity->vel.y > engine->terminal_velocity)
+        // TODO! this should be for all axis - a deceleration force, not yk, flat cap
+        if (vel.y > terminal_velocity_)
         {
-            f32 t_vy = entity->vel.y + net_accel.y * dt;
-            if (t_vy < engine->terminal_velocity)
-                entity->vel.y = engine->terminal_velocity;
+            f32 t_vy = vel.y + net_accel.y * dt;
+            if (t_vy < terminal_velocity_)
+                vel.y = terminal_velocity_;
             else
-                entity->vel.y = t_vy;
+                vel.y = t_vy;
         }
-        entity->vel.z = entity->vel.z + net_accel.z * dt;
+        vel.z = vel.z + net_accel.z * dt;
 
         // TODO! eliminate phasing through blocks at high velocities
         // with raycasting
 
-        AxisAlignedBoundingBox t_aabb = entity->aabb;
+        AxisAlignedBoundingBox t_aabb = collider.aabb;
         aabb_translate(&t_aabb, deltas);
 
         BlockTouchingResult results[64];
@@ -97,7 +76,7 @@ GDF_BOOL physics_update(PhysicsEngine engine, World* world, f64 dt)
         // Check for floor (only if translated aabb's y is below the current one)
         GDF_BOOL ground_found = GDF_FALSE;
         GDF_BOOL should_check_ground =
-            t_aabb.min.y <= entity->aabb.min.y;
+            t_aabb.min.y <= collider.aabb.min.y;
         f32 ground_y = 0;
         if (should_check_ground)
         {
@@ -132,7 +111,7 @@ GDF_BOOL physics_update(PhysicsEngine engine, World* world, f64 dt)
                     vec3 offset_vec = vec3_new(0, y_offset, 0);
                     aabb_translate(&t_aabb, offset_vec);
                     vec3_add_to(&deltas, offset_vec);
-                    entity->vel.y = 0;
+                    vel.y = 0;
                     break;
                 }
             }
@@ -160,15 +139,15 @@ GDF_BOOL physics_update(PhysicsEngine engine, World* world, f64 dt)
                 // zero velocity and shi
                 if (resolution.x != 0)
                 {
-                    entity->vel.x = 0;
+                    vel.x = 0;
                 }
                 if (resolution.y != 0)
                 {
-                    entity->vel.y = 0;
+                    vel.y = 0;
                 }
                 if (resolution.z != 0)
                 {
-                    entity->vel.z = 0;
+                    vel.z = 0;
                 }
                 // GDF_EventContext ctx = {
                 //     .data.u64[0] = (u64)entity
@@ -177,11 +156,8 @@ GDF_BOOL physics_update(PhysicsEngine engine, World* world, f64 dt)
             }
         }
         // update grounded status
-        entity->grounded = ground_found;
+        collider.is_grounded = ground_found;
 
-        aabb_translate(&entity->aabb, deltas);
+        aabb_translate(&collider.aabb, deltas);
     }
-
-    return GDF_TRUE;
 }
-

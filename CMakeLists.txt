@@ -13,6 +13,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_program(GLSLC glslc REQUIRED)
 add_subdirectory(gdfe)
 add_subdirectory(extern/ser20)
+add_subdirectory(extern/entt)
 
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
 
@@ -49,16 +50,15 @@ SET_SOURCE_FILES_PROPERTIES(${GAME_SRC} ${CLIENT_SRC} ${SERVER_SRC} ${EXTERN_SRC
 
 add_library(gdf_common STATIC ${GAME_SRC} ${EXTERN_SRC}
         include/game/events/defs.h
-        include/game/events/defs.h)
+        include/game/events/defs.h
+)
 
-add_executable(client ${CLIENT_SRC}
-        include/constants.h
-        include/game/events/defs.h)
+add_executable(client ${SERVER_SRC}
+        src/client/app.cpp)
+
 target_compile_definitions(client PRIVATE GDF_CLIENT_BUILD)
 
-add_executable(server ${SERVER_SRC}
-        include/game/events/defs.h
-        include/game/events/defs.h)
+add_executable(server ${SERVER_SRC})
 
 if(DEFINED ENV{VULKAN_SDK})
     if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
@@ -85,6 +85,7 @@ target_link_libraries(gdf_common
         Vulkan::Vulkan
         gdfe
         ser20
+        EnTT::EnTT
 )
 
 target_link_libraries(client

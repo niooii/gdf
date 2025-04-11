@@ -26,9 +26,7 @@ struct NetworkManager {
     ~NetworkManager();
     void broadcast();
 
-    // Dispatches all the incoming events locally and then
-    // dispatches the oens in the dispatch queue to the proper
-    // clients.
+    // Dispatches all the incoming events locally
     void dispatch_incoming();
 };
 

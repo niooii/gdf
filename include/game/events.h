@@ -244,3 +244,27 @@ void SubscriptionT<T>::unsubscribe() const
 {
 	EventManager::get_dispatcher<T>().unsubscribe(id);
 }
+
+/* Macros for declaring event types */
+
+template<typename Derived>
+struct EventBaseT : EventBase {
+	void dispatch_self(EventManager& manager) const override {
+		manager.dispatch(static_cast<const Derived&>(*this));
+	}
+};
+
+#define SERIALIZE_FIELDS(...) \
+template<class Archive> \
+void serialize(Archive& ar) { \
+ar(ser20::base_class<EventBase>(this) __VA_OPT__(,) __VA_ARGS__); \
+}
+
+// Declares a non-serializable event type. For serializable events, see DECL_SERDE_EVENT
+#define DECL_EVENT(name) struct name : EventBaseT<name>
+
+// Every serializable event must contain SERIALIZE_FIELDS somewhere in it's declaration.
+#define DECL_SERDE_EVENT(name) struct name; \
+SER20_REGISTER_TYPE(name) \
+SER20_REGISTER_POLYMORPHIC_RELATION(EventBase, name) \
+struct name : EventBaseT<name>

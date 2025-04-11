@@ -2,12 +2,15 @@
 
 #include <gdfe/core.h>
 #include <game/entity/humanoid.h>
-#include <game/physics/physics.h>
+#include <game/physics/engine.h>
 #include <game/physics/aabb.h>
 #include <gdf_math.h>
 #include <unordered_dense.h>
+
+#include "ecs.h"
 #include "types.h"
 
+class World;
 u32 chunk_hash(const u8* data, u32 len);
 
 #define CHUNK_SIZE 32
@@ -123,12 +126,12 @@ class World {
 
     u16 ticks_per_sec_;
     GDF_Stopwatch upd_stopwatch_;
-    
-    std::vector<HumanoidEntity*> humanoids_;
+
+    ecs::Registry registry_{};
 
 public:
     // temp
-    PhysicsEngine physics_;
+    PhysicsSimulation* physics_;
 
     // Creates a new world with the given parameters.
     World(WorldCreateInfo& create_info);
@@ -141,12 +144,12 @@ public:
 
     void update(f64 dt);
     // Will load it from somewhere or return nullptr if nothing
-    Chunk* get_chunk(ivec3 chunk_coord);
+    Chunk* get_chunk(ivec3 chunk_coord) const;
     Chunk* get_or_create_chunk(ivec3 chunk_coord);
-    HumanoidEntity* create_humanoid();
+    ecs::Entity create_humanoid();
 
-    // Will create a new chunk if it doesn't exist.
-    Block* get_block(vec3 pos);
+    // WILL NOT create a new chunk if it doesn't exist.
+    Block* get_block(vec3 pos) const;
 
     Block* set_block(BlockCreateInfo& create_info);
 
@@ -154,11 +157,11 @@ public:
 
     // Gets the blocks that is touching an AABB.
     // Modifies the result_arr with the found blocks, and returns the amount of blocks found
-    u32 get_blocks_touching(
+    const u32 get_blocks_touching(
         AxisAlignedBoundingBox* aabb,
         BlockTouchingResult* result_arr,
         u32 result_arr_size
-    );
+    ) const;
 };
 
 FORCEINLINE AxisAlignedBoundingBox block_get_aabb(vec3 world_pos) {

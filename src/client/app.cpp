@@ -9,11 +9,16 @@
 #include <gdfe/os/thread.h>
 #include <server/net.h>
 #include <server/server.h>
-
 #include "game/events/defs.h"
 
-static HumanoidEntity* player;
-AppState* app_init(AppState* game)
+void App::join_world(const char* host, u16 port)
+{
+    TODO("UNIMPELMENTED JOIN WORLD YET");
+}
+
+App APP{};
+
+void app_init()
 {
     // TODO! the server here is for fast iteration during development.
     // should be removed in release builds
@@ -29,39 +34,37 @@ AppState* app_init(AppState* game)
         .near_clip = 0.1f,
         .far_clip = 1000.0f,
     };
-    game->main_camera = GDF_CameraCreate(&camera_info);
-    GDF_CameraSetGlobalAxis(game->main_camera, vec3_new(0, 1, 0));
-    GDF_CameraConstrainPitch(game->main_camera, -DEG_TO_RAD(89.9), DEG_TO_RAD(89.9));
+    APP.main_camera = GDF_CameraCreate(&camera_info);
+    GDF_CameraSetGlobalAxis(APP.main_camera, vec3_new(0, 1, 0));
+    GDF_CameraConstrainPitch(APP.main_camera, -DEG_TO_RAD(89.9), DEG_TO_RAD(89.9));
+
+    APP.join_world("127.0.0.1", GDF_SERVER_PORT);
 
     // TODO! uncomment later, the game will be initilaized in world state for now.
-    // game->current_screen = GDF_GAME_SCREEN_MAIN_MENU;
-    // game->current_screen_type = GDF_GAME_SCREENTYPE_GUI_MENU;
-    // game->main_player = NULL;
-    // game->world = NULL;
+    // APP.current_screen = GDF_GAME_SCREEN_MAIN_MENU;
+    // APP.current_screen_type = GDF_GAME_SCREENTYPE_GUI_MENU;
+    // APP.main_player = NULL;
+    // APP.world = NULL;
 
-    game->current_screen = GDF_GAME_SCREEN_IN_WORLD;
-    game->current_screen_type = GDF_GAME_SCREENTYPE_WORLD;
-    // game->main_player = NULL;
-    WorldCreateInfo world_info = {
-    };
-    game->world = new World(world_info);
-    player = game->world->create_humanoid();
-    physics_add_entity(game->world->physics_, &player->base);
-    player->base.aabb.min = vec3_new(-0.375, 0, -0.375);
-    player->base.aabb.max = vec3_new(0.375, 1.8, 0.375);
-    aabb_translate(&player->base.aabb, vec3_new(1, 5, 1));
-    player->base.health = 100;
-    player->base.damagable = GDF_TRUE;
-
-    return game;
+    // APP.main_player = NULL;
+    // WorldCreateInfo world_info = {
+    // };
+    // APP.world = new World(world_info);
+    // player = APP.world->create_humanoid();
+    // physics_add_entity(APP.world->physics_, &player->base);
+    // player->base.aabb.min = vec3_new(-0.375, 0, -0.375);
+    // player->base.aabb.max = vec3_new(0.375, 1.8, 0.375);
+    // aabb_translate(&player->base.aabb, vec3_new(1, 5, 1));
+    // player->base.health = 100;
+    // player->base.damagable = GDF_TRUE;
 }
 
 // TODO! remove this from here prob
 // temporary input controls. will switch to registering different input handlers
 // later.
-void game_handle_input(AppState* game, f64 dt)
+void game_handle_input(App* game, f64 dt)
 {
-    GDF_Camera camera = game->main_camera;
+    GDF_Camera camera = APP.main_camera;
     {
         ivec2 d;
         GDF_GetMouseDelta(&d);
@@ -118,7 +121,7 @@ void game_handle_input(AppState* game, f64 dt)
     }
     if (GDF_IsKeyPressed(GDF_KEYCODE_Q))
     {
-        dash(player, 1.f, camera_forward);
+        dash(game->world->main_player, 1.f, camera_forward);
     }
     GDF_BOOL jumped = GDF_FALSE;
     if (GDF_IsKeyDown(GDF_KEYCODE_SPACE) && player->base.grounded)
@@ -166,7 +169,7 @@ void game_handle_input(AppState* game, f64 dt)
     if (GDF_IsButtonDown(GDF_MBUTTON_LEFT))
     {
         RaycastInfo raycast_info = raycast_info_new(
-            game->world,
+            APP.world,
             camera_pos,
             camera_forward,
             4
@@ -176,13 +179,13 @@ void game_handle_input(AppState* game, f64 dt)
         if (result.status == RAYCAST_STATUS_HIT)
         {
             LOG_DEBUG("destroying block..");
-            game->world->destroy_block(result.block_world_pos, nullptr);
+            APP.world->destroy_block(result.block_world_pos, nullptr);
         }
     }
     else if (GDF_IsButtonDown(GDF_MBUTTON_RIGHT))
     {
         RaycastInfo raycast_info = raycast_info_new(
-            game->world,
+            APP.world,
             camera_pos,
             camera_forward,
             4
@@ -224,7 +227,7 @@ void game_handle_input(AppState* game, f64 dt)
                     .type = BLOCK_TYPE_WoodPlank,
                     .world_pos = place_pos
                 };
-                game->world->set_block(info);
+                APP.world->set_block(info);
             }
         }
     }
@@ -232,10 +235,10 @@ void game_handle_input(AppState* game, f64 dt)
 
 GDF_BOOL app_update(const GDF_AppState* app_state, f64 dt, void* state)
 {
-    AppState* game = (AppState*)state;
+    App* app = (App*)state;
     // LOG_INFO("VEL: %f %f %f", player->base.vel.x, player->base.vel.y, player->base.vel.z);
-    game_handle_input(game, dt);
-    game->world->update(dt);
+    game_handle_input(app, dt);
+    app->world->update(dt);
 
     auto& events = EventManager::get_instance();
 

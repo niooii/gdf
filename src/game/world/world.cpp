@@ -10,8 +10,7 @@
 World::World(WorldCreateInfo& create_info)
 {
     chunks_.reserve(128);
-    humanoids_.reserve(128);
-    PhysicsCreateInfo physics_info = {
+    SimulationCreateInfo physics_info = {
         .gravity = vec3_mul_scalar(vec3_new(0, -1, 0), 20),
         .gravity_active = GDF_TRUE,
         .air_drag = 3.f,
@@ -23,7 +22,7 @@ World::World(WorldCreateInfo& create_info)
     chunk_view_dist_ = 8;
 
     // TODO! make physics class
-    physics_ = physics_init(physics_info);
+    physics_ = new PhysicsSimulation(physics_info, this);
     ticks_per_sec_ = 20;
 
     upd_stopwatch_ = GDF_StopwatchCreate();
@@ -58,8 +57,7 @@ World::World(WorldCreateInfo& create_info)
 World::World(const char* folder_path)
 {
     chunks_.reserve(128);
-    humanoids_.reserve(128);
-    PhysicsCreateInfo physics_info = {
+    SimulationCreateInfo physics_info = {
         .gravity = vec3_mul_scalar(vec3_new(0, -1, 0), 20),
         .gravity_active = GDF_TRUE,
         .air_drag = 3.f,
@@ -70,7 +68,7 @@ World::World(const char* folder_path)
     chunk_sim_dist_ = 8;
     chunk_view_dist_ = 8;
 
-    physics_ = physics_init(physics_info);
+    physics_ = new PhysicsSimulation(physics_info, this);
     ticks_per_sec_ = 20;
 
     upd_stopwatch_ = GDF_StopwatchCreate();
@@ -107,22 +105,22 @@ World::~World()
     {
         delete entry.second;
     }
-    for (auto hum : humanoids_)
-    {
-        delete hum;
-    }
+    // for (auto hum : humanoids_)
+    // {
+    //     delete hum;
+    // }
 }
 
 void World::update(f64 dt)
 {
-    u32 num_humanoids = humanoids_.size();
-    for (u32 i = 0; i < num_humanoids; i++)
-        humanoid_entity_update(humanoids_[i]);
-    physics_update(physics_, this, dt);
+    // u32 num_humanoids = humanoids_.size();
+    // for (u32 i = 0; i < num_humanoids; i++)
+    //     humanoid_entity_update(humanoids_[i]);
+    physics_->update(dt);
 }
 
 Chunk* World::get_chunk(ivec3 chunk_coord)
-{
+const {
     auto it = chunks_.find(chunk_coord);
     if (it == chunks_.end())
     {
@@ -146,21 +144,26 @@ Chunk* World::get_or_create_chunk(ivec3 chunk_coord)
     return it->second;
 }
 
-HumanoidEntity* World::create_humanoid()
+ecs::Entity World::create_humanoid()
 {
-    auto* hum = new HumanoidEntity();
-    humanoids_.emplace_back(hum);
-    hum->base.type = ENTITY_TYPE_HUMANOID;
-    hum->base.parent = hum;
+    auto entity = registry_.create();
+    registry_.emplace<Components::Health>(entity, 100);
+    registry_.emplace<Components::Velocity>(entity, vec3_zero());
+    AxisAlignedBoundingBox aabb = {
+        vec3_new(-0.375, 0, -0.375),
+        vec3_new(0.375, 1.8, 0.375)
+    };
+    aabb_translate(&aabb, vec3_new(1, 6, 1));
+    registry_.emplace<Components::AabbCollider>(entity, aabb, false);
 
-    return hum;
+    return entity;
 }
 
-// Will create a new chunk if it doesn't exist.
+// WILL NOT create a new chunk if it doesn't exist.
 Block* World::get_block(vec3 pos)
-{
+const {
     auto [cc, bc] = world_pos_to_chunk_block_tuple(pos);
-    Chunk* chunk = this->get_or_create_chunk(cc);
+    Chunk* chunk = this->get_chunk(cc);
     if (!chunk)
         return nullptr;
 
@@ -203,12 +206,12 @@ void World::destroy_block(vec3 pos, Block* destroyed)
 
 // Gets the blocks that is touching an AABB.
 // Modifies the result_arr with the found blocks, and returns the amount of blocks found
-u32 World::get_blocks_touching(
+const u32 World::get_blocks_touching(
     AxisAlignedBoundingBox* aabb,
     BlockTouchingResult* result_arr,
     u32 result_arr_size
 )
-{
+const {
     f32 min_x = FLOOR(aabb->min.x);
     f32 min_y = FLOOR(aabb->min.y);
     f32 min_z = FLOOR(aabb->min.z);
