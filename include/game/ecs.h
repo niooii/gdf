@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#undef max
 #include <entt/entt.hpp>
 
 /* These are aliases for ENTT's types, in case I implement my own somewhere down the line */

@@ -6,6 +6,7 @@ project(gdf
         DESCRIPTION "Not really a game dev final..."
         LANGUAGES CXX)
 
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -53,12 +54,11 @@ add_library(gdf_common STATIC ${GAME_SRC} ${EXTERN_SRC}
         include/game/events/defs.h
 )
 
-add_executable(client ${SERVER_SRC}
-        src/client/app.cpp)
+add_executable(client ${CLIENT_SRC} ${EXTERN_SRC})
 
 target_compile_definitions(client PRIVATE GDF_CLIENT_BUILD)
 
-add_executable(server ${SERVER_SRC})
+add_executable(server ${SERVER_SRC} ${EXTERN_SRC})
 
 if(DEFINED ENV{VULKAN_SDK})
     if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
@@ -77,6 +77,7 @@ target_include_directories(gdf_common
         PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/extern"
+        "${CMAKE_CURRENT_SOURCE_DIR}/extern/hfsm2/include/"
         "${CMAKE_CURRENT_SOURCE_DIR}/game"
 )
 

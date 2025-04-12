@@ -74,11 +74,9 @@ typedef enum WORLD_DIRECTION {
 } WORLD_DIRECTION;
 
 class Chunk {
-    // TODO! use sparse octrees
-    // Array of [CHUNK_SIZE^3] size for direct access.
     std::vector<Block> block_arr;
 
-    // GDF_LIST of ChunkBlock pointers for easy iteration over existing blocks.
+    // list of Block pointers for easy iteration over existing blocks.
     std::vector<Block*> block_list;
 
     // for fast meshing
@@ -139,6 +137,8 @@ public:
     World(const char* folder_path);
 
     ~World();
+
+    FORCEINLINE ecs::Registry& registry() { return registry_; }
 
     bool save(const char* folder_path);
 

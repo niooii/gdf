@@ -1,4 +1,5 @@
 #include <game/physics/engine.h>
+#include <game/world.h>
 
 PhysicsSimulation::PhysicsSimulation(const SimulationCreateInfo& info, const World* world)
     : world{world}

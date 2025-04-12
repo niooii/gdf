@@ -15,19 +15,18 @@ int main()
         LOG_FATAL("An error occurred while initializing ENet");
     }
 
-    AppState app = {};
-    app_init(&app);
+    app_init();
     GDF_InitInfo init = {
         .callbacks = {
             .on_loop = app_update,
-            .on_loop_state = &app,
+            .on_loop_state = &APP,
             .render_callbacks = {
                 .on_render_init = renderer_init,
-                .on_render_init_state = &app,
+                .on_render_init_state = &APP,
                 .on_render_destroy = renderer_destroy,
-                .on_render_destroy_state = &app,
+                .on_render_destroy_state = &APP,
                 .on_render = renderer_draw,
-                .on_render_state = &app
+                .on_render_state = &APP
             }
         },
         .config = {
@@ -52,12 +51,12 @@ int main()
 
     GDF_ThreadSleep(500);
 
-    ServerConnection connection{"127.0.0.1", GDF_SERVER_PORT};
+    APP.join_world("127.0.0.1", GDF_SERVER_PORT);
     auto test_event = std::make_unique<TestTextEvent>();
     test_event->message = "HELLO SERVER!";
-    connection.send(std::move(test_event));
+    APP.client_world->server_con.send(std::move(test_event));
 
-    GDF_RendererSetActiveCamera(app_state->renderer, app.main_camera);
+    GDF_RendererSetActiveCamera(app_state->renderer, APP.main_camera);
 
     LOG_DEBUG("running path: %s", GDF_GetExecutablePath());
     f64 time_ran_for = GDF_Run();

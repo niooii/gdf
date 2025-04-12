@@ -254,7 +254,8 @@ struct EventBaseT : EventBase {
 	}
 };
 
-#define SERIALIZE_FIELDS(...) \
+// Helper macro for serializing fields on an event type
+#define SERIALIZE_EVENT_FIELDS(...) \
 template<class Archive> \
 void serialize(Archive& ar) { \
 ar(ser20::base_class<EventBase>(this) __VA_OPT__(,) __VA_ARGS__); \

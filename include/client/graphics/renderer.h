@@ -14,17 +14,25 @@ typedef struct WorldRenderer {
     terrain_pipeline terrain_pipeline;
     block_textures block_textures;
 
-    WorldRenderer(const GDF_VkRenderContext* vk_ctx, World* world);
+    // Event subscriptions
+    std::unique_ptr<Subscription> on_chunk_load;
+    std::unique_ptr<Subscription> on_chunk_update;
+
+    // Created once when game is loaded
+    WorldRenderer(const GDF_VkRenderContext* vk_ctx);
     ~WorldRenderer();
+
+    // should be called when entering a new world
+    FORCEINLINE void set_world(World* world) { this->world = world; }
 } WorldRenderer;
 
 typedef struct GameRenderer {
     // contains everything needed to render a world
     WorldRenderer world_renderer;
 
-    // TODO! this shouldnt accept the world at first.
+    // TODO!
     // need states for player in menu / in game
-    GameRenderer(const GDF_VkRenderContext* vk_ctx, World* world);
+    GameRenderer(const GDF_VkRenderContext* vk_ctx);
     ~GameRenderer();
 } GameRenderer;
 

@@ -5,6 +5,7 @@
 #include <client/graphics/renderer.h>
 
 #include <game/prelude.h>
+#include <game/entity/entity.h>
 
 // TODO! make customizable
 World::World(WorldCreateInfo& create_info)
@@ -15,7 +16,8 @@ World::World(WorldCreateInfo& create_info)
         .gravity_active = GDF_TRUE,
         .air_drag = 3.f,
         .ground_drag = 12.f,
-        .terminal_velocity = -50.f
+        .terminal_velocity = -50.f,
+        .entity_registry_p = &registry_
     };
 
     chunk_sim_dist_ = 8;
@@ -45,7 +47,7 @@ World::World(WorldCreateInfo& create_info)
                 };
                 chunks_[cc] = new Chunk();
                 generator_.gen_chunk(cc, *chunks_[cc]);
-                chunk_load_event->loaded_chunks.push_back(cc);
+                chunk_load_event->loaded_chunks.push_back(ChunkLoadInfo {cc});
             }
         }
     }
@@ -62,7 +64,8 @@ World::World(const char* folder_path)
         .gravity_active = GDF_TRUE,
         .air_drag = 3.f,
         .ground_drag = 12.f,
-        .terminal_velocity = -50.f
+        .terminal_velocity = -50.f,
+        .entity_registry_p = &registry_
     };
 
     chunk_sim_dist_ = 8;
@@ -91,7 +94,7 @@ World::World(const char* folder_path)
                 };
                 chunks_[cc] = new Chunk();
                 generator_.gen_chunk(cc, *chunks_[cc]);
-                chunk_load_event->loaded_chunks.push_back(cc);
+                chunk_load_event->loaded_chunks.push_back(ChunkLoadInfo{cc});
             }
         }
     }
@@ -147,7 +150,7 @@ Chunk* World::get_or_create_chunk(ivec3 chunk_coord)
 ecs::Entity World::create_humanoid()
 {
     auto entity = registry_.create();
-    registry_.emplace<Components::Health>(entity, 100);
+    registry_.emplace<Components::Health>(entity, 100.f);
     registry_.emplace<Components::Velocity>(entity, vec3_zero());
     AxisAlignedBoundingBox aabb = {
         vec3_new(-0.375, 0, -0.375),

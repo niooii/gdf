@@ -1,6 +1,8 @@
 #pragma once
 #include <game/prelude.h>
 
+#include "aabb.h"
+
 namespace Components
 {
     struct Velocity {
@@ -12,6 +14,8 @@ namespace Components
         bool is_grounded;
     };
 }
+
+class World;
 
 struct SimulationCreateInfo {
     f32 ground_drag;

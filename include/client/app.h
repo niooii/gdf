@@ -22,23 +22,11 @@
 //     GDF_GAME_SCREENTYPE_WORLD_GUI_MENU,
 // } GDF_GAME_SCREENTYPE;
 
-using EntityId = u64;
-
-struct ClientWorld {
-    World world;
-    ServerConnection server_con;
-    EntityId main_player;
-
-    FORCEINLINE void update(f32 dt)
-    {
-        world.update(dt);
-        server_con.dispatch_incoming();
-    }
-};
-
+struct ClientWorld;
 struct App {
     // This will be NULL if the player is not in a world.
-    ClientWorld* world = NULL;
+    ClientWorld* client_world = NULL;
+    GameRenderer* renderer;
 
     // HumanoidEntity* main_player;
     // GDF_GAME_SCREEN current_screen;
@@ -51,6 +39,35 @@ struct App {
 
 // The global app state.
 extern App APP;
+
+// Represents a connection to a world server on the client
+struct ClientWorld {
+    // This may be null if the connection is not finished
+    World* world = NULL;
+    ServerConnection server_con;
+    ecs::Entity main_player;
+
+    ClientWorld(const char* host, u16 port)
+        : server_con{host, port} {
+        // TODO! remove and replaec with event system,
+        // deserializing world data and constructing it when ready
+        world = new World{"awf"};
+        main_player = world->create_humanoid();
+        APP.renderer->world_renderer.set_world(world);
+    }
+
+    ~ClientWorld() {
+        delete world;
+    }
+
+    FORCEINLINE void update(f32 dt)
+    {
+        if (world)
+            world->update(dt);
+        server_con.dispatch_incoming();
+    }
+};
+
 
 void app_init();
 void app_destroy();

@@ -8,9 +8,6 @@
 [submodule "extern/entt"]
 	path = extern/entt
 	url = https://github.com/skypjack/entt.git
-[submodule "HFSM2"]
-	path = HFSM2
-	url = https://github.com/andrew-gresyk/HFSM2.git
 [submodule "extern/hfsm2"]
 	path = extern/hfsm2
 	url = https://github.com/andrew-gresyk/HFSM2.git

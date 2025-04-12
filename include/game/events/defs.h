@@ -6,29 +6,33 @@
 #include <serde.h>
 #include <vector>
 #include <game/types.h>
-#include <game/world.h>
+
+struct ChunkLoadInfo {
+    ivec3 cc;
+    SERIALIZE_FIELDS(cc);
+};
 
 DECL_SERDE_EVENT(ChunkLoadEvent)
 {
-    std::vector<ivec3> loaded_chunks;
-    SERIALIZE_FIELDS(loaded_chunks)
+    std::vector<ChunkLoadInfo> loaded_chunks;
+    SERIALIZE_EVENT_FIELDS(loaded_chunks)
 };
 
 DECL_SERDE_EVENT(TestTextEvent)
 {
     std::string message;
-    SERIALIZE_FIELDS(message)
+    SERIALIZE_EVENT_FIELDS(message)
 };
 
 DECL_SERDE_EVENT(ChunkUpdateEvent)
 {
     ivec3 chunk_coord;
     u8vec3 updated;
-    SERIALIZE_FIELDS(chunk_coord, updated)
+    SERIALIZE_EVENT_FIELDS(chunk_coord, updated)
 };
 
 DECL_SERDE_EVENT(PlayerMoveEvent)
 {
     vec3 pos;
-    SERIALIZE_FIELDS(pos)
+    SERIALIZE_EVENT_FIELDS(pos)
 };

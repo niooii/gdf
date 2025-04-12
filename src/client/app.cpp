@@ -13,7 +13,7 @@
 
 void App::join_world(const char* host, u16 port)
 {
-    TODO("UNIMPELMENTED JOIN WORLD YET");
+    client_world = new ClientWorld{host, port};
 }
 
 App APP{};
@@ -38,8 +38,6 @@ void app_init()
     GDF_CameraSetGlobalAxis(APP.main_camera, vec3_new(0, 1, 0));
     GDF_CameraConstrainPitch(APP.main_camera, -DEG_TO_RAD(89.9), DEG_TO_RAD(89.9));
 
-    APP.join_world("127.0.0.1", GDF_SERVER_PORT);
-
     // TODO! uncomment later, the game will be initilaized in world state for now.
     // APP.current_screen = GDF_GAME_SCREEN_MAIN_MENU;
     // APP.current_screen_type = GDF_GAME_SCREENTYPE_GUI_MENU;
@@ -52,9 +50,9 @@ void app_init()
     // APP.world = new World(world_info);
     // player = APP.world->create_humanoid();
     // physics_add_entity(APP.world->physics_, &player->base);
-    // player->base.aabb.min = vec3_new(-0.375, 0, -0.375);
-    // player->base.aabb.max = vec3_new(0.375, 1.8, 0.375);
-    // aabb_translate(&player->base.aabb, vec3_new(1, 5, 1));
+    // collider->aabb.min = vec3_new(-0.375, 0, -0.375);
+    // collider->aabb.max = vec3_new(0.375, 1.8, 0.375);
+    // aabb_translate(&collider->aabb, vec3_new(1, 5, 1));
     // player->base.health = 100;
     // player->base.damagable = GDF_TRUE;
 }
@@ -65,6 +63,7 @@ void app_init()
 void game_handle_input(App* game, f64 dt)
 {
     GDF_Camera camera = APP.main_camera;
+    auto player = game->client_world->main_player;
     {
         ivec2 d;
         GDF_GetMouseDelta(&d);
@@ -121,36 +120,40 @@ void game_handle_input(App* game, f64 dt)
     }
     if (GDF_IsKeyPressed(GDF_KEYCODE_Q))
     {
-        dash(game->world->main_player, 1.f, camera_forward);
+        // dash(game->world->main_player, 1.f, camera_forward);
     }
     GDF_BOOL jumped = GDF_FALSE;
-    if (GDF_IsKeyDown(GDF_KEYCODE_SPACE) && player->base.grounded)
-    {
-        jump(player, global_up, 1);
-        jumped = GDF_TRUE;
-    }
+
+    World* world = game->client_world->world;
+    Components::AabbCollider* collider = world->registry().try_get<Components::AabbCollider>(player);
+
+    // if (GDF_IsKeyDown(GDF_KEYCODE_SPACE) && player->base.grounded)
+    // {
+    //     // jump(player, global_up, 1);
+    //     jumped = GDF_TRUE;
+    // }
 
     f32 move_speed = 1;
     if (GDF_IsKeyDown(GDF_KEYCODE_LCONTROL))
     {
         move_speed = 3.5;
     }
-    player_apply_movement(
-        player,
-        x_input,
-        z_input,
-        &camera_forward,
-        &camera_right,
-        dt,
-        jumped,
-        move_speed
-    );
+    // player_apply_movement(
+    //     player,
+    //     x_input,
+    //     z_input,
+    //     &camera_forward,
+    //     &camera_right,
+    //     dt,
+    //     jumped,
+    //     move_speed
+    // );
 
     // cam is in center of players head
     vec3 camera_pos = vec3_new(
-        (player->base.aabb.min.x + player->base.aabb.max.x) / 2.0,
-        player->base.aabb.max.y - 0.25,
-        (player->base.aabb.min.z + player->base.aabb.max.z) / 2.0
+        (collider->aabb.min.x + collider->aabb.max.x) / 2.0,
+        collider->aabb.max.y - 0.25,
+        (collider->aabb.min.z + collider->aabb.max.z) / 2.0
     );
     GDF_CameraSetPosition(
         camera,
@@ -159,7 +162,7 @@ void game_handle_input(App* game, f64 dt)
 
     if (GDF_IsKeyDown(GDF_KEYCODE_LSHIFT))
     {
-        player->base.vel.y = -move_speed;
+        // player->base.vel.y = -move_speed;
     }
     // if (GDF_IsKeyPressed(GDF_KEYCODE_V))
     // {
@@ -169,7 +172,7 @@ void game_handle_input(App* game, f64 dt)
     if (GDF_IsButtonDown(GDF_MBUTTON_LEFT))
     {
         RaycastInfo raycast_info = raycast_info_new(
-            APP.world,
+            world,
             camera_pos,
             camera_forward,
             4
@@ -179,13 +182,13 @@ void game_handle_input(App* game, f64 dt)
         if (result.status == RAYCAST_STATUS_HIT)
         {
             LOG_DEBUG("destroying block..");
-            APP.world->destroy_block(result.block_world_pos, nullptr);
+            APP.client_world->world->destroy_block(result.block_world_pos, nullptr);
         }
     }
     else if (GDF_IsButtonDown(GDF_MBUTTON_RIGHT))
     {
         RaycastInfo raycast_info = raycast_info_new(
-            APP.world,
+            world,
             camera_pos,
             camera_forward,
             4
@@ -222,12 +225,12 @@ void game_handle_input(App* game, f64 dt)
                 result.block_world_pos.z + z_dif
             );
             AxisAlignedBoundingBox block = block_get_aabb(place_pos);
-            if (!aabb_intersects(&block, &player->base.aabb)) {
+            if (!aabb_intersects(&block, &collider->aabb)) {
                 BlockCreateInfo info = {
                     .type = BLOCK_TYPE_WoodPlank,
                     .world_pos = place_pos
                 };
-                APP.world->set_block(info);
+                APP.client_world->world->set_block(info);
             }
         }
     }
@@ -238,17 +241,17 @@ GDF_BOOL app_update(const GDF_AppState* app_state, f64 dt, void* state)
     App* app = (App*)state;
     // LOG_INFO("VEL: %f %f %f", player->base.vel.x, player->base.vel.y, player->base.vel.z);
     game_handle_input(app, dt);
-    app->world->update(dt);
+    app->client_world->update(dt);
 
     auto& events = EventManager::get_instance();
 
     // TODO! remove
     auto move = std::make_unique<PlayerMoveEvent>();
-    move->pos = player->base.aabb.min;
+    // move->pos = collider->aabb.min;
 
     events.flush();
 
-    // LOG_DEBUG("pos: %f %f %f", player->base.aabb.min.x, player->base.aabb.min.y, player->base.aabb.min.z);
+    // LOG_DEBUG("pos: %f %f %f", collider->aabb.min.x, collider->aabb.min.y, collider->aabb.min.z);
     // LOG_DEBUG("vel: %f %f %f", player_comp->vel.x, player_comp->vel.y, player_comp->vel.z);
     return GDF_TRUE;
 }

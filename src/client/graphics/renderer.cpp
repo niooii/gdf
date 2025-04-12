@@ -2,8 +2,8 @@
 
 #include <client/app.h>
 
-GameRenderer::GameRenderer(const GDF_VkRenderContext* vk_ctx, World* world)
-    : world_renderer{vk_ctx, world}
+GameRenderer::GameRenderer(const GDF_VkRenderContext* vk_ctx)
+    : world_renderer{vk_ctx}
 {
 }
 
@@ -13,21 +13,25 @@ GameRenderer::~GameRenderer()
 
 GDF_BOOL renderer_init(const GDF_VkRenderContext* vk_ctx, const GDF_AppState* app_state, void* state)
 {
-    AppState* game = (AppState*)state;
-    game->renderer = new GameRenderer(vk_ctx, game->world);
+    App* game = (App*)state;
+    game->renderer = new GameRenderer(vk_ctx);
     return GDF_TRUE;
 }
 
 GDF_BOOL renderer_destroy(const GDF_VkRenderContext* vk_ctx, const GDF_AppState* app_state, void* state)
 {
-    AppState* game = (AppState*)state;
+    App* game = (App*)state;
     delete game->renderer;
     return GDF_TRUE;
 }
 
 GDF_BOOL renderer_draw(const GDF_VkRenderContext* vk_ctx, GDF_RENDER_MODE mode, const GDF_AppState* app_state, void* state)
 {
-    AppState* game = (AppState*)state;
+    App* game = (App*)state;
+
+    if (!game->client_world)
+        return GDF_TRUE;
+
     WorldRenderer* renderer = &game->renderer->world_renderer;
     u32 frame_idx = vk_ctx->resource_idx;
     VkCommandBuffer cmd_buf = vk_ctx->per_frame[frame_idx].cmd_buffer;
