@@ -5,7 +5,6 @@
 #include <client/graphics/renderer.h>
 #include <game/movement.h>
 #include <game/physics/raycast.h>
-#include <game/events.h>
 #include <gdfe/os/thread.h>
 #include <server/net.h>
 #include <server/server.h>
@@ -182,7 +181,11 @@ void game_handle_input(App* game, f64 dt)
         if (result.status == RAYCAST_STATUS_HIT)
         {
             LOG_DEBUG("destroying block..");
-            APP.client_world->world->destroy_block(result.block_world_pos, nullptr);
+            BlockCreateInfo info = {
+                .type = BLOCK_TYPE_Air,
+                .world_pos = result.block_world_pos
+            };
+            APP.client_world->world->set_block(info);
         }
     }
     else if (GDF_IsButtonDown(GDF_MBUTTON_RIGHT))
@@ -243,13 +246,7 @@ GDF_BOOL app_update(const GDF_AppState* app_state, f64 dt, void* state)
     game_handle_input(app, dt);
     app->client_world->update(dt);
 
-    auto& events = EventManager::get_instance();
-
-    // TODO! remove
-    auto move = std::make_unique<PlayerMoveEvent>();
-    // move->pos = collider->aabb.min;
-
-    events.flush();
+    Services::Events::flush();
 
     // LOG_DEBUG("pos: %f %f %f", collider->aabb.min.x, collider->aabb.min.y, collider->aabb.min.z);
     // LOG_DEBUG("vel: %f %f %f", player_comp->vel.x, player_comp->vel.y, player_comp->vel.z);

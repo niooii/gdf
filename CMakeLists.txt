@@ -43,16 +43,15 @@ function(find_src_files result search_dir)
 endfunction()
 
 find_src_files(GAME_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/game")
+find_src_files(SERVICES_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/services")
+
 find_src_files(CLIENT_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/client")
 find_src_files(SERVER_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/server")
 find_src_files(EXTERN_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/extern")
 
 SET_SOURCE_FILES_PROPERTIES(${GAME_SRC} ${CLIENT_SRC} ${SERVER_SRC} ${EXTERN_SRC} PROPERTIES LANGUAGE CXX)
 
-add_library(gdf_common STATIC ${GAME_SRC} ${EXTERN_SRC}
-        include/game/events/defs.h
-        include/game/events/defs.h
-)
+add_library(gdf_common STATIC ${GAME_SRC} ${EXTERN_SRC} ${SERVICES_SRC})
 
 add_executable(client ${CLIENT_SRC} ${EXTERN_SRC})
 

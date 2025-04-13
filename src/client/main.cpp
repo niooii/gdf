@@ -1,10 +1,11 @@
 #include <gdfe/core.h>
 #include <client/graphics/renderer.h>
-#include <game/prelude.h>
+#include <prelude.h>
 
 #define ENET_IMPLEMENTATION
 #include <client/app.h>
 #include <client/net.h>
+#include <game/events/defs.h>
 #include <server/net.h>
 #include <server/server.h>
 

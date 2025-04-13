@@ -1,8 +1,7 @@
 #include <game/world.h>
 
 Chunk::Chunk()
-    : block_arr(CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE),
-    block_list(256)
+    : block_arr(CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE)
 {
 
 }
@@ -27,13 +26,10 @@ Block* Chunk::set_block(BLOCK_TYPE type, u8vec3 block_coord)
         )
     ];
 
-    block->exists = true;
     block->data.type = type;
     block->x_rel = block_coord.x;
     block->y_rel = block_coord.y;
     block->z_rel = block_coord.z;
-
-    block_list.push_back(block);
 
     return block;
 }
@@ -45,8 +41,8 @@ Block* Chunk::get_block(u8vec3 bc)
             bc
         )
     ];
-    
-    if (!chunk_block->exists)
+
+    if (chunk_block->data.type == BLOCK_TYPE_Air)
         return nullptr;
 
     return chunk_block;
@@ -60,21 +56,16 @@ void Chunk::destroy_block(u8vec3 bc, Block* out)
         )
     ];
 
-    block->exists = GDF_FALSE;
-
     // TODO! THIS IS HORRIBLE USE A HASHMAP
-    for (auto it = block_list.begin(); it != block_list.end(); ++it) {
-        // TODO! bandaid fix wtf why does this happen
-        if (!*it)
-            continue;
+    for (Block& b : block_arr) {
         if (
-            (*it)->x_rel == block->x_rel
-            && (*it)->y_rel == block->y_rel
-            && (*it)->z_rel == block->z_rel
+            (b).x_rel == block->x_rel
+            && (b).y_rel == block->y_rel
+            && (b).z_rel == block->z_rel
         ) {
+            b.data.type = BLOCK_TYPE_Air;
             if (out)
-                *out = *(*it);
-            block_list.erase(it);
+                *out = b;
             break; // Exit the loop
         }
     }

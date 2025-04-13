@@ -99,7 +99,7 @@ GDF_BOOL renderer_draw(const GDF_VkRenderContext* vk_ctx, GDF_RENDER_MODE mode, 
 
 // #include <gdfe/render/vk/game_renderer.h>
 // #include <gdfe/geometry.h>
-// #include <game/events.h>
+// #include <events.h>
 // #include <gdfe/render/renderer.h>
 // #include <gdfe/render/chunkmesh.h>
 //

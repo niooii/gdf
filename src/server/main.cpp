@@ -3,7 +3,7 @@
 #define ENET_IMPLEMENTATION
 #include <server/server.h>
 
-#include <game/events.h>
+#include <prelude.h>
 #include <gdfe/strutils.h>
 #include <server/net.h>
 
@@ -13,7 +13,8 @@ GDF_BOOL server_loop(const GDF_AppState* app_state, f64 delta_time, void* _state
 {
     WorldServer* server = (WorldServer*)_state;
     server->tick();
-    EventManager::get_instance().flush();
+
+    Services::Events::flush();
     return GDF_TRUE;
 }
 
@@ -54,7 +55,7 @@ int main(int argc, char** argv)
     };
     GDF_Init(info);
 
-    EventManager::get_instance().reject_dispatch_if<ChunkUpdateEvent>(
+    Services::Events::reject_dispatch_if<ChunkUpdateEvent>(
         [](auto event) {
         return event.source == ProgramType::Client;
     });

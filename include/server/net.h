@@ -1,21 +1,21 @@
 #pragma once
 #include <memory>
 #include <vector>
-
+#include <prelude.h>
 #include <enet.h>
 #include <gdfe/os/thread.h>
 
-struct EventBase;
+
 struct NetworkManager {
     ENetHost* host;
     std::vector<ENetPeer> peers;
 
     GDF_Thread recv_thread;
 
-    std::vector<std::unique_ptr<EventBase>> incoming_queue;
+    std::vector<std::unique_ptr<Services::Events::Event>> incoming_queue;
     GDF_Mutex incoming_mutex;
 
-    std::vector<std::unique_ptr<EventBase>> outgoing_queue;
+    std::vector<std::unique_ptr<Services::Events::Event>> outgoing_queue;
     GDF_Mutex outgoing_mutex;
 
     std::atomic_bool io_active;

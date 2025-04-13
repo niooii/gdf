@@ -1,6 +1,8 @@
 #include <client/graphics/renderer.h>
-#include <game/prelude.h>
-#include <game/events.h>
+#include <prelude.h>
+#include <game/events/defs.h>
+
+using namespace Services;
 
 WorldRenderer::WorldRenderer(const GDF_VkRenderContext* vk_ctx)
     : world{world}
@@ -11,10 +13,9 @@ WorldRenderer::WorldRenderer(const GDF_VkRenderContext* vk_ctx)
     queued_remeshes.reserve(32);
     chunk_meshes.reserve(128);
 
-    auto& event_manager = EventManager::get_instance();
-
-    on_chunk_load = event_manager.subscribe<ChunkLoadEvent>([this](const auto& event)
+    on_chunk_load = Events::subscribe<ChunkLoadEvent>([this](const auto& event)
     {
+        LOG_INFO("HEY MAN!!");
         for (auto& load_info : event.loaded_chunks) {
             auto& cc = load_info.cc;
             LOG_INFO("loaded chunk at %d, %d, %d", cc.x, cc.y, cc.z);
@@ -23,7 +24,7 @@ WorldRenderer::WorldRenderer(const GDF_VkRenderContext* vk_ctx)
         }
     });
 
-    on_chunk_update = event_manager.subscribe<ChunkUpdateEvent>([this](const auto& event)
+    on_chunk_update = Events::subscribe<ChunkUpdateEvent>([this](const auto& event)
     {
         ivec3 cc = event.chunk_coord;
 

@@ -1,5 +1,5 @@
 #pragma once
-#include <game/prelude.h>
+#include <prelude.h>
 
 #include "aabb.h"
 

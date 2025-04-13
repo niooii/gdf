@@ -1,10 +1,9 @@
 #include <game/world.h>
-#include <game/events.h>
 #include <gdfe/event.h>
 #include <gdfe/profiler.h>
 #include <client/graphics/renderer.h>
-
-#include <game/prelude.h>
+#include <game/events/defs.h>
+#include <prelude.h>
 #include <game/entity/entity.h>
 
 // TODO! make customizable
@@ -29,8 +28,7 @@ World::World(WorldCreateInfo& create_info)
 
     upd_stopwatch_ = GDF_StopwatchCreate();
 
-    auto& events = EventManager::get_instance();
-    auto chunk_load_event = events.create_event<ChunkLoadEvent>();
+    auto chunk_load_event = Services::Events::create_event<ChunkLoadEvent>();
     chunk_load_event->source = ProgramType::Client;
 
     // Create chunks
@@ -52,7 +50,7 @@ World::World(WorldCreateInfo& create_info)
         }
     }
 
-    events.queue_dispatch(*chunk_load_event);
+    Services::Events::queue_dispatch(*chunk_load_event);
 }
 
 // TODO! actually implement loading and saving
@@ -76,8 +74,7 @@ World::World(const char* folder_path)
 
     upd_stopwatch_ = GDF_StopwatchCreate();
 
-    auto& events = EventManager::get_instance();
-    auto chunk_load_event = events.create_event<ChunkLoadEvent>();
+    auto chunk_load_event = Services::Events::create_event<ChunkLoadEvent>();
     chunk_load_event->source = ProgramType::Client;
 
     // Create chunks
@@ -99,7 +96,7 @@ World::World(const char* folder_path)
         }
     }
 
-    events.queue_dispatch(*chunk_load_event);
+    Services::Events::queue_dispatch(*chunk_load_event);
 }
 
 World::~World()
@@ -158,7 +155,7 @@ ecs::Entity World::create_humanoid()
     };
     aabb_translate(&aabb, vec3_new(1, 6, 1));
     registry_.emplace<Components::AabbCollider>(entity, aabb, false);
-
+    // registry_.emplace<Components::Movement>(entity);
     return entity;
 }
 
@@ -181,8 +178,7 @@ Block* World::set_block(BlockCreateInfo& create_info)
 
     ChunkUpdateEvent update{};
     update.chunk_coord = info.cc;
-    auto& events = EventManager::get_instance();
-    events.dispatch(update);
+    Services::Events::dispatch(update);
 
     // TODO! remove this please find a way to fit this inside the chunk functions directly.
     // or better yet through the use of actual structured event data. PLEASE!!
@@ -192,19 +188,6 @@ Block* World::set_block(BlockCreateInfo& create_info)
     // GDF_EventFire(GDF_EVENT_CHUNK_UPDATE, c, (GDF_EventContext){});
 
     return b;
-}
-
-void World::destroy_block(vec3 pos, Block* destroyed)
-{
-    ChunkBlockPosTuple info = world_pos_to_chunk_block_tuple(pos);
-    Chunk* c = this->get_or_create_chunk(info.cc);
-
-    c->destroy_block(info.bc, destroyed);
-
-    ChunkUpdateEvent update{};
-    update.chunk_coord = info.cc;
-    auto& events = EventManager::get_instance();
-    events.dispatch(update);
 }
 
 // Gets the blocks that is touching an AABB.

@@ -15,8 +15,8 @@ typedef struct WorldRenderer {
     block_textures block_textures;
 
     // Event subscriptions
-    std::unique_ptr<Subscription> on_chunk_load;
-    std::unique_ptr<Subscription> on_chunk_update;
+    std::unique_ptr<Services::Events::Subscription> on_chunk_load;
+    std::unique_ptr<Services::Events::Subscription> on_chunk_update;
 
     // Created once when game is loaded
     WorldRenderer(const GDF_VkRenderContext* vk_ctx);

@@ -1,4 +1,4 @@
-#include <game/prelude.h>
+#include <prelude.h>
 
 #include <game/world.h>
 
@@ -37,7 +37,7 @@ void Generator::gen_chunk(ivec3 cc, Chunk& chunk)
                 bc.y = y;
                 bc.z = z;
 
-                type = (BLOCK_TYPE)0;
+                type = (BLOCK_TYPE)1;
 
                 chunk.set_block(type, bc);
             }

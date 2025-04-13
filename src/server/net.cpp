@@ -1,7 +1,9 @@
 #include <server/net.h>
 #include <gdfe/os/thread.h>
-#include <game/prelude.h>
+#include <prelude.h>
+#include <game/events/defs.h>
 
+using namespace Services;
 // TODO! throttled thread execution function in gdfe.
 // make it now.
 // or some horrible horrible macro
@@ -12,7 +14,6 @@ static unsigned long io_thread(void* args) {
 
     LOG_INFO("Listening on port %d", server->port);
     ENetEvent event;
-    auto& event_manager = EventManager::get_instance();
     for (;;)
     {
         if (!server->io_active)
@@ -21,7 +22,7 @@ static unsigned long io_thread(void* args) {
         GDF_LockMutex(server->outgoing_mutex);
         for (auto& outgoing : server->outgoing_queue)
         {
-            std::string serialized {event_manager.serialize(outgoing)};
+            std::string serialized {Events::serialize(outgoing)};
 
             ENetPacket* packet = enet_packet_create(
                 serialized.c_str(),
@@ -51,7 +52,7 @@ static unsigned long io_thread(void* args) {
                         event.channelID
                     );
 
-                    auto recv_event = event_manager.deserialize(
+                    auto recv_event = Events::deserialize(
                     {
                         (char*)event.packet->data,
                         event.packet->dataLength
@@ -89,7 +90,7 @@ NetworkManager::NetworkManager(u16 port, u16 max_clients) {
         .host = ENET_HOST_ANY
     };
 
-    EventManager::get_instance().subscribe<TestTextEvent>([](auto& event)
+    Events::subscribe<TestTextEvent>([](auto& event)
     {
         LOG_INFO("Words from client: \"%s\"", event.message.c_str());
     });
@@ -135,12 +136,10 @@ NetworkManager::~NetworkManager()
 
 void NetworkManager::dispatch_incoming()
 {
-    EventManager& events = EventManager::get_instance();
-
     GDF_LockMutex(incoming_mutex);
     for (auto& event : incoming_queue)
     {
-        event->dispatch_self(events);
+        event->queue_dispatch();
     }
 
     incoming_queue.clear();

@@ -1,6 +1,6 @@
 #pragma once
 #include <gdfe/os/thread.h>
-#include <game/prelude.h>
+#include <prelude.h>
 #include <game/world.h>
 #include <server/net.h>
 

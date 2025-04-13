@@ -12,6 +12,7 @@ PhysicsSimulation::PhysicsSimulation(const SimulationCreateInfo& info, const Wor
     registry_ = info.entity_registry_p;
 }
 
+// TODO! THIS IS SO HORRIBLE
 void PhysicsSimulation::update(f32 dt)
 {
     // TODO! stupid hack for now to test with absurd chunk loading times and not

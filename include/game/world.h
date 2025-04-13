@@ -18,6 +18,7 @@ u32 chunk_hash(const u8* data, u32 len);
 #define CHUNK_SIZE_P (CHUNK_SIZE + 2) 
 
 typedef enum BLOCK_TYPE {
+    BLOCK_TYPE_Air = 0,
     BLOCK_TYPE_Stone,
     BLOCK_TYPE_Dirt,
     BLOCK_TYPE_Grass,
@@ -46,7 +47,6 @@ typedef struct Block {
     u8 x_rel;
     u8 y_rel;
     u8 z_rel;
-    bool exists;
 } Block;
 
 typedef enum BLOCK_FACE {
@@ -75,9 +75,6 @@ typedef enum WORLD_DIRECTION {
 
 class Chunk {
     std::vector<Block> block_arr;
-
-    // list of Block pointers for easy iteration over existing blocks.
-    std::vector<Block*> block_list;
 
     // for fast meshing
     // TODO! did nothing with this yet
@@ -125,11 +122,12 @@ class World {
     u16 ticks_per_sec_;
     GDF_Stopwatch upd_stopwatch_;
 
+    // temp
+    PhysicsSimulation* physics_;
+
     ecs::Registry registry_{};
 
 public:
-    // temp
-    PhysicsSimulation* physics_;
 
     // Creates a new world with the given parameters.
     World(WorldCreateInfo& create_info);
@@ -152,8 +150,6 @@ public:
     Block* get_block(vec3 pos) const;
 
     Block* set_block(BlockCreateInfo& create_info);
-
-    void destroy_block(vec3 pos, Block* destroyed);
 
     // Gets the blocks that is touching an AABB.
     // Modifies the result_arr with the found blocks, and returns the amount of blocks found

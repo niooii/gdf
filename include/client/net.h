@@ -5,23 +5,21 @@
 #include <gdfe/core.h>
 #include <gdfe/os/thread.h>
 #include <atomic>
+#include <prelude.h>
 
-struct EventBase;
 struct ServerConnection {
     ENetHost* client;
     ENetPeer* peer;
 
     GDF_Thread recv_thread;
 
-    std::vector<std::unique_ptr<EventBase>> incoming_queue;
+    std::vector<std::unique_ptr<Services::Events::Event>> incoming_queue;
     GDF_Mutex incoming_mutex;
 
-    std::vector<std::unique_ptr<EventBase>> outgoing_queue;
+    std::vector<std::unique_ptr<Services::Events::Event>> outgoing_queue;
     GDF_Mutex outgoing_mutex;
 
     std::atomic_bool io_active;
-
-    // std::vector<std::unique_ptr<EventBase>> dispatch_queue;
 
     const char* addr;
     u16 port;
@@ -29,7 +27,7 @@ struct ServerConnection {
     ServerConnection(const char* addr, u16 port);
     ~ServerConnection();
 
-    void send(std::unique_ptr<EventBase> unique_ptr);
+    void send(std::unique_ptr<Services::Events::Event> unique_ptr);
 
     void dispatch_incoming();
 };
