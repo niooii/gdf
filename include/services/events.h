@@ -1,9 +1,9 @@
 #pragma once
+#include <gdfe/core.h>
 #include <functional>
 #include <memory>
 #include <span>
 #include <unordered_dense.h>
-#include <game/events/type_ids.h>
 #include <ser20/ser20.hpp>
 #include <ser20/archives/binary.hpp>
 #include <spanstream>
@@ -14,22 +14,15 @@
 /*
  * There is room for optimization here, but for now
  * forget about it
+ * TODO! make events dispatch in SEQUENTIALLY IN QUEUED ORDER
  */
 
-#define FWD_DISPATCHER(name, return_type, ...) \
-template<EventType T> \
-	FORCEINLINE return_type name(__VA_ARGS__) { \
-	return get_dispatcher<T>().name(__VA_ARGS__); \
-}
-
 namespace Services::Events {
-	struct Event {
-		virtual ~Event() = default;
+	struct NetEvent {
+		virtual ~NetEvent() = default;
 
 		ProgramType source = ProgramType::Client;
-		// DispatchMode replication = DispatchMode::Local;
-
-		// EventTypeId type;
+		u64 timestamp_millis;
 
 		// Intended for use when we store the base class only. Slightly slower
 		virtual void dispatch() const = 0;
@@ -39,14 +32,14 @@ namespace Services::Events {
 
 		template<class Archive>
 		void serialize(Archive& ar) {
-			ar(source/*, replication*/);
+			ar(source, timestamp_millis);
 		}
 	};
 
 	typedef u64 SubscriptionId;
 
 	template<typename T>
-	concept EventType = std::is_base_of_v<Event, T>;
+	concept NetEventType = std::is_base_of_v<NetEvent, T>;
 
 	struct Subscription {
 		SubscriptionId id;
@@ -57,13 +50,13 @@ namespace Services::Events {
 
 	namespace detail {
 
-		template<EventType>
+		template<typename>
 		struct SubscriptionT : Subscription {
 			~SubscriptionT() override = default;
 			void unsubscribe() const override;
 		};
 
-		template<EventType T>
+		template<typename T>
 		class EventDispatcher {
 			// TODO! should separate deferred and immediate events. do this later
 			// Deferred handlers
@@ -125,14 +118,14 @@ namespace Services::Events {
 		};
 
 		class EventManager {
-			template<EventType T>
+			template<typename T>
 			friend struct SubscriptionT;
 
 			std::vector<std::function<void()>> flush_functions;
 
-			template<EventType EventT>
-			static EventDispatcher<EventT>& get_dispatcher() {
-				static EventDispatcher<EventT> dispatcher;
+			template<typename T>
+			static EventDispatcher<T>& get_dispatcher() {
+				static EventDispatcher<T> dispatcher;
 				static bool registered = false;
 
 				if (!registered) {
@@ -154,32 +147,32 @@ namespace Services::Events {
 				return instance;
 			}
 
-			template<EventType T>
+			template<typename T>
 			FORCEINLINE void dispatch(const T& event) {
 				get_dispatcher<T>().dispatch(event);
 			}
 
-			template<EventType T>
+			template<typename T>
 			FORCEINLINE void queue_dispatch(const T& event) {
 				get_dispatcher<T>().queue_dispatch(event);
 			}
 
-			template<EventType T>
+			template<typename T>
 			FORCEINLINE std::unique_ptr<Subscription> subscribe(std::function<void(const T&)> handler) {
 				return get_dispatcher<T>().subscribe(std::move(handler));
 			}
 
-			template<EventType T>
+			template<typename T>
 			FORCEINLINE std::unique_ptr<T> create_event() {
 				return std::unique_ptr<T>(new T{});
 			}
 
-			template<EventType T, typename... Args>
+			template<typename T, typename... Args>
 			FORCEINLINE std::unique_ptr<T> create_event(Args&&... args) {
 				return std::make_unique<T>(std::forward<Args>(args)...);
 			}
 
-			template<EventType T>
+			template<typename T>
 			// Add a condition to reject the dispatching of an event if true.
 			// TODO! unused for now
 			FORCEINLINE void reject_dispatch_if(std::function<bool(const T&)> reject_condition) {
@@ -195,7 +188,7 @@ namespace Services::Events {
 	}
 
 	// TODO can i attach these to event base instances maybe? idk.
-	FORCEINLINE std::string serialize(const std::unique_ptr<Event>& event) {
+	FORCEINLINE std::string serialize(const std::unique_ptr<NetEvent>& event) {
 		std::ostringstream os;
 
 		ser20::BinaryOutputArchive archive{os};
@@ -204,8 +197,8 @@ namespace Services::Events {
 		return os.str();
 	}
 
-	FORCEINLINE std::unique_ptr<Event> deserialize(const std::span<char>& data) {
-		std::unique_ptr<Event> event;
+	FORCEINLINE std::unique_ptr<NetEvent> deserialize(const std::span<char>& data) {
+		std::unique_ptr<NetEvent> event;
 
 		std::ispanstream stream{data};
 
@@ -215,38 +208,38 @@ namespace Services::Events {
 		return event;
 	}
 
-	template<EventType T>
+	template<typename T>
 	FORCEINLINE void dispatch(const T& event) {
 		detail::EventManager::get_instance().dispatch(event);
 	}
 
-	template<EventType T>
+	template<typename T>
 	FORCEINLINE void queue_dispatch(const T& event) {
 		detail::EventManager::get_instance().queue_dispatch(event);
 	}
 
-	template<EventType T>
+	template<typename T>
 	FORCEINLINE std::unique_ptr<Subscription> subscribe(std::function<void(const T&)> handler) {
 		return detail::EventManager::get_instance().subscribe(handler);
 	}
 
-	template <EventType T>
+	template <typename T>
 	void detail::SubscriptionT<T>::unsubscribe() const
 	{
 		detail::EventManager::get_dispatcher<T>().unsubscribe(id);
 	}
 
-	template<EventType T>
+	template<NetEventType T>
 	FORCEINLINE std::unique_ptr<T> create_event() {
 		return std::unique_ptr<T>(new T{});
 	}
 
-	template<EventType T, typename... Args>
+	template<NetEventType T, typename... Args>
 	FORCEINLINE std::unique_ptr<T> create_event(Args&&... args) {
 		return std::make_unique<T>(std::forward<Args>(args)...);
 	}
 
-	template<EventType T>
+	template<NetEventType T>
 	// Add a condition to reject the dispatching of an event if true.
 	// TODO! unused for now
 	FORCEINLINE void reject_dispatch_if(std::function<bool(const T&)> reject_condition) {
@@ -259,7 +252,7 @@ namespace Services::Events {
 
 	// Event template type
 	template<typename Derived>
-	struct EventT : Event {
+	struct NetEventT : NetEvent {
 		void dispatch() const override {
 			Events::dispatch(static_cast<const Derived&>(*this));
 		}
@@ -270,5 +263,5 @@ namespace Services::Events {
 	};
 }
 
-SER20_REGISTER_TYPE(Services::Events::Event)
+SER20_REGISTER_TYPE(Services::Events::NetEvent)
 

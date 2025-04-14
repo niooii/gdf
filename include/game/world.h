@@ -127,6 +127,9 @@ class World {
 
     ecs::Registry registry_{};
 
+    ankerl::unordered_dense::map<ecs::Entity, u64> ecs_to_net_map_;
+    ankerl::unordered_dense::map<u64, ecs::Entity> net_to_ecs_map_;
+
 public:
 
     // Creates a new world with the given parameters.
@@ -158,6 +161,45 @@ public:
         BlockTouchingResult* result_arr,
         u32 result_arr_size
     ) const;
+
+    /* Utility functions for coupling the ECS entity ID and the net synced entity ID */
+
+    // Register a relationship between a local ecs entity ID and a network synced entity ID
+    FORCEINLINE void register_id_relation(const ecs::Entity ecs_id, const u64 net_id)
+    {
+        net_to_ecs_map_.emplace(net_id, ecs_id);
+        ecs_to_net_map_.emplace(ecs_id, net_id);
+    }
+
+    // Unregister a relationship between a local ecs entity ID and a network synced entity ID,
+    // using the local ecs id
+    FORCEINLINE void unregister_id_relation(const ecs::Entity ecs_id)
+    {
+        const u64 net_id = ecs_to_net_map_.at(ecs_id);
+        net_to_ecs_map_.erase(net_id);
+        ecs_to_net_map_.erase(ecs_id);
+    }
+
+    // Unregister a relationship between a local ecs entity ID and a network synced entity ID,
+    // using the network synced id
+    FORCEINLINE void unregister_id_relation(const u64 net_id)
+    {
+        const ecs::Entity ecs_id = net_to_ecs_map_.at(net_id);
+        ecs_to_net_map_.erase(ecs_id);
+        net_to_ecs_map_.erase(net_id);
+    }
+
+    // Get the local ecs entity ID connected with the network synced entity ID
+    FORCEINLINE ecs::Entity get_ecs_id(const u64 net_id)
+    {
+        return net_to_ecs_map_.at(net_id);
+    }
+
+    // Get the networked synced entity ID connected with the local ecs entity ID
+    FORCEINLINE u64 get_net_id(const ecs::Entity ecs_id)
+    {
+        return ecs_to_net_map_.at(ecs_id);
+    }
 };
 
 FORCEINLINE AxisAlignedBoundingBox block_get_aabb(vec3 world_pos) {

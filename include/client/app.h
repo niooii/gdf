@@ -52,7 +52,6 @@ struct ClientWorld {
         // TODO! remove and replaec with event system,
         // deserializing world data and constructing it when ready
         world = new World{"awf"};
-        main_player = world->create_humanoid();
         APP.renderer->world_renderer.set_world(world);
     }
 
@@ -65,6 +64,13 @@ struct ClientWorld {
         if (world)
             world->update(dt);
         server_con.dispatch_incoming();
+        // TODO! remove
+        // (but on the server we would update our state machines here, after dispatching incoming)
+        auto view = world->registry().view<Components::MovementControl>();
+        for(auto [entity, movement_ctl]: view.each())
+        {
+            movement_ctl.state_machine->update();
+        }
     }
 };
 

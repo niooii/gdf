@@ -105,17 +105,10 @@ World::~World()
     {
         delete entry.second;
     }
-    // for (auto hum : humanoids_)
-    // {
-    //     delete hum;
-    // }
 }
 
 void World::update(f64 dt)
 {
-    // u32 num_humanoids = humanoids_.size();
-    // for (u32 i = 0; i < num_humanoids; i++)
-    //     humanoid_entity_update(humanoids_[i]);
     physics_->update(dt);
 }
 
@@ -155,7 +148,9 @@ ecs::Entity World::create_humanoid()
     };
     aabb_translate(&aabb, vec3_new(1, 6, 1));
     registry_.emplace<Components::AabbCollider>(entity, aabb, false);
-    // registry_.emplace<Components::Movement>(entity);
+    registry_.emplace<Components::MovementControl>(entity, entity);
+    auto ptr = registry_.try_get<Components::AabbCollider>(entity);
+    GDF_ASSERT(ptr);
     return entity;
 }
 

@@ -13,6 +13,7 @@
 void App::join_world(const char* host, u16 port)
 {
     client_world = new ClientWorld{host, port};
+    client_world->main_player = client_world->world->create_humanoid();
 }
 
 App APP{};
@@ -92,7 +93,6 @@ void game_handle_input(App* game, f64 dt)
     }
 
     vec3 camera_forward, camera_right, camera_up;
-    vec3 global_up = GDF_CameraGetGlobalAxis(camera);
     GDF_CameraOrientation(camera, &camera_forward, &camera_right, &camera_up);
 
     // LOG_DEBUG("Camera forward: %f, %f, %f", camera_forward.x, camera_forward.y, camera_forward.z);
@@ -116,10 +116,6 @@ void game_handle_input(App* game, f64 dt)
     if (GDF_IsKeyDown(GDF_KEYCODE_D))
     {
         x_input++;
-    }
-    if (GDF_IsKeyPressed(GDF_KEYCODE_Q))
-    {
-        // dash(game->world->main_player, 1.f, camera_forward);
     }
     GDF_BOOL jumped = GDF_FALSE;
 

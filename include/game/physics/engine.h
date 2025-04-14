@@ -3,6 +3,11 @@
 
 #include "aabb.h"
 
+struct EntityBlockCollisionEvent {
+    ecs::Entity entity;
+    std::vector<struct Block*> touched;
+};
+
 namespace Components
 {
     struct Velocity {

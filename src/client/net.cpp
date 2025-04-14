@@ -131,7 +131,7 @@ ServerConnection::~ServerConnection()
     enet_host_destroy(client);
 }
 
-void ServerConnection::send(std::unique_ptr<Services::Events::Event> unique_ptr)
+void ServerConnection::send(std::unique_ptr<Services::Events::NetEvent> unique_ptr)
 {
     unique_ptr->source = ProgramType::Client;
     GDF_LockMutex(outgoing_mutex);

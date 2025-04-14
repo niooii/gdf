@@ -19,7 +19,7 @@ void PhysicsSimulation::update(f32 dt)
     // fall thru the ground
     if (dt > 0.5)
         dt = 0.5;
-    
+
     // TODO! optimize, look into SIMD
     vec3 effective_gravity = gravity_active_ ? gravity_ : vec3_zero();
     vec3 net_accel;
@@ -119,9 +119,9 @@ void PhysicsSimulation::update(f32 dt)
             }
         }
 
-        // GDF_EventContext ctx = {
-        //     .data.u64[0] = (u64)entity
-        // };
+        EntityBlockCollisionEvent e;
+        e.entity = entity;
+        e.touched.reserve(8);
         for (u32 i = 0; i < results_len; i++)
         {
             BlockTouchingResult* r = results + i;
@@ -138,7 +138,7 @@ void PhysicsSimulation::update(f32 dt)
 
                 vec3_add_to(&deltas, resolution);
                 aabb_translate(&t_aabb, resolution);
-                // zero velocity and shi
+                // zero velocity
                 if (resolution.x != 0)
                 {
                     vel.x = 0;
@@ -151,14 +151,14 @@ void PhysicsSimulation::update(f32 dt)
                 {
                     vel.z = 0;
                 }
-                // GDF_EventContext ctx = {
-                //     .data.u64[0] = (u64)entity
-                // };
-                // GDF_EventFire(GDF_EVENT_BLOCK_TOUCHED, r->block, ctx);
+                e.touched.push_back(r->block);
             }
         }
         // update grounded status
         collider.is_grounded = ground_found;
+        // this fluctuates for negative y apparently lol
+        LOG_DEBUG("GROUND FOUND: %d", ground_found);
+        Services::Events::queue_dispatch(e);
 
         aabb_translate(&collider.aabb, deltas);
     }

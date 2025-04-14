@@ -5,17 +5,16 @@
 #include <enet.h>
 #include <gdfe/os/thread.h>
 
-
 struct NetworkManager {
     ENetHost* host;
     std::vector<ENetPeer> peers;
 
     GDF_Thread recv_thread;
 
-    std::vector<std::unique_ptr<Services::Events::Event>> incoming_queue;
+    std::vector<std::unique_ptr<Services::Events::NetEvent>> incoming_queue;
     GDF_Mutex incoming_mutex;
 
-    std::vector<std::unique_ptr<Services::Events::Event>> outgoing_queue;
+    std::vector<std::unique_ptr<Services::Events::NetEvent>> outgoing_queue;
     GDF_Mutex outgoing_mutex;
 
     std::atomic_bool io_active;

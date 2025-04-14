@@ -52,8 +52,6 @@ typedef struct RaycastEntityHitInfo {
     // If this is not a RAYCAST_STATUS_ERR status, then it is safe to get information
     // from other fields.
     RAYCAST_STATUS status;
-
-    Entity* entity;
 } RaycastEntityHitInfo;
 
 void raycast_blocks(RaycastInfo* info, RaycastBlockHitInfo* result);
