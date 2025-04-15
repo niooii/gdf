@@ -1,6 +1,7 @@
 #include <game/entity/humanoid.h>
 #include <game/physics/engine.h>
 #include <game/world.h>
+#include <game/entity/entity.h>
 
 using namespace Systems;
 using namespace Components;
@@ -70,12 +71,14 @@ void HumanoidMovementController::InAir::react(const HumanoidActionEvent& action,
 
 void HumanoidMovementController::Dashing::enter(Control& control) {
     auto& context = control.context();
-    LOG_CALL
+    const auto& registry = Services::world_ptr()->registry();
 
     context.dash_available = false;
-    vec3 forward, right, up;
-    // TODO! calculate with pitch and yaw
+
     // GDF_CameraOrientation(APP.main_camera, &forward, &right, &up);
+    const Rotation* rotation = registry.try_get<Rotation>(context.entity);
+    LOG_INFO("%f, %f", rotation->yaw, rotation->pitch);
+    vec3 forward = vec3_forward(rotation->yaw, rotation->pitch);
     context.dash_dir = forward;
     GDF_StopwatchReset(context.dash_stopwatch);
 }

@@ -1,5 +1,6 @@
 #include <client/world.h>
 #include <client/app.h>
+#include <game/entity/entity.h>
 
 std::unique_ptr<HumanoidActionEvent> ClientWorld::make_action_packet()
 {
@@ -55,10 +56,15 @@ void ClientWorld::update(f32 dt)
     // move one level higher (the main app loop) or i might be stupid
     auto player_action_event{make_action_packet()};
 
-    // TODO! simulate the inputs on client side - this is a rough way to do it
+    // TODO! simulate the inputs on client side - this is a rough sketch of how to do it
 
     // on client there should only be one controller
     auto& hum = world_->simulated_humanoids()[0];
+    // upd the rotation component - this will be done on the server side after recieving
+    // the action event
+    Components::Rotation* rotation = world_->registry().try_get<Components::Rotation>(main_player_);
+    rotation->pitch = player_action_event->pitch;
+    rotation->yaw = player_action_event->yaw;
     hum.movement_controller.state_machine->react(*player_action_event);
 
     // Send the player input to the server

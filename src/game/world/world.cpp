@@ -147,6 +147,7 @@ ecs::Entity World::create_humanoid()
     auto entity = registry_.create();
     registry_.emplace<Components::Health>(entity, 100.f);
     registry_.emplace<Components::Velocity>(entity, vec3_zero());
+    registry_.emplace<Components::Rotation>(entity);
     AxisAlignedBoundingBox aabb = {
         vec3_new(-0.375, 0, -0.375),
         vec3_new(0.375, 1.8, 0.375)

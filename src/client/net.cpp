@@ -36,10 +36,10 @@ static unsigned long io_thread(void* args)
             switch (event.type) {
             case ENET_EVENT_TYPE_RECEIVE:
                 {
-                    LOG_DEBUG("A packet of length %u containing %s was received from server on channel %u.\n",
-                    event.packet->dataLength,
-                    event.packet->data,
-                    event.channelID);
+                    // LOG_DEBUG("A packet of length %u containing %s was received from server on channel %u.\n",
+                    // event.packet->dataLength,
+                    // event.packet->data,
+                    // event.channelID);
 
                     auto recv_event = Services::Events::deserialize(
                         {
