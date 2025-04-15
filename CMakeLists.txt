@@ -51,13 +51,13 @@ find_src_files(EXTERN_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/extern")
 
 SET_SOURCE_FILES_PROPERTIES(${GAME_SRC} ${CLIENT_SRC} ${SERVER_SRC} ${EXTERN_SRC} PROPERTIES LANGUAGE CXX)
 
-add_library(gdf_common STATIC ${GAME_SRC} ${EXTERN_SRC} ${SERVICES_SRC})
+add_library(gdf_common STATIC ${GAME_SRC} ${EXTERN_SRC})
 
-add_executable(client ${CLIENT_SRC} ${EXTERN_SRC})
+add_executable(client ${CLIENT_SRC} ${EXTERN_SRC} ${SERVICES_SRC})
 
-target_compile_definitions(client PRIVATE GDF_CLIENT_BUILD)
+target_compile_definitions(client PUBLIC GDF_CLIENT_BUILD)
 
-add_executable(server ${SERVER_SRC} ${EXTERN_SRC})
+add_executable(server ${SERVER_SRC} ${EXTERN_SRC} ${SERVICES_SRC})
 
 if(DEFINED ENV{VULKAN_SDK})
     if(CMAKE_SYSTEM_NAME STREQUAL "Windows")

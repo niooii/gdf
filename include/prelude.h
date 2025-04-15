@@ -4,6 +4,7 @@
 #include <game/ecs.h>
 #include <game/hfsm.h>
 #include <services/events.h>
+#include <services/global.h>
 #include <constants.h>
 
 /* Macros for declaring event types */

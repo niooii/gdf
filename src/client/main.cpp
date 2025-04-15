@@ -53,9 +53,6 @@ int main()
     GDF_ThreadSleep(500);
 
     APP.join_world("127.0.0.1", GDF_SERVER_PORT);
-    auto test_event = std::make_unique<TestTextEvent>();
-    test_event->message = "HELLO SERVER!";
-    APP.client_world->server_con.send(std::move(test_event));
 
     GDF_RendererSetActiveCamera(app_state->renderer, APP.main_camera);
 

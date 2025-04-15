@@ -122,11 +122,14 @@ class World {
     u16 ticks_per_sec_;
     GDF_Stopwatch upd_stopwatch_;
 
-    // temp
+    /* Simulation stuff */
     PhysicsSimulation* physics_;
+    // On the client, this will contain only the main player for client-side prediction
+    // On the server, this will contain all humanoids that need to be simulated
+    std::vector<SimulatedHumanoid> humanoids_;
 
+    /* Entity component system stuff */
     ecs::Registry registry_{};
-
     ankerl::unordered_dense::map<ecs::Entity, u64> ecs_to_net_map_;
     ankerl::unordered_dense::map<u64, ecs::Entity> net_to_ecs_map_;
 
@@ -200,6 +203,9 @@ public:
     {
         return ecs_to_net_map_.at(ecs_id);
     }
+
+    // temporary
+    FORCEINLINE std::vector<SimulatedHumanoid>& simulated_humanoids() { return humanoids_; }
 };
 
 FORCEINLINE AxisAlignedBoundingBox block_get_aabb(vec3 world_pos) {

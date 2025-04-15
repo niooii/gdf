@@ -109,7 +109,12 @@ World::~World()
 
 void World::update(f64 dt)
 {
+    /* Update the world simulation */
     physics_->update(dt);
+    for (auto& hum : humanoids_)
+    {
+        hum.movement_controller.state_machine->update();
+    }
 }
 
 Chunk* World::get_chunk(ivec3 chunk_coord)
@@ -148,9 +153,8 @@ ecs::Entity World::create_humanoid()
     };
     aabb_translate(&aabb, vec3_new(1, 6, 1));
     registry_.emplace<Components::AabbCollider>(entity, aabb, false);
-    registry_.emplace<Components::MovementControl>(entity, entity);
-    auto ptr = registry_.try_get<Components::AabbCollider>(entity);
-    GDF_ASSERT(ptr);
+
+    humanoids_.emplace_back(entity);
     return entity;
 }
 
