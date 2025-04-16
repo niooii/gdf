@@ -33,9 +33,8 @@ namespace Services::Events {
 		// Intended for use when we store the base class only. Slightly slower
 		virtual void queue_dispatch() const = 0;
 
-#ifndef GDF_CLIENT_BUILD
+		// Unused on the client. Do not set it, it will be ignored.
 		std::string source_uuid;
-#endif
 
 		template<class Archive>
 		void serialize(Archive& ar) {

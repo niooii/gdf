@@ -34,8 +34,6 @@ std::unique_ptr<HumanoidStateChangeEvent> ClientWorld::make_action_packet()
     action_event->x_input = x_input;
     action_event->z_input = z_input;
 
-    action_event->action_bits.mask = 0;
-
     if (GDF_IsKeyDown(GDF_KEYCODE_SPACE))
         action_event->add_bits(HumanoidActionBit::Jump);
 

@@ -67,7 +67,7 @@ static unsigned long io_thread(void* args) {
                         continue;
                     }
 
-                    recv_event->source_uuid = "TEST_UUID";
+                    // recv_event->source_uuid = "TEST_UUID";
 
                     GDF_LockMutex(server->incoming_mutex);
                     server->incoming_queue.push_back(std::move(recv_event));

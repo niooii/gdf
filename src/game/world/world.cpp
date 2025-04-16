@@ -89,8 +89,7 @@ World::World(const char* folder_path)
                 };
                 chunks_[cc] = new Chunk();
                 generator_.gen_chunk(cc, *chunks_[cc]);
-                // chunk_load_event->loaded_chunks.emplace_back(cc);
-                LOG_DEBUG("GENERATED")
+                chunk_load_event->loaded_chunks.emplace_back(cc);
             }
         }
     }

@@ -50,7 +50,7 @@ void HumanoidMovementController::OnGround::update(FullControl& control) {
     vec3 forward_vec = vec3_new(forward.x, 0, forward.z);
     vec3_normalize(&forward_vec);
 
-    f32 real_speed = 3 * 100;
+    f32 real_speed = 2 * 100;
 
     vec3_add_to(&dv, vec3_mul_scalar(forward_vec, context->z_input));
     vec3_add_to(&dv, vec3_mul_scalar(right_vec, context->x_input));
@@ -61,29 +61,6 @@ void HumanoidMovementController::OnGround::update(FullControl& control) {
     }
 
     dv = vec3_mul_scalar(dv, real_speed * Services::Time::delta());
-
-    // vec3 horizontal_vel = vec3_new(physics->vel.x, 0, physics->vel.z);
-    // f32 current_speed = vec3_length(horizontal_vel);
-
-    // if (!physics->grounded) {
-    //     vec3 vel_dir = horizontal_vel;
-    //     if (current_speed > AIR_CONTROL_THRESHOLD) {
-    //         vec3_normalize(&vel_dir);
-
-    //         f32 movement_alignment = vec3_dot(vel_dir, dv);
-
-    //         // LOG_DEBUG("DOT PRODUCT: %f", movement_alignment);
-
-    //         // Allows for change in velocity very close to 180 degs
-    //         if (movement_alignment < 0.1f) {
-    //             return;
-    //         }
-    //     }
-
-    //     // Apply air control only when changing direction or moving slowly
-    //     if (!just_jumped)
-    //         dv = vec3_mul_scalar(dv, AIR_CONTROL);
-    // }
 
     vec3_add_to(&vel->vec, dv);
 }
@@ -107,11 +84,65 @@ void HumanoidMovementController::InAir::enter(Control& control)
 
 void HumanoidMovementController::InAir::update(FullControl& control) {
     const auto& context = control.context();
-    const auto& registry = Services::world_ptr()->registry();
+    auto& registry = Services::world_ptr()->registry();
 
     const auto& collider = registry.get<AabbCollider>(context->entity);
     if (collider.is_grounded)
+    {
         control.changeTo<OnGround>();
+        return;
+    }
+
+    Velocity* vel = registry.try_get<Velocity>(context->entity);
+    Rotation* rot = registry.try_get<Rotation>(context->entity);
+
+    vec3 dv = vec3_zero();
+
+    vec3 right_vec = vec3_right(rot->yaw);
+    vec3_normalize(&right_vec);
+
+    vec3 forward = vec3_forward(rot->yaw, rot->pitch);
+    vec3 forward_vec = vec3_new(forward.x, 0, forward.z);
+    vec3_normalize(&forward_vec);
+
+    f32 real_speed = 3 * 100;
+
+    vec3_add_to(&dv, vec3_mul_scalar(forward_vec, context->z_input));
+    vec3_add_to(&dv, vec3_mul_scalar(right_vec, context->x_input));
+
+    if (context->x_input != 0 || context->z_input != 0)
+    {
+        vec3_normalize(&dv);
+    }
+
+    dv = vec3_mul_scalar(dv, real_speed * Services::Time::delta());
+
+    constexpr f32 AIR_CONTROL = 0.5;
+    constexpr f32 AIR_CONTROL_THRESHOLD = 0.1;
+
+    vec3 horizontal_vel = vec3_new(vel->vec.x, 0, vel->vec.z);
+    f32 current_speed = vec3_length(horizontal_vel);
+
+    // WHAT AM I DOING BRO
+    // vec3 vel_dir = horizontal_vel;
+    // if (current_speed > AIR_CONTROL_THRESHOLD) {
+    //     vec3_normalize(&vel_dir);
+    //
+    //     f32 movement_alignment = vec3_dot(vel_dir, dv);
+    //
+    //     // LOG_DEBUG("DOT PRODUCT: %f", movement_alignment);
+    //
+    //     // Allows for change in velocity very close to 180 degs
+    //     if (movement_alignment < 0.1f) {
+    //         return;
+    //     }
+    // }
+
+    //     // Apply air control only when changing direction or moving slowly
+    //     if (!just_jumped)
+    dv = vec3_mul_scalar(dv, AIR_CONTROL * 0.5 /* some stupid hard coded constant HOW DO I DO GOOD AIR CONTROL?? CHAT? */);
+
+    vec3_add_to(&vel->vec, dv);
 }
 
 void HumanoidMovementController::InAir::react(const HumanoidStateChangeEvent& action, EventControl& control)
