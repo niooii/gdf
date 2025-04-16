@@ -2,7 +2,7 @@
 #include <client/app.h>
 #include <game/entity/entity.h>
 
-std::unique_ptr<HumanoidActionEvent> ClientWorld::make_action_packet()
+std::unique_ptr<HumanoidStateChangeEvent> ClientWorld::make_action_packet()
 {
     /* Build an action event packet */
     ivec2 d;
@@ -30,9 +30,11 @@ std::unique_ptr<HumanoidActionEvent> ClientWorld::make_action_packet()
         x_input++;
     }
 
-    auto action_event = Services::Events::create_event<HumanoidActionEvent>();
+    auto action_event = Services::Events::create_event<HumanoidStateChangeEvent>();
     action_event->x_input = x_input;
     action_event->z_input = z_input;
+
+    action_event->action_bits.mask = 0;
 
     if (GDF_IsKeyDown(GDF_KEYCODE_SPACE))
         action_event->add_bits(HumanoidActionBit::Jump);
@@ -40,8 +42,14 @@ std::unique_ptr<HumanoidActionEvent> ClientWorld::make_action_packet()
     if (GDF_IsKeyDown(GDF_KEYCODE_SHIFT))
         action_event->add_bits(HumanoidActionBit::Sneak);
 
-    if (GDF_IsKeyDown(GDF_KEYCODE_Q))
+    if (GDF_IsKeyPressed(GDF_KEYCODE_Q))
         action_event->add_bits(HumanoidActionBit::Dash);
+
+    if (GDF_IsButtonDown(GDF_MBUTTON_LEFT))
+        action_event->add_bits(HumanoidActionBit::Attack);
+
+    if (GDF_IsButtonDown(GDF_MBUTTON_RIGHT))
+        action_event->add_bits(HumanoidActionBit::Use);
 
     action_event->pitch = GDF_CameraGetPitch(APP.main_camera);
     action_event->yaw = GDF_CameraGetYaw(APP.main_camera);
@@ -65,23 +73,13 @@ void ClientWorld::update(f32 dt)
     Components::Rotation* rotation = world_->registry().try_get<Components::Rotation>(main_player_);
     rotation->pitch = player_action_event->pitch;
     rotation->yaw = player_action_event->yaw;
-    hum.movement_controller.state_machine->react(*player_action_event);
+    hum.process_action(*player_action_event);
 
     // Send the player input to the server
-    server_con_.send(std::move(player_action_event));
+    // server_con_.send(std::move(player_action_event));
 
     world_->update(dt);
     server_con_.dispatch_incoming();
-
-
-
-    // TODO! move to server
-    // (but on the server we would update our state machines here, after dispatching incoming)
-    // auto view = world_->registry().view<Components::MovementControl>();
-    // for(auto [entity, movement_ctl]: view.each())
-    // {
-    //     movement_ctl.state_machine->update();
-    // }
 
     // update camera pos to be center of "head"
     const auto* collider = world_->registry().try_get<Components::AabbCollider>(main_player_);

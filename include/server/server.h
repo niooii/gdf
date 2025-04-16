@@ -12,6 +12,8 @@ struct Server {
     // will be NULL.
     GDF_Semaphore global_semaphore;
 
+    NetClientManager* net;
+
     ServerWorld* server_world;
 };
 

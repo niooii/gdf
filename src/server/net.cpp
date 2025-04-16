@@ -9,7 +9,7 @@ using namespace Services;
 // or some horrible horrible macro
 // this should execute at a max fixed rate lol
 static unsigned long io_thread(void* args) {
-    NetworkManager* server = (NetworkManager*) args;
+    NetClientManager* server = (NetClientManager*) args;
     GDF_InitThreadLogging("Server:Net");
 
     LOG_INFO("Listening on port %d", server->port);
@@ -67,6 +67,8 @@ static unsigned long io_thread(void* args) {
                         continue;
                     }
 
+                    recv_event->source_uuid = "TEST_UUID";
+
                     GDF_LockMutex(server->incoming_mutex);
                     server->incoming_queue.push_back(std::move(recv_event));
                     GDF_ReleaseMutex(server->incoming_mutex);
@@ -84,7 +86,7 @@ static unsigned long io_thread(void* args) {
     }
 }
 
-NetworkManager::NetworkManager(u16 port, u16 max_clients) {
+NetClientManager::NetClientManager(u16 port, u16 max_clients) {
     ENetAddress addr = {
         .port = port,
         .host = ENET_HOST_ANY
@@ -121,7 +123,7 @@ NetworkManager::NetworkManager(u16 port, u16 max_clients) {
     recv_thread = GDF_CreateThread(io_thread, this);
 }
 
-NetworkManager::~NetworkManager()
+NetClientManager::~NetClientManager()
 {
     io_active = false;
 
@@ -134,7 +136,7 @@ NetworkManager::~NetworkManager()
     enet_host_destroy(host);
 }
 
-void NetworkManager::dispatch_incoming()
+void NetClientManager::dispatch_incoming()
 {
     GDF_LockMutex(incoming_mutex);
     for (auto& event : incoming_queue)

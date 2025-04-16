@@ -10,6 +10,7 @@
 #include <ser20/types/polymorphic.hpp>
 #include <ser20/types/vector.hpp>
 #include <constants.h>
+#include <services/time.h>
 
 /*
  * There is room for optimization here, but for now
@@ -22,7 +23,9 @@ namespace Services::Events {
 		virtual ~NetEvent() = default;
 
 		ProgramType source = ProgramType::Client;
-		u64 timestamp_millis;
+		// The unix timestamp of when the event was created from the source,
+		// not deserialized. In UTC.
+		u64 creation_time;
 
 		// Intended for use when we store the base class only. Slightly slower
 		virtual void dispatch() const = 0;
@@ -30,9 +33,13 @@ namespace Services::Events {
 		// Intended for use when we store the base class only. Slightly slower
 		virtual void queue_dispatch() const = 0;
 
+#ifndef GDF_CLIENT_BUILD
+		std::string source_uuid;
+#endif
+
 		template<class Archive>
 		void serialize(Archive& ar) {
-			ar(source, timestamp_millis);
+			ar(source, creation_time);
 		}
 	};
 
@@ -163,16 +170,6 @@ namespace Services::Events {
 			}
 
 			template<typename T>
-			FORCEINLINE std::unique_ptr<T> create_event() {
-				return std::unique_ptr<T>(new T{});
-			}
-
-			template<typename T, typename... Args>
-			FORCEINLINE std::unique_ptr<T> create_event(Args&&... args) {
-				return std::make_unique<T>(std::forward<Args>(args)...);
-			}
-
-			template<typename T>
 			// Add a condition to reject the dispatching of an event if true.
 			// TODO! unused for now
 			FORCEINLINE void reject_dispatch_if(std::function<bool(const T&)> reject_condition) {
@@ -230,11 +227,29 @@ namespace Services::Events {
 	}
 
 	template<NetEventType T>
+			FORCEINLINE std::unique_ptr<T> create_event() {
+		T* e = new T();
+		e->creation_time = Services::Time::unix_millis();
+		e->source = CURR_PROGRAM_TYPE;
+		return std::unique_ptr<T>(e);
+	}
+
+	template<NetEventType T, typename... Args>
+	FORCEINLINE std::unique_ptr<T> create_event(Args&&... args) {
+		std::unique_ptr<T> ptr = std::make_unique<T>(std::forward<Args>(args)...);
+		ptr->creation_time = Services::Time::unix_millis();
+		ptr->source = CURR_PROGRAM_TYPE;
+		return std::move(ptr);
+	}
+
+	template<typename T>
+	requires (!NetEventType<T>)
 	FORCEINLINE std::unique_ptr<T> create_event() {
 		return std::unique_ptr<T>(new T{});
 	}
 
-	template<NetEventType T, typename... Args>
+	template<typename T, typename... Args>
+	requires (!NetEventType<T>)
 	FORCEINLINE std::unique_ptr<T> create_event(Args&&... args) {
 		return std::make_unique<T>(std::forward<Args>(args)...);
 	}

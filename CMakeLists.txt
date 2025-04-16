@@ -51,7 +51,7 @@ find_src_files(EXTERN_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/extern")
 
 SET_SOURCE_FILES_PROPERTIES(${GAME_SRC} ${CLIENT_SRC} ${SERVER_SRC} ${EXTERN_SRC} PROPERTIES LANGUAGE CXX)
 
-add_library(gdf_common STATIC ${GAME_SRC} ${EXTERN_SRC})
+add_library(gdf_common STATIC ${GAME_SRC} ${EXTERN_SRC} ${SERVICES_SRC})
 
 add_executable(client ${CLIENT_SRC} ${EXTERN_SRC} ${SERVICES_SRC})
 

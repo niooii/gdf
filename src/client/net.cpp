@@ -26,7 +26,7 @@ static unsigned long io_thread(void* args)
             );
 
             enet_peer_send(conn->peer, 0, packet);
-            LOG_WARN("Packets sent!!!");
+            // LOG_WARN("Packets sent!!!");
         }
         conn->outgoing_queue.clear();
         GDF_ReleaseMutex(conn->outgoing_mutex);

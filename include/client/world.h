@@ -20,7 +20,7 @@ class ClientWorld {
     ecs::Entity main_player_;
 
     // Creates a humanoid action event packet based on the current frame's inputs
-    std::unique_ptr<HumanoidActionEvent> make_action_packet();
+    std::unique_ptr<HumanoidStateChangeEvent> make_action_packet();
 
 public:
     ClientWorld(const char* host, u16 port)
@@ -32,6 +32,7 @@ public:
 
         auto test_event = std::make_unique<TestTextEvent>();
         test_event->message = "HELLO SERVER!";
+        server_con_.send(std::move(test_event));
     }
 
     ~ClientWorld() {

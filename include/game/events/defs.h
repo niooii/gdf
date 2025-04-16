@@ -14,7 +14,7 @@ struct ChunkLoadInfo {
 
 DECL_NET_EVENT(ChunkLoadEvent)
 {
-    std::vector<ChunkLoadInfo> loaded_chunks;
+    std::vector<ChunkLoadInfo> loaded_chunks{};
     SERIALIZE_EVENT_FIELDS(loaded_chunks)
 };
 

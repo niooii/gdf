@@ -22,7 +22,6 @@ World::World(WorldCreateInfo& create_info)
     chunk_sim_dist_ = 8;
     chunk_view_dist_ = 8;
 
-    // TODO! make physics class
     physics_ = new PhysicsSimulation(physics_info, this);
     ticks_per_sec_ = 20;
 
@@ -75,7 +74,6 @@ World::World(const char* folder_path)
     upd_stopwatch_ = GDF_StopwatchCreate();
 
     auto chunk_load_event = Services::Events::create_event<ChunkLoadEvent>();
-    chunk_load_event->source = ProgramType::Client;
 
     // Create chunks
     for (i32 chunk_x = -1; chunk_x <= 1; chunk_x++)
@@ -91,7 +89,8 @@ World::World(const char* folder_path)
                 };
                 chunks_[cc] = new Chunk();
                 generator_.gen_chunk(cc, *chunks_[cc]);
-                chunk_load_event->loaded_chunks.push_back(ChunkLoadInfo{cc});
+                // chunk_load_event->loaded_chunks.emplace_back(cc);
+                LOG_DEBUG("GENERATED")
             }
         }
     }
@@ -113,7 +112,7 @@ void World::update(f64 dt)
     physics_->update(dt);
     for (auto& hum : humanoids_)
     {
-        hum.movement_controller.state_machine->update();
+        hum.update();
     }
 }
 
@@ -152,7 +151,7 @@ ecs::Entity World::create_humanoid()
         vec3_new(-0.375, 0, -0.375),
         vec3_new(0.375, 1.8, 0.375)
     };
-    aabb_translate(&aabb, vec3_new(1, 6, 1));
+    aabb_translate(&aabb, vec3_new(1, 10, 1));
     registry_.emplace<Components::AabbCollider>(entity, aabb, false);
 
     humanoids_.emplace_back(entity);

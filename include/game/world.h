@@ -94,7 +94,6 @@ public:
 
 // A terrain generator_
 class Generator {
-    World* world;
 public:
     Generator();
     ~Generator();

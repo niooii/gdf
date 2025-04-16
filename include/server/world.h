@@ -12,22 +12,50 @@ struct WorldServerCreateInfo {
 
 };
 
+struct Client {
+    std::vector<HumanoidStateChangeEvent> queued_inputs;
+};
+
 // TODO! world configuration
 class ServerWorld {
-    NetworkManager net;
-    World world;
+    NetClientManager* net_;
+    World world_;
+
+    std::vector<std::unique_ptr<Services::Events::Subscription>> subscriptions_;
+    // this should be stored per each client, probably.
+    std::vector<HumanoidStateChangeEvent> clients;
 
 public:
 
-    ServerWorld(WorldServerCreateInfo& create_info)
-        : net{GDF_SERVER_PORT, 64}, world{"daworld"}
+    ServerWorld(NetClientManager* net)
+        : net_{net}, world_{"daworld"}
+    {
+        // subscriptions_.emplace_back(
+        //     // Services::Events::subscribe<>([&wo])
+        // );
+    }
+
+    ~ServerWorld()
     {
 
     }
 
-    FORCEINLINE World* world_ptr() { return &world; }
+    FORCEINLINE World* world_ptr() { return &world_; }
 
-    void tick() {
-        net.dispatch_incoming();
+    FORCEINLINE void update(f32 dt) {
+        auto& humanoids = world_.simulated_humanoids();
+        for (auto& humanoid : humanoids)
+            humanoid.reset_accumulator();
+
+        // TODO! humanoid ai stuff here + handled queued player inputs
+
+        // then tick the simulation
+        world_.update(dt);
+
+        for (auto& humanoid : humanoids)
+        {
+            HumanoidStateChangeEvent accumulated = humanoid.accumulated_actions();
+            // send here or something idk
+        }
     }
 };

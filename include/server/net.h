@@ -5,7 +5,7 @@
 #include <enet.h>
 #include <gdfe/os/thread.h>
 
-struct NetworkManager {
+struct NetClientManager {
     ENetHost* host;
     std::vector<ENetPeer> peers;
 
@@ -21,8 +21,8 @@ struct NetworkManager {
 
     u16 port;
 
-    NetworkManager(u16 port, u16 max_clients);
-    ~NetworkManager();
+    NetClientManager(u16 port, u16 max_clients);
+    ~NetClientManager();
     void broadcast();
 
     // Dispatches all the incoming events locally

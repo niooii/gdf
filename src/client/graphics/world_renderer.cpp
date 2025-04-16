@@ -5,7 +5,6 @@
 using namespace Services;
 
 WorldRenderer::WorldRenderer(const GDF_VkRenderContext* vk_ctx)
-    : world{world}
 {
     block_textures_init(vk_ctx, &this->block_textures);
     terrain_pipeline_init(vk_ctx, this);

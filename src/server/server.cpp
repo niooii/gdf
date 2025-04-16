@@ -5,13 +5,14 @@ Server SERVER{};
 
 void server_init()
 {
+    SERVER.net = new NetClientManager{GDF_SERVER_PORT, 64};
     Services::Events::reject_dispatch_if<ChunkUpdateEvent>(
         [](auto event) {
         return event.source == ProgramType::Client;
     });
 
     auto tmp = WorldServerCreateInfo{};
-    SERVER.server_world = new ServerWorld{tmp};
+    SERVER.server_world = new ServerWorld{SERVER.net};
 
     if (SERVER.global_semaphore_name)
     {
@@ -23,14 +24,18 @@ void server_init()
 
 void server_destroy()
 {
-
+    delete SERVER.net;
 }
 
 GDF_BOOL server_update(const GDF_AppState* app_state, f64 dt, void* state)
 {
+    Services::Time::detail::_internal_dt = dt;
     Server* server = (Server*)state;
-    server->server_world->tick();
 
+    server->net->dispatch_incoming();
     Services::Events::flush();
+
+    server->server_world->update(dt);
+
     return GDF_TRUE;
 }

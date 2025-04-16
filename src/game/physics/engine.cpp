@@ -157,7 +157,7 @@ void PhysicsSimulation::update(f32 dt)
         // update grounded status
         collider.is_grounded = ground_found;
         // this fluctuates for negative y apparently lol
-        LOG_DEBUG("GROUND FOUND: %d", ground_found);
+        // LOG_DEBUG("GROUND FOUND: %d", ground_found);
         Services::Events::queue_dispatch(e);
 
         aabb_translate(&collider.aabb, deltas);
