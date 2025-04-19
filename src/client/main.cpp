@@ -31,7 +31,7 @@ int main()
             }
         },
         .config = {
-            .max_updates_per_sec = 0,
+            .updates_per_sec = 0,
         }
     };
 
@@ -40,7 +40,7 @@ int main()
         return 1;
 
     char server_path[300];
-    GDF_MemZero(server_path, sizeof(server_path));
+    GDF_Memzero(server_path, sizeof(server_path));
     snprintf(server_path, sizeof(server_path), "%s\\server.exe", GDF_GetExecutablePath());
 
     GDF_Process server_proc = GDF_CreateProcess(
@@ -66,7 +66,7 @@ int main()
     {
         LOG_ERR("yikes....\n");
     }
-    logging_flush_buffer();
+    GDF_FlushLogBuffer();
     enet_deinitialize();
     return 0;
 }

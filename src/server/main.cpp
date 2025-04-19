@@ -38,7 +38,7 @@ int main(int argc, char** argv)
 
     GDF_InitInfo info = {
         .config = {
-            .max_updates_per_sec = 20,
+            .updates_per_sec = 20,
             .disable_video = GDF_TRUE
         },
         .callbacks = {
