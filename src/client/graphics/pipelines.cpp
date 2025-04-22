@@ -1,8 +1,9 @@
 #include <client/graphics/pipelines.h>
-#include <gdfe/render/vk_utils.h>
-#include <gdfe/render/vk_types.h>
+#include <gdfe/render/vk/utils.h>
+#include <gdfe/render/vk/types.h>
 #include <client/graphics/chunkmesh.h>
 #include <client/graphics/renderer.h>
+#include <gdfe/render/vk/buffers.h>
 
 bool terrain_pipeline_init(const GDF_VkRenderContext* vk_ctx, WorldRenderer* world_renderer)
 {

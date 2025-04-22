@@ -203,7 +203,7 @@ public:
     /// Resets the accumulated actions of the humanoid
     FORCEINLINE void reset_accumulator()
     {
-        GDF_MemSet(&action_accumulator, 0, sizeof(action_accumulator));
+        GDF_Memset(&action_accumulator, 0, sizeof(action_accumulator));
     }
 
     /// Get the accumulated actions the humanoid has taken. Should be called after the update()

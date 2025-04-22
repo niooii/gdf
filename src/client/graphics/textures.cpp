@@ -1,9 +1,11 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #include <client/graphics/textures.h>
+#include <gdfe/render/vk/buffers.h>
+#include <gdfe/render/vk/image.h>
 
 #include "gdfe/os/io.h"
-#include "gdfe/render/vk_utils.h"
+#include "gdfe/render/vk/utils.h"
 #include <vulkan/vulkan.h>
 
 #define TEXTURES_FOLDER "resources/textures/"
@@ -133,7 +135,7 @@ bool block_textures_init(const GDF_VkRenderContext* context, block_textures* out
         //     return GDF_FALSE;
         // }
 
-        GDF_MemCopy((byte*)texture_data + i * image_size, pixels, image_size);
+        GDF_Memcpy((byte*)texture_data + i * image_size, pixels, image_size);
         LOG_DEBUG("Loaded texture id %u into staging buffer.", i);
         stbi_image_free(pixels);
     }

@@ -1,8 +1,9 @@
 #include <client/graphics/chunkmesh.h>
-#include <gdfe/render/vk_utils.h>
+#include <gdfe/render/vk/utils.h>
 
 #include "gdfe/collections/hashmap.h"
 #include <client/graphics/renderer.h>
+#include <gdfe/render/vk/buffers.h>
 
 #define GDFP_DISABLE
 
@@ -60,7 +61,7 @@ void get_vertex_attrs(VkVertexInputAttributeDescription** attrs, u32* len)
 void print_mask(const char* msg, u64 n)
 {
     char s[65]; 
-    GDF_MemSet(s, 0, sizeof(s));
+    GDF_Memset(s, 0, sizeof(s));
     for (u64 i = 1ULL << 63; i > 0; i = i / 2) {
         if ((n & i) != 0) {
             strcat(s, "1");
@@ -75,7 +76,7 @@ void print_mask(const char* msg, u64 n)
 void print_mask_64(const char* msg, u64 n)
 {
     char s[65]; 
-    GDF_MemSet(s, 0, sizeof(s));
+    GDF_Memset(s, 0, sizeof(s));
     for (u64 i = 1ULL << 63; i > 0; i = i / 2) {
         if ((n & i) != 0) {
             strcat(s, "1");
@@ -90,7 +91,7 @@ void print_mask_64(const char* msg, u64 n)
 void print_mask_32(const char* msg, u32 n)
 {
     char s[33];
-    GDF_MemSet(s, 0, sizeof(s));
+    GDF_Memset(s, 0, sizeof(s));
     for (u32 i = 1U << 31; i > 0; i = i / 2) {
         if ((n & i) != 0) {
             strcat(s, "1");
@@ -169,8 +170,8 @@ void ChunkMesh::mesh()
     // stores the masks for culled faces, where 1 represents a visible face and 0 doesnt.  
     u64 axis_face_masks[6][CHUNK_SIZE_P][CHUNK_SIZE_P];
 
-    GDF_MemSet(axis_masks, 0, sizeof(axis_masks));
-    GDF_MemSet(axis_face_masks, 0, sizeof(axis_face_masks));
+    GDF_Memset(axis_masks, 0, sizeof(axis_masks));
+    GDF_Memset(axis_face_masks, 0, sizeof(axis_face_masks));
 
     GDFP_START();
 

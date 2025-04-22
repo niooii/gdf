@@ -2,7 +2,7 @@
 
 #include <vector>
 #include <gdfe/core.h>
-#include <gdfe/render/vk_types.h>
+#include <gdfe/render/vk/types.h>
 
 #include "textures.h"
 

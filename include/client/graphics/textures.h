@@ -3,7 +3,7 @@
 #include <gdfe/core.h>
 #include <vulkan/vulkan.h>
 
-#include "gdfe/render/vk_types.h"
+#include "gdfe/render/vk/types.h"
 
 #define MAX_TEXTURES = 2048
 
