@@ -5,21 +5,19 @@
 #include <game/net.h>
 
 using namespace Services;
-// TODO! throttled thread execution function in gdfe.
-// make it now.
-// or some horrible horrible macro
-// this should execute at a max fixed rate lol
 static unsigned long io_thread(void* args) {
     ServerNetManager* server = (ServerNetManager*) args;
     GDF_InitThreadLogging("Server:Net");
 
+    const GDF_Stopwatch throttle_timer = GDF_StopwatchCreate();
+    // Make loop happen at a fixed rate of 2ms per iteration
+    constexpr f64 throttle_secs = 0.002;
+
     LOG_INFO("Listening on port %d", server->port);
     ENetEvent event;
-    for (;;)
+    do
     {
-        if (!server->io_active)
-            return 0;
-
+        GDF_StopwatchReset(throttle_timer);
         for (auto& [uuid, client] : server->clients)
         {
             GDF_LockMutex(client->outgoing_mutex);
@@ -131,9 +129,21 @@ static unsigned long io_thread(void* args) {
 
             case ENET_EVENT_TYPE_NONE:
                 break;
+
+            default:
+                LOG_ERR("BAD ENET EVENT.");
             }
         }
-    }
+        if (
+            const f64 overflow = GDF_StopwatchSleepUntil(throttle_timer, throttle_secs);
+            overflow > 0
+        )
+            LOG_WARN("Server fell behind by %lf secs :(", overflow);
+    } while (server->io_active);
+
+    GDF_StopwatchDestroy(throttle_timer);
+
+    return 0;
 }
 
 ServerNetManager::ServerNetManager(u16 port, u16 max_clients) {

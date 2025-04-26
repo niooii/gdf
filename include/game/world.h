@@ -35,6 +35,8 @@ const extern u32 STATIC_BLOCK_LOOKUP_TABLE_SIZE;
 
 typedef struct BlockData {
     BLOCK_TYPE type;
+
+    SERIALIZE_FIELDS(type);
 } BlockData;
 
 typedef struct BlockCreateInfo {
@@ -47,6 +49,8 @@ typedef struct Block {
     u8 x_rel;
     u8 y_rel;
     u8 z_rel;
+    SERIALIZE_FIELDS(data
+        , x_rel, y_rel, z_rel);
 } Block;
 
 typedef enum BLOCK_FACE {
@@ -257,3 +261,30 @@ FORCEINLINE ChunkBlockPosTuple world_pos_to_chunk_block_tuple(vec3 world_pos)
 
 // Called every world tick by world_update()
 void world_tick(World* world);
+
+/* World relevant event declarations */
+
+// defined as a separate struct to make future compression easier
+struct BlockInfo {
+    Block block;
+    SERIALIZE_FIELDS(block);
+};
+
+struct ChunkLoadInfo {
+    ivec3 cc;
+    std::vector<BlockInfo> blocks;
+    SERIALIZE_FIELDS(cc, blocks);
+};
+
+DECL_NET_EVENT(ChunkLoadEvent)
+{
+    std::vector<ChunkLoadInfo> loaded_chunks{};
+    SERIALIZE_EVENT_FIELDS(loaded_chunks)
+};
+
+DECL_NET_EVENT(ChunkUpdateEvent)
+{
+    ivec3 chunk_coord;
+    u8vec3 updated;
+    SERIALIZE_EVENT_FIELDS(chunk_coord, updated)
+};

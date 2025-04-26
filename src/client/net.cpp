@@ -6,13 +6,16 @@ static unsigned long io_thread(void* args)
     ServerConnection* conn = (ServerConnection*) args;
     GDF_InitThreadLogging("Client:Net");
 
+    const GDF_Stopwatch throttle_timer = GDF_StopwatchCreate();
+    // Make loop happen at a fixed rate of 2ms per iteration
+    constexpr f64 throttle_secs = 0.002;
+
     LOG_INFO("Listening for server events..");
 
     ENetEvent event;
-    for(;;)
+    do
     {
-        if (!conn->io_active)
-            return 0;
+        GDF_StopwatchReset(throttle_timer);
 
         GDF_LockMutex(conn->outgoing_mutex);
         for (auto& outgoing : conn->outgoing_queue)
@@ -70,7 +73,16 @@ static unsigned long io_thread(void* args)
                 break;
             }
         }
-    }
+        if (
+            const f64 overflow = GDF_StopwatchSleepUntil(throttle_timer, throttle_secs);
+            overflow > 0
+        )
+            LOG_WARN("Server fell behind by %lf secs :(", overflow);
+    } while (conn->io_active);
+
+    GDF_StopwatchDestroy(throttle_timer);
+
+    return 0;
 }
 
 ServerConnection::ServerConnection(const char* addr, u16 port)
