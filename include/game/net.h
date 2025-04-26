@@ -30,3 +30,13 @@ DECL_NET_EVENT(ClientConnectionEvent)
     std::string uuid;
     SERIALIZE_EVENT_FIELDS(auth, uuid)
 };
+
+DECL_NET_EVENT(ClientDisconnectEvent)
+{
+    /// TODO! This is unused for now. For development purposes, the only field that matters is
+    /// the UUID. Change before production.
+    std::string auth;
+    /// The UUID of the player who has disconnected
+    std::string uuid;
+};
+

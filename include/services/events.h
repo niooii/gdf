@@ -10,6 +10,7 @@
 #include <ser20/types/polymorphic.hpp>
 #include <ser20/types/vector.hpp>
 #include <constants.h>
+#include <gdfe/os/thread.h>
 #include <services/time.h>
 
 /*
@@ -32,14 +33,15 @@ namespace Services::Events {
 		// not deserialized. In UTC.
 		u64 creation_time;
 
-		// Intended for use when we store the base class only. Slightly slower
+		/// Additional context for the event.
+		/// In server code, this contains a ConnectedClient pointer, unless the event is
+		/// an instance of ClientDisconnectEvent.
+		/// In client code, this field is unused for now, do not read or write to it.
+		void* data;
+
 		virtual void dispatch() const = 0;
 
-		// Intended for use when we store the base class only. Slightly slower
 		virtual void queue_dispatch() const = 0;
-
-		// Unused on the client. Do not set it, it will be ignored.
-		std::string source_uuid;
 
 		template<class Archive>
 		void serialize(Archive& ar) {
@@ -60,7 +62,6 @@ namespace Services::Events {
 	};
 
 	namespace detail {
-
 		template<typename>
 		struct SubscriptionT : Subscription {
 			~SubscriptionT() override = default;
@@ -184,6 +185,15 @@ namespace Services::Events {
 				}
 			}
 		};
+
+		extern GDF_Semaphore flush_signal;
+	}
+
+	/// This returns after the next flush fully completes.
+	/// This function is thread-safe.
+	FORCEINLINE void wait_for_flush() {
+		// consume the semaphore signal
+		TODO("UNIMPLEMENTED")
 	}
 
 	// TODO can i attach these to event base instances maybe? idk.

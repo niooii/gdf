@@ -18,6 +18,12 @@ static unsigned long io_thread(void* args) {
     do
     {
         GDF_StopwatchReset(throttle_timer);
+        // TODO! this is not good. probably batch serialize all events at once, and then
+        // acquire the mutex for a short amount of time, although this would mean
+        // separating the queued events into a global queue not owned by the ConnectedClient.
+        // Look out if the server starts falling behind, will prob become a bottleneck
+        LOG_INFO("Got here");
+        GDF_LockMutex(server->clients_mutex);
         for (auto& [uuid, client] : server->clients)
         {
             GDF_LockMutex(client->outgoing_mutex);
@@ -36,6 +42,7 @@ static unsigned long io_thread(void* args) {
             client->outgoing_queue.clear();
             GDF_ReleaseMutex(client->outgoing_mutex);
         }
+        GDF_ReleaseMutex(server->clients_mutex);
 
         GDF_LockMutex(server->broadcast_mutex);
         for (auto& outgoing : server->broadcast_queue)
@@ -63,13 +70,6 @@ static unsigned long io_thread(void* args) {
 
             case ENET_EVENT_TYPE_RECEIVE:
                 {
-                    // LOG_DEBUG("A packet of length %u containing %s was received from %s on channel %u.\n",
-                    //     event.packet->dataLength,
-                    //     event.packet->data,
-                    //     (char*) event.peer->data,
-                    //     event.channelID
-                    // );
-
                     ConnectedClient* client = (ConnectedClient*)event.peer->data;
                     try
                     {
@@ -83,12 +83,12 @@ static unsigned long io_thread(void* args) {
                         if (recv_event->source != ProgramType::Client)
                         {
                             LOG_WARN("Rejected packet for invalid packet source.");
-                            goto DESTROY_PACKET;
+                            goto SN_DESTROY_PACKET;
                         }
 
-                        if (recv_event->connect_event)
+                        if (UNLIKELY(recv_event->connect_event))
                         {
-                            ClientConnectionEvent* conn =
+                            const auto* conn =
                                     (dynamic_cast<ClientConnectionEvent*>(recv_event.get()));
 
                             if (LIKELY(conn))
@@ -98,6 +98,9 @@ static unsigned long io_thread(void* args) {
                                 // or something? idk.
                                 client->uuid = conn->uuid;
                                 client->name = "NAMELESS... FORMLESS...";
+                                GDF_LockMutex(server->clients_mutex);
+                                server->clients[conn->uuid] = client;
+                                GDF_ReleaseMutex(server->clients_mutex);
 
                                 LOG_DEBUG("Initialized connection information for %s!", conn->uuid.c_str());
                             }
@@ -107,8 +110,7 @@ static unsigned long io_thread(void* args) {
                             }
                         }
 
-                        // TODO! unnecessary allocation but not the main issue prob
-                        recv_event->source_uuid = client->uuid;
+                        recv_event->data = (void*)client;
 
                         GDF_LockMutex(server->incoming_mutex);
                         server->incoming_queue.push_back(std::move(recv_event));
@@ -117,14 +119,30 @@ static unsigned long io_thread(void* args) {
                     {
                         LOG_ERR("Failed to deserialize a packet from %s", client->uuid.c_str());
                     }
-                    DESTROY_PACKET:
+                    SN_DESTROY_PACKET:
                     enet_packet_destroy(event.packet);
                 }
                 break;
 
             case ENET_EVENT_TYPE_DISCONNECT:
-                LOG_DEBUG("%s disconnected.\n", (char*) event.peer->data);
-                GDF_Free(event.peer->data);
+                {
+                    GDF_LockMutex(server->incoming_mutex);
+                    auto* client = (ConnectedClient*) event.peer->data;
+
+                    LOG_DEBUG("%s disconnected.\n", client->name.c_str());
+
+                    auto dc = Services::Events::create_event<ClientDisconnectEvent>();
+                    dc->auth = client->auth;
+                    dc->uuid = client->uuid;
+                    server->incoming_queue.push_back(std::move(dc));
+
+                    GDF_ReleaseMutex(server->incoming_mutex);
+
+                    // TODO! wait for the next main thread flush
+                    Services::Events::wait_for_flush();
+
+                    GDF_Free(client);
+                }
                 break;
 
             case ENET_EVENT_TYPE_NONE:
@@ -156,7 +174,8 @@ ServerNetManager::ServerNetManager(u16 port, u16 max_clients) {
 
     Events::subscribe<TestMsgEvent>([](auto& event)
     {
-        LOG_INFO("Words from %s: \"%s\"", event.source_uuid.c_str(), event.message.c_str());
+        const ConnectedClient* client = (const ConnectedClient*)event.data;
+        LOG_INFO("Words from %s: \"%s\"", client->name.c_str(), event.message.c_str());
     });
 
     io_active = true;
@@ -164,6 +183,7 @@ ServerNetManager::ServerNetManager(u16 port, u16 max_clients) {
 
     incoming_mutex = GDF_CreateMutex();
     broadcast_mutex = GDF_CreateMutex();
+    clients_mutex = GDF_CreateMutex();
 
     if (enet_initialize() != 0) {
         LOG_FATAL("An error occurred while initializing ENet");
@@ -194,6 +214,7 @@ ServerNetManager::~ServerNetManager()
 
     GDF_DestroyMutex(incoming_mutex);
     GDF_DestroyMutex(broadcast_mutex);
+    GDF_DestroyMutex(clients_mutex);
 
     enet_host_destroy(host);
 }

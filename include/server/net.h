@@ -40,6 +40,7 @@ struct ServerNetManager {
 
     /// A map of a UUID string to a ConnectedClient ptr.
     ankerl::unordered_dense::map<std::string, ConnectedClient*> clients;
+    GDF_Mutex clients_mutex;
 
     GDF_Thread recv_thread;
 
@@ -55,13 +56,15 @@ struct ServerNetManager {
 
     FORCEINLINE void send_to(const std::string& uuid, std::unique_ptr<NetEvent> event)
     {
-        auto entry = clients.find(uuid);
+        GDF_LockMutex(clients_mutex);
+        const auto entry = clients.find(uuid);
         if (entry == clients.end())
         {
             LOG_ERR("Tried to send packet to nonexisting client.");
             return;
         }
         entry->second->queue_send(std::move(event));
+        GDF_ReleaseMutex(clients_mutex);
     }
 
     FORCEINLINE void broadcast(std::unique_ptr<NetEvent> event)
@@ -72,7 +75,7 @@ struct ServerNetManager {
     }
 
     // Dispatches all the incoming events locally
-    FORCEINLINE void dispatch_incoming()
+    FORCEINLINE void update()
     {
         GDF_LockMutex(incoming_mutex);
         for (const auto& event : incoming_queue)

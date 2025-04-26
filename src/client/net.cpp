@@ -39,29 +39,31 @@ static unsigned long io_thread(void* args)
             switch (event.type) {
             case ENET_EVENT_TYPE_RECEIVE:
                 {
-                    // LOG_DEBUG("A packet of length %u containing %s was received from server on channel %u.\n",
-                    // event.packet->dataLength,
-                    // event.packet->data,
-                    // event.channelID);
-
-                    auto recv_event = Services::Events::deserialize(
-                        {
-                            (char*)event.packet->data,
-                            event.packet->dataLength
-                        }
-                    );
-
-                    enet_packet_destroy(event.packet);
-
-                    if (recv_event->source != ProgramType::Server)
+                    try
                     {
-                        LOG_WARN("Rejected packet for invalid packet source.");
-                        continue;
+                        auto recv_event = Services::Events::deserialize(
+                           {
+                               (char*)event.packet->data,
+                               event.packet->dataLength
+                           }
+                        );
+
+                        if (recv_event->source != ProgramType::Server)
+                        {
+                            LOG_WARN("Rejected packet for invalid packet source.");
+                            goto CN_DESTROY_PACKET;
+                        }
+
+                        GDF_LockMutex(conn->incoming_mutex);
+                        conn->incoming_queue.push_back(std::move(recv_event));
+                        GDF_ReleaseMutex(conn->incoming_mutex);
+                    } catch (const ser20::Exception& e)
+                    {
+                        LOG_ERR("Failed to deserialize a packet from server");
                     }
 
-                    GDF_LockMutex(conn->incoming_mutex);
-                    conn->incoming_queue.push_back(std::move(recv_event));
-                    GDF_ReleaseMutex(conn->incoming_mutex);
+                    CN_DESTROY_PACKET:
+                    enet_packet_destroy(event.packet);
                 }
                 break;
 
@@ -114,7 +116,7 @@ ServerConnection::ServerConnection(const char* addr, u16 port)
     }
 
     ENetEvent event;
-    if (enet_host_service(client, &event, 25) > 0 &&
+    if (enet_host_service(client, &event, 250) > 0 &&
         event.type == ENET_EVENT_TYPE_CONNECT) {
         LOG_INFO("Connection to server succeeded");
     }
