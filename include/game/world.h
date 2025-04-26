@@ -81,6 +81,7 @@ class Chunk {
     u64 axis_masks[3][CHUNK_SIZE_P][CHUNK_SIZE_P];
 
     // indices correspond to the BLOCK_FACE enum
+    // TODO! unused
     Chunk* adjacent[6];
 
 public:
@@ -90,6 +91,8 @@ public:
     Block* set_block(BLOCK_TYPE type, u8vec3 block_coord);
     Block* get_block(u8vec3 block_coord);
     void destroy_block(u8vec3 block_coord, Block* out);
+
+    SERIALIZE_FIELDS(block_arr);
 };
 
 // A terrain generator_

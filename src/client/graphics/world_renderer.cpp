@@ -14,10 +14,10 @@ WorldRenderer::WorldRenderer(const GDF_VkRenderContext* vk_ctx)
 
     on_chunk_load = Events::subscribe<ChunkLoadEvent>([this](const auto& event)
     {
-        LOG_INFO("HEY MAN!!");
+        LOG_DEBUG("Recieved chunk load event!!");
         for (auto& load_info : event.loaded_chunks) {
             auto& cc = load_info.cc;
-            LOG_INFO("loaded chunk at %d, %d, %d", cc.x, cc.y, cc.z);
+            LOG_DEBUG("loaded chunk at %d, %d, %d", cc.x, cc.y, cc.z);
             if (!chunk_meshes.contains(cc))
                 chunk_meshes[cc] = new ChunkMesh{this->world, this->world->get_chunk(cc), cc};
         }

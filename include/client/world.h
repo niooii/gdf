@@ -2,7 +2,7 @@
 #include <gdfe/core.h>
 #include <game/world.h>
 #include <game/events/defs.h>
-
+#include <game/net.h>
 #include "net.h"
 
 /*
@@ -30,7 +30,13 @@ public:
         world_ = new World{"awf"};
         main_player_ = world_->create_humanoid();
 
-        auto test_event = std::make_unique<TestTextEvent>();
+        auto client_info = Services::Events::create_event<ClientConnectionEvent>();
+        client_info->auth = "TESTABABABAB";
+        client_info->uuid = "TESTUUID ABABABA";
+        client_info->connect_event = true;
+        server_con_.send(std::move(client_info));
+
+        auto test_event = Services::Events::create_event<TestMsgEvent>();
         test_event->message = "HELLO SERVER!";
         server_con_.send(std::move(test_event));
     }

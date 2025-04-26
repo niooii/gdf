@@ -18,7 +18,7 @@ struct Client {
 
 // TODO! world configuration
 class ServerWorld {
-    NetClientManager* net_;
+    ServerNetManager* net_;
     World world_;
 
     std::vector<std::unique_ptr<Services::Events::Subscription>> subscriptions_;
@@ -27,7 +27,7 @@ class ServerWorld {
 
 public:
 
-    ServerWorld(NetClientManager* net)
+    ServerWorld(ServerNetManager* net)
         : net_{net}, world_{"daworld"}
     {
         // subscriptions_.emplace_back(

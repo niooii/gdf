@@ -18,12 +18,6 @@ DECL_NET_EVENT(ChunkLoadEvent)
     SERIALIZE_EVENT_FIELDS(loaded_chunks)
 };
 
-DECL_NET_EVENT(TestTextEvent)
-{
-    std::string message;
-    SERIALIZE_EVENT_FIELDS(message)
-};
-
 DECL_NET_EVENT(ChunkUpdateEvent)
 {
     ivec3 chunk_coord;

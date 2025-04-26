@@ -22,6 +22,11 @@ namespace Services::Events {
 	struct NetEvent {
 		virtual ~NetEvent() = default;
 
+		/// TODO! maybe collapse this and other fields into a bitfield or something.
+		/// this is true if and only if the packet is a ClientConnectionEvent type, although
+		/// it is not enforced anywhere.
+		bool connect_event = false;
+
 		ProgramType source = ProgramType::Client;
 		// The unix timestamp of when the event was created from the source,
 		// not deserialized. In UTC.
@@ -38,7 +43,7 @@ namespace Services::Events {
 
 		template<class Archive>
 		void serialize(Archive& ar) {
-			ar(source, creation_time);
+			ar(source, creation_time, connect_event);
 		}
 	};
 
@@ -64,8 +69,6 @@ namespace Services::Events {
 
 		template<typename T>
 		class EventDispatcher {
-			// TODO! should separate deferred and immediate events. do this later
-			// Deferred handlers
 			ankerl::unordered_dense::map<SubscriptionId, std::function<void(const T&)>>
 				handlers;
 
