@@ -3,9 +3,7 @@
 #include <gdfe/core.h>
 #include <game/ecs.h>
 #include <game/hfsm.h>
-#include <services/events.h>
-#include <services/global.h>
-#include <services/time.h>
+#include <services/fwd.h>
 #include <constants.h>
 #include <serde.h>
 

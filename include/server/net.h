@@ -8,7 +8,6 @@
 using Services::Events::NetEvent;
 
 struct ConnectedClient {
-    ENetPeer* peer;
     ConnectedClient(ENetPeer* peer) : peer{peer}
     {
         outgoing_queue.reserve(32);
@@ -26,6 +25,8 @@ struct ConnectedClient {
         outgoing_queue.push_back(std::move(event));
         GDF_ReleaseMutex(outgoing_mutex);
     }
+
+    ENetPeer* peer;
 
     std::string auth;
     std::string uuid;
@@ -61,9 +62,11 @@ struct ServerNetManager {
         if (entry == clients.end())
         {
             LOG_ERR("Tried to send packet to nonexisting client.");
-            return;
         }
-        entry->second->queue_send(std::move(event));
+        else
+        {
+            entry->second->queue_send(std::move(event));
+        }
         GDF_ReleaseMutex(clients_mutex);
     }
 

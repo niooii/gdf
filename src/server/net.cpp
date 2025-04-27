@@ -22,7 +22,6 @@ static unsigned long io_thread(void* args) {
         // acquire the mutex for a short amount of time, although this would mean
         // separating the queued events into a global queue not owned by the ConnectedClient.
         // Look out if the server starts falling behind, will prob become a bottleneck
-        LOG_INFO("Got here");
         GDF_LockMutex(server->clients_mutex);
         for (auto& [uuid, client] : server->clients)
         {
@@ -65,7 +64,7 @@ static unsigned long io_thread(void* args) {
             case ENET_EVENT_TYPE_CONNECT:
                 LOG_DEBUG("A new client connected from %x:%u.\n",
                     event.peer->address.host, event.peer->address.port);
-                event.peer->data = GDF_Malloc(sizeof(ConnectedClient), GDF_MEMTAG_UNKNOWN);
+                event.peer->data = new ConnectedClient(event.peer);
                 break;
 
             case ENET_EVENT_TYPE_RECEIVE:
@@ -141,7 +140,7 @@ static unsigned long io_thread(void* args) {
                     // TODO! wait for the next main thread flush
                     Services::Events::wait_for_flush();
 
-                    GDF_Free(client);
+                    delete client;
                 }
                 break;
 
