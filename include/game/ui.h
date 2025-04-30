@@ -1,10 +1,13 @@
 #pragma once
 #include <vector>
+#include <gdfe/def.h>
+#include <memory>
+#include <string>
 
 class UIComponent;
 
 struct UIScreen {
-    std::vector<std::unique_ptr<UIComponent>> components;
+    std::vector<std::unique_ptr<UIComponent*>> components;
 };
 
 /// A UIComponent controls it's own rendering.
