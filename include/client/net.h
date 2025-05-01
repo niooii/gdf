@@ -2,7 +2,7 @@
 #include <enet.h>
 #include <memory>
 #include <vector>
-#include <gdfe/core.h>
+#include <gdfe/prelude.h>
 #include <gdfe/os/thread.h>
 #include <atomic>
 #include <prelude.h>

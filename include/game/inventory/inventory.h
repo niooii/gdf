@@ -1,6 +1,6 @@
 #pragma once
 
-#include <gdfe/core.h>
+#include <gdfe/prelude.h>
 #include <game/items/item.h>
 #include "item_slot.h"
 

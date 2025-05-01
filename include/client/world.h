@@ -1,5 +1,5 @@
 #pragma once
-#include <gdfe/core.h>
+#include <gdfe/prelude.h>
 #include <game/world.h>
 #include <game/events/defs.h>
 #include <game/net.h>

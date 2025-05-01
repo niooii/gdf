@@ -1,4 +1,4 @@
-#include <gdfe/core.h>
+#include <gdfe/prelude.h>
 #include <client/graphics/renderer.h>
 #include <prelude.h>
 

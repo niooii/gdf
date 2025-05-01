@@ -1,6 +1,6 @@
 #pragma once
 
-#include <gdfe/core.h>
+#include <gdfe/prelude.h>
 #include <game/ecs.h>
 #include <game/hfsm.h>
 #include <services/fwd.h>

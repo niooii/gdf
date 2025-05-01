@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include <gdfe/core.h>
+#include <gdfe/prelude.h>
 #include <gdfe/render/vk/types.h>
 
 #include "textures.h"

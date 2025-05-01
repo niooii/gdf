@@ -1,6 +1,6 @@
 #pragma once
 
-#include <gdfe/core.h>
+#include <gdfe/prelude.h>
 #include <vulkan/vulkan.h>
 
 #include "gdfe/render/vk/types.h"

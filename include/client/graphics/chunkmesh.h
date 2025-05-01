@@ -1,6 +1,6 @@
 #pragma once
 
-#include <gdfe/core.h>
+#include <gdfe/prelude.h>
 #include <game/world.h>
 #include <gdfe/render/renderer.h>
 

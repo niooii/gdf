@@ -1,6 +1,6 @@
 #pragma once
 
-#include <gdfe/core.h>
+#include <gdfe/prelude.h>
 #include <game/entity/humanoid.h>
 #include <game/physics/engine.h>
 #include <game/physics/aabb.h>

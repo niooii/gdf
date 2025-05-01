@@ -1,5 +1,5 @@
 #pragma once
-#include <gdfe/core.h>
+#include <gdfe/prelude.h>
 #include <functional>
 #include <memory>
 #include <span>
