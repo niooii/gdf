@@ -12,7 +12,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_program(GLSLC glslc REQUIRED)
-add_subdirectory(gdfe)
+add_subdirectory(extern/gdfe)
 add_subdirectory(extern/ser20)
 add_subdirectory(extern/entt)
 

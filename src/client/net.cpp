@@ -20,7 +20,7 @@ static unsigned long io_thread(void* args)
         GDF_LockMutex(conn->outgoing_mutex);
         for (auto& outgoing : conn->outgoing_queue)
         {
-            std::string serialized {Services::Events::serialize(outgoing)};
+            std::string serialized {Net::serialize(outgoing)};
 
             ENetPacket* packet = enet_packet_create(
                 serialized.c_str(),
@@ -41,7 +41,7 @@ static unsigned long io_thread(void* args)
                 {
                     try
                     {
-                        auto recv_event = Services::Events::deserialize(
+                        auto recv_event = Net::deserialize(
                            {
                                (char*)event.packet->data,
                                event.packet->dataLength
@@ -145,7 +145,7 @@ ServerConnection::~ServerConnection()
     enet_host_destroy(client);
 }
 
-void ServerConnection::send(std::unique_ptr<Services::Events::NetEvent> unique_ptr)
+void ServerConnection::send(std::unique_ptr<Net::Packet> unique_ptr)
 {
     unique_ptr->source = ProgramType::Client;
     GDF_LockMutex(outgoing_mutex);

@@ -20,39 +20,7 @@
  */
 
 namespace Services::Events {
-	struct NetEvent {
-		virtual ~NetEvent() = default;
-
-		/// TODO! maybe collapse this and other fields into a bitfield or something.
-		/// this is true if and only if the packet is a ClientConnectionEvent type, although
-		/// it is not enforced anywhere.
-		bool connect_event = false;
-
-		ProgramType source = ProgramType::Client;
-		// The unix timestamp of when the event was created from the source,
-		// not deserialized. In UTC.
-		u64 creation_time;
-
-		/// Additional context for the event.
-		/// In server code, this contains a ConnectedClient pointer, unless the event is
-		/// an instance of ClientDisconnectEvent.
-		/// In client code, this field is unused for now, do not read or write to it.
-		void* data;
-
-		virtual void dispatch() const = 0;
-
-		virtual void queue_dispatch() const = 0;
-
-		template<class Archive>
-		void serialize(Archive& ar) {
-			ar(source, creation_time, connect_event);
-		}
-	};
-
 	typedef u64 SubscriptionId;
-
-	template<typename T>
-	concept NetEventType = std::is_base_of_v<NetEvent, T>;
 
 	struct Subscription {
 		SubscriptionId id;
@@ -196,27 +164,6 @@ namespace Services::Events {
 		TODO("UNIMPLEMENTED")
 	}
 
-	// TODO can i attach these to event base instances maybe? idk.
-	FORCEINLINE std::string serialize(const std::unique_ptr<NetEvent>& event) {
-		std::ostringstream os;
-
-		ser20::BinaryOutputArchive archive{os};
-		archive(event);
-
-		return os.str();
-	}
-
-	FORCEINLINE std::unique_ptr<NetEvent> deserialize(const std::span<char>& data) {
-		std::unique_ptr<NetEvent> event;
-
-		std::ispanstream stream{data};
-
-		ser20::BinaryInputArchive archive{stream};
-		archive(event);
-
-		return event;
-	}
-
 	template<typename T>
 	FORCEINLINE void dispatch(const T& event) {
 		detail::EventManager::get_instance().dispatch(event);
@@ -238,57 +185,24 @@ namespace Services::Events {
 		detail::EventManager::get_dispatcher<T>().unsubscribe(id);
 	}
 
-	template<NetEventType T>
-			FORCEINLINE std::unique_ptr<T> create_event() {
-		T* e = new T();
-		e->creation_time = Services::Time::unix_millis();
-		e->source = CURR_PROGRAM_TYPE;
-		return std::unique_ptr<T>(e);
-	}
-
-	template<NetEventType T, typename... Args>
-	FORCEINLINE std::unique_ptr<T> create_event(Args&&... args) {
-		std::unique_ptr<T> ptr = std::make_unique<T>(std::forward<Args>(args)...);
-		ptr->creation_time = Services::Time::unix_millis();
-		ptr->source = CURR_PROGRAM_TYPE;
-		return std::move(ptr);
-	}
-
 	template<typename T>
-	requires (!NetEventType<T>)
 	FORCEINLINE std::unique_ptr<T> create_event() {
 		return std::unique_ptr<T>(new T{});
 	}
 
 	template<typename T, typename... Args>
-	requires (!NetEventType<T>)
 	FORCEINLINE std::unique_ptr<T> create_event(Args&&... args) {
 		return std::make_unique<T>(std::forward<Args>(args)...);
 	}
 
-	template<NetEventType T>
 	// Add a condition to reject the dispatching of an event if true.
 	// TODO! unused for now
-	FORCEINLINE void reject_dispatch_if(std::function<bool(const T&)> reject_condition) {
-
-	}
+	// FORCEINLINE void reject_dispatch_if(std::function<bool(const T&)> reject_condition) {
+	//
+	// }
 
 	FORCEINLINE void flush() {
 		detail::EventManager::get_instance().flush();
 	}
-
-	// Event template type
-	template<typename Derived>
-	struct NetEventT : NetEvent {
-		void dispatch() const override {
-			Events::dispatch(static_cast<const Derived&>(*this));
-		}
-
-		void queue_dispatch() const override {
-			Events::queue_dispatch(static_cast<const Derived&>(*this));
-		}
-	};
 }
-
-SER20_REGISTER_TYPE(Services::Events::NetEvent)
 

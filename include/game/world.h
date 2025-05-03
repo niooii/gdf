@@ -276,15 +276,15 @@ struct ChunkLoadInfo {
     SERIALIZE_FIELDS(cc, blocks);
 };
 
-DECL_NET_EVENT(ChunkLoadEvent)
+DECL_PACKET(ChunkLoadEvent)
 {
     std::vector<ChunkLoadInfo> loaded_chunks{};
-    SERIALIZE_EVENT_FIELDS(loaded_chunks)
+    SERIALIZE_PACKET_FIELDS(loaded_chunks)
 };
 
-DECL_NET_EVENT(ChunkUpdateEvent)
+DECL_PACKET(ChunkUpdateEvent)
 {
     ivec3 chunk_coord;
     u8vec3 updated;
-    SERIALIZE_EVENT_FIELDS(chunk_coord, updated)
+    SERIALIZE_PACKET_FIELDS(chunk_coord, updated)
 };

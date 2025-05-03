@@ -7,10 +7,10 @@ void server_init()
 {
     SERVER.net = new ServerNetManager{GDF_SERVER_PORT, 64};
 
-    Services::Events::reject_dispatch_if<ChunkUpdateEvent>(
-        [](auto event) {
-        return event.source == ProgramType::Client;
-    });
+    // Services::Events::reject_dispatch_if<ChunkUpdateEvent>(
+    //     [](auto event) {
+    //     return event.source == ProgramType::Client;
+    // });
 
     auto tmp = WorldServerCreateInfo{};
     SERVER.server_world = new ServerWorld{SERVER.net};

@@ -15,7 +15,7 @@ enum HumanoidActionBit {
     Use = 0b10000,
 };
 
-DECL_NET_EVENT(HumanoidStateChangeEvent) {
+DECL_PACKET(HumanoidStateChangeEvent) {
     /* Shared usage by client and server */
     // The updated pitch of a humanoid - consider sending these separately?
     f32 pitch = 0;
@@ -52,7 +52,7 @@ DECL_NET_EVENT(HumanoidStateChangeEvent) {
     FORCEINLINE bool has_bits(u64 bits) const { return action_bits.has_bits(bits); }
     FORCEINLINE void add_bits(u64 bits) { return action_bits.add_bits(bits); }
 
-    SERIALIZE_EVENT_FIELDS(
+    SERIALIZE_PACKET_FIELDS(
         x_input,
         z_input,
         pitch,

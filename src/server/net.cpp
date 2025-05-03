@@ -28,7 +28,7 @@ static unsigned long io_thread(void* args) {
             GDF_LockMutex(client->outgoing_mutex);
             for (const auto& outgoing : client->outgoing_queue)
             {
-                std::string serialized {Events::serialize(outgoing)};
+                std::string serialized {Net::serialize(outgoing)};
 
                 ENetPacket* packet = enet_packet_create(
                     serialized.c_str(),
@@ -46,7 +46,7 @@ static unsigned long io_thread(void* args) {
         GDF_LockMutex(server->broadcast_mutex);
         for (auto& outgoing : server->broadcast_queue)
         {
-            std::string serialized {Events::serialize(outgoing)};
+            std::string serialized {Net::serialize(outgoing)};
 
             ENetPacket* packet = enet_packet_create(
                 serialized.c_str(),
@@ -62,86 +62,114 @@ static unsigned long io_thread(void* args) {
         while (enet_host_service(server->host, &event, 0) > 0) {
             switch (event.type) {
             case ENET_EVENT_TYPE_CONNECT:
+            {
                 LOG_DEBUG("A new client connected from %x:%u.\n",
                     event.peer->address.host, event.peer->address.port);
-                event.peer->data = new ConnectedClient(event.peer);
+                std::shared_ptr<ConnectedClient> shared_client(
+                    new ConnectedClient(event.peer)
+                );
+                // the shared pointer will only go out of scope once
+                // the client disconnects, so we will not ever
+                // deal with this client again. therefore, we will not
+                // ever access it after it becomes dangling.
+                event.peer->data = shared_client.get();
+                server->pending_connections[shared_client.get()] = shared_client;
+            }
                 break;
 
             case ENET_EVENT_TYPE_RECEIVE:
+            {
+                auto* client = (ConnectedClient*)event.peer->data;
+                try
                 {
-                    ConnectedClient* client = (ConnectedClient*)event.peer->data;
-                    try
+                    auto recv_event = Net::deserialize(
                     {
-                        auto recv_event = Events::deserialize(
-                        {
-                                (char*)event.packet->data,
-                                event.packet->dataLength
-                            }
-                        );
+                            (char*)event.packet->data,
+                            event.packet->dataLength
+                        }
+                    );
 
-                        if (recv_event->source != ProgramType::Client)
-                        {
-                            LOG_WARN("Rejected packet for invalid packet source.");
+                    if (recv_event->source != ProgramType::Client)
+                    {
+                        LOG_WARN("Rejected packet for invalid packet source.");
+                        goto SN_DESTROY_PACKET;
+                    }
+
+                    if (UNLIKELY(recv_event->connect_event))
+                    {
+                        // check if the connected client is pending a connection event
+                        auto pending_client = server->pending_connections.extract(client);
+
+                        if (!pending_client.has_value()) {
+                            LOG_ERR("Client \"%s\" tried to connect twice.", client->uuid.c_str());
+                            // TODO! handle more later
                             goto SN_DESTROY_PACKET;
                         }
 
-                        if (UNLIKELY(recv_event->connect_event))
+                        std::shared_ptr<ConnectedClient> shared_client =
+                            pending_client.value().second;
+
+                        const auto* conn =
+                            (dynamic_cast<ClientConnectionEvent*>(recv_event.get()));
+
+                        if (LIKELY(conn))
                         {
-                            const auto* conn =
-                                    (dynamic_cast<ClientConnectionEvent*>(recv_event.get()));
+                            client->auth = conn->auth;
+                            // TODO! get uuid and name from some centralized server
+                            // or something? idk. (oh but don't block this thread uh gg)
+                            // At this point, the shared ptr should only be accessed
+                            // in this thread, so there should be no harm in
+                            // directly assigning these values without a lock
+                            shared_client->uuid = conn->uuid;
+                            shared_client->name = "NAMELESS... FORMLESS...";
+                            GDF_LockMutex(server->clients_mutex);
+                            server->clients[conn->uuid] = shared_client;
+                            GDF_ReleaseMutex(server->clients_mutex);
 
-                            if (LIKELY(conn))
-                            {
-                                client->auth = conn->auth;
-                                // TODO! get uuid and name from some centralized server
-                                // or something? idk.
-                                client->uuid = conn->uuid;
-                                client->name = "NAMELESS... FORMLESS...";
-                                GDF_LockMutex(server->clients_mutex);
-                                server->clients[conn->uuid] = client;
-                                GDF_ReleaseMutex(server->clients_mutex);
-
-                                LOG_DEBUG("Initialized connection information for %s!", conn->uuid.c_str());
-                            }
-                            else
-                            {
-                                LOG_ERR("Recieved malformed connection packet, treating like a regular packet..");
-                            }
+                            LOG_DEBUG("Initialized connection information for %s!", conn->uuid.c_str());
                         }
-
-                        recv_event->data = (void*)client;
-
-                        GDF_LockMutex(server->incoming_mutex);
-                        server->incoming_queue.push_back(std::move(recv_event));
-                        GDF_ReleaseMutex(server->incoming_mutex);
-                    } catch (const ser20::Exception& e)
-                    {
-                        LOG_ERR("Failed to deserialize a packet from %s", client->uuid.c_str());
+                        else
+                        {
+                            LOG_ERR("Recieved malformed connection packet, treating like a regular packet..");
+                        }
                     }
-                    SN_DESTROY_PACKET:
-                    enet_packet_destroy(event.packet);
+
+                    recv_event->data = (void*)client;
+
+                    GDF_LockMutex(server->incoming_mutex);
+                    server->incoming_queue.push_back(std::move(recv_event));
+                    GDF_ReleaseMutex(server->incoming_mutex);
+                } catch (const ser20::Exception& e)
+                {
+                    LOG_ERR("Failed to deserialize a packet from %s", client->uuid.c_str());
                 }
+                SN_DESTROY_PACKET:
+                enet_packet_destroy(event.packet);
+            }
                 break;
 
             case ENET_EVENT_TYPE_DISCONNECT:
-                {
-                    GDF_LockMutex(server->incoming_mutex);
-                    auto* client = (ConnectedClient*) event.peer->data;
+            {
+                GDF_LockMutex(server->incoming_mutex);
+                auto* client = (ConnectedClient*) event.peer->data;
 
-                    LOG_DEBUG("%s disconnected.\n", client->name.c_str());
+                LOG_DEBUG("%s disconnected.\n", client->name.c_str());
 
-                    auto dc = Services::Events::create_event<ClientDisconnectEvent>();
-                    dc->auth = client->auth;
-                    dc->uuid = client->uuid;
-                    server->incoming_queue.push_back(std::move(dc));
+                auto dc = Services::Events::create_event<ClientDisconnectEvent>();
+                dc->auth = client->auth;
+                dc->uuid = client->uuid;
+                server->incoming_queue.push_back(std::move(dc));
 
-                    GDF_ReleaseMutex(server->incoming_mutex);
+                GDF_ReleaseMutex(server->incoming_mutex);
 
-                    // TODO! wait for the next main thread flush
-                    Services::Events::wait_for_flush();
+                // remove the client from the map so outgoing messages are no longer sent,
+                // effectively removing it from this thread's concern.
+                GDF_LockMutex(server->clients_mutex);
+                server->clients.erase(client->uuid);
+                GDF_ReleaseMutex(server->clients_mutex);
 
-                    delete client;
-                }
+                // client will delete itself via shared pointer.
+            }
                 break;
 
             case ENET_EVENT_TYPE_NONE:

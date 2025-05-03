@@ -13,10 +13,10 @@ struct ServerConnection {
 
     GDF_Thread recv_thread;
 
-    std::vector<std::unique_ptr<Services::Events::NetEvent>> incoming_queue;
+    std::vector<std::unique_ptr<Net::Packet>> incoming_queue;
     GDF_Mutex incoming_mutex;
 
-    std::vector<std::unique_ptr<Services::Events::NetEvent>> outgoing_queue;
+    std::vector<std::unique_ptr<Net::Packet>> outgoing_queue;
     GDF_Mutex outgoing_mutex;
 
     std::atomic_bool io_active;
@@ -27,7 +27,7 @@ struct ServerConnection {
     ServerConnection(const char* addr, u16 port);
     ~ServerConnection();
 
-    void send(std::unique_ptr<Services::Events::NetEvent> unique_ptr);
+    void send(std::unique_ptr<Net::Packet> unique_ptr);
 
     void dispatch_incoming();
 };

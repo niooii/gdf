@@ -7,8 +7,8 @@
 #include <game/types.h>
 #include <prelude.h>
 
-DECL_NET_EVENT(PlayerMoveEvent)
+DECL_PACKET(PlayerMoveEvent)
 {
     vec3 pos;
-    SERIALIZE_EVENT_FIELDS(pos)
+    SERIALIZE_PACKET_FIELDS(pos)
 };

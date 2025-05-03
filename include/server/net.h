@@ -5,7 +5,7 @@
 #include <enet.h>
 #include <gdfe/os/thread.h>
 
-using Services::Events::NetEvent;
+using Net::Packet;
 
 struct ConnectedClient {
     ConnectedClient(ENetPeer* peer) : peer{peer}
@@ -19,7 +19,7 @@ struct ConnectedClient {
         GDF_DestroyMutex(outgoing_mutex);
     }
 
-    FORCEINLINE void queue_send(std::unique_ptr<NetEvent> event)
+    FORCEINLINE void queue_send(std::unique_ptr<Packet> event)
     {
         GDF_LockMutex(outgoing_mutex);
         outgoing_queue.push_back(std::move(event));
@@ -32,20 +32,28 @@ struct ConnectedClient {
     std::string uuid;
     std::string name;
 
-    std::vector<std::unique_ptr<NetEvent>> outgoing_queue;
+    std::vector<std::unique_ptr<Packet>> outgoing_queue;
     GDF_Mutex outgoing_mutex;
 };
 
 struct ServerNetManager {
     ENetHost* host;
 
-    /// A map of a UUID string to a ConnectedClient ptr.
-    ankerl::unordered_dense::map<std::string, ConnectedClient*> clients;
+    /// A map of a UUID string to a shared_ptr<ConnectedClient>.
+    ankerl::unordered_dense::map<std::string, std::shared_ptr<ConnectedClient>>
+        clients;
+
     GDF_Mutex clients_mutex;
+
+    /// This set stores the clients that have not yet sent any authentication
+    /// information over, but have connected to the server.
+    /// This will only be accessed from one thread, so no locks are needed.
+    ankerl::unordered_dense::map<ConnectedClient*, std::shared_ptr<ConnectedClient>>
+        pending_connections;
 
     GDF_Thread recv_thread;
 
-    std::vector<std::unique_ptr<NetEvent>> incoming_queue;
+    std::vector<std::unique_ptr<Packet>> incoming_queue;
     GDF_Mutex incoming_mutex;
 
     std::atomic_bool io_active;
@@ -55,7 +63,7 @@ struct ServerNetManager {
     ServerNetManager(u16 port, u16 max_clients);
     ~ServerNetManager();
 
-    FORCEINLINE void send_to(const std::string& uuid, std::unique_ptr<NetEvent> event)
+    FORCEINLINE void send_to(const std::string& uuid, std::unique_ptr<Packet> event)
     {
         GDF_LockMutex(clients_mutex);
         const auto entry = clients.find(uuid);
@@ -70,7 +78,7 @@ struct ServerNetManager {
         GDF_ReleaseMutex(clients_mutex);
     }
 
-    FORCEINLINE void broadcast(std::unique_ptr<NetEvent> event)
+    FORCEINLINE void broadcast(std::unique_ptr<Packet> event)
     {
         GDF_LockMutex(broadcast_mutex);
         broadcast_queue.push_back(std::move(event));
@@ -90,7 +98,7 @@ struct ServerNetManager {
         GDF_ReleaseMutex(incoming_mutex);
     }
 
-    std::vector<std::unique_ptr<NetEvent>> broadcast_queue;
+    std::vector<std::unique_ptr<Packet>> broadcast_queue;
     GDF_Mutex broadcast_mutex;
 };
 
