@@ -1,6 +1,6 @@
 #pragma once
-#include <gdfe/def.h>
 #include <chrono>
+#include <gdfe/def.h>
 
 namespace Services::Time {
     namespace detail {
@@ -17,4 +17,4 @@ namespace Services::Time {
 
         return static_cast<u64>(now_time_t);
     }
-}
+} // namespace Services::Time

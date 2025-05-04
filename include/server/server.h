@@ -1,6 +1,6 @@
 #pragma once
-#include <server/world.h>
 #include <gdfe/gdfe.h>
+#include <server/world.h>
 
 struct Server {
     // This is the name of a global semaphore that will signal when the server should terminate
@@ -20,6 +20,6 @@ struct Server {
 // The global server state
 extern Server SERVER;
 
-void server_init();
-void server_destroy();
+void     server_init();
+void     server_destroy();
 GDF_BOOL server_update(const GDF_AppState* app_state, f64 delta_time, void* state);

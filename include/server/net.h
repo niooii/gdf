@@ -1,23 +1,20 @@
 #pragma once
-#include <memory>
-#include <vector>
-#include <prelude.h>
 #include <enet.h>
 #include <gdfe/os/thread.h>
+#include <memory>
+#include <prelude.h>
+#include <vector>
 
 using Net::Packet;
 
 struct ConnectedClient {
-    ConnectedClient(ENetPeer* peer) : peer{peer}
+    ConnectedClient(ENetPeer* peer) : peer{ peer }
     {
         outgoing_queue.reserve(32);
         outgoing_mutex = GDF_CreateMutex();
     };
 
-    ~ConnectedClient()
-    {
-        GDF_DestroyMutex(outgoing_mutex);
-    }
+    ~ConnectedClient() { GDF_DestroyMutex(outgoing_mutex); }
 
     FORCEINLINE void queue_send(std::unique_ptr<Packet> event)
     {
@@ -33,15 +30,14 @@ struct ConnectedClient {
     std::string name;
 
     std::vector<std::unique_ptr<Packet>> outgoing_queue;
-    GDF_Mutex outgoing_mutex;
+    GDF_Mutex                            outgoing_mutex;
 };
 
 struct ServerNetManager {
     ENetHost* host;
 
     /// A map of a UUID string to a shared_ptr<ConnectedClient>.
-    ankerl::unordered_dense::map<std::string, std::shared_ptr<ConnectedClient>>
-        clients;
+    ankerl::unordered_dense::map<std::string, std::shared_ptr<ConnectedClient>> clients;
 
     GDF_Mutex clients_mutex;
 
@@ -54,13 +50,13 @@ struct ServerNetManager {
     GDF_Thread recv_thread;
 
     std::vector<std::unique_ptr<Packet>> incoming_queue;
-    GDF_Mutex incoming_mutex;
+    GDF_Mutex                            incoming_mutex;
 
     std::atomic_bool io_active;
 
     u16 port;
 
-    ServerNetManager(u16 port, u16 max_clients);
+     ServerNetManager(u16 port, u16 max_clients);
     ~ServerNetManager();
 
     FORCEINLINE void send_to(const std::string& uuid, std::unique_ptr<Packet> event)
@@ -99,6 +95,5 @@ struct ServerNetManager {
     }
 
     std::vector<std::unique_ptr<Packet>> broadcast_queue;
-    GDF_Mutex broadcast_mutex;
+    GDF_Mutex                            broadcast_mutex;
 };
-

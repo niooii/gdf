@@ -17,12 +17,12 @@ typedef enum GDF_TEXTURE_INDEX {
 } GDF_TEXTURE_INDEX;
 
 typedef struct block_textures {
-    const GDF_VkDevice* device;
+    const GDF_VkDevice*    device;
     VkAllocationCallbacks* allocator;
 
-    GDF_VkImage texture_array;
+    GDF_VkImage    texture_array;
     VkDeviceMemory texture_array_memory;
-    VkSampler sampler;
+    VkSampler      sampler;
 } block_textures;
 
 // This initializes the texture array buffer

@@ -1,5 +1,5 @@
-#include <client/world.h>
 #include <client/app.h>
+#include <client/world.h>
 #include <game/entity/entity.h>
 
 std::unique_ptr<HumanoidStateChangeEvent> ClientWorld::make_action_packet()
@@ -30,7 +30,7 @@ std::unique_ptr<HumanoidStateChangeEvent> ClientWorld::make_action_packet()
         x_input++;
     }
 
-    auto action_event = Services::Events::create_event<HumanoidStateChangeEvent>();
+    auto action_event     = Services::Events::create_event<HumanoidStateChangeEvent>();
     action_event->x_input = x_input;
     action_event->z_input = z_input;
 
@@ -50,7 +50,7 @@ std::unique_ptr<HumanoidStateChangeEvent> ClientWorld::make_action_packet()
         action_event->add_bits(HumanoidActionBit::Use);
 
     action_event->pitch = GDF_CameraGetPitch(APP.main_camera);
-    action_event->yaw = GDF_CameraGetYaw(APP.main_camera);
+    action_event->yaw   = GDF_CameraGetYaw(APP.main_camera);
 
     return std::move(action_event);
 }
@@ -60,7 +60,7 @@ void ClientWorld::update(f32 dt)
     // gather the player input
     // this doesnt really fit in this function well does it idk - maybe
     // move one level higher (the main app loop) or i might be stupid
-    auto player_action_event{make_action_packet()};
+    auto player_action_event{ make_action_packet() };
 
     // TODO! simulate the inputs on client side - this is a rough sketch of how to do it
 
@@ -69,8 +69,8 @@ void ClientWorld::update(f32 dt)
     // upd the rotation component - this will be done on the server side after recieving
     // the action event
     Components::Rotation* rotation = world_->registry().try_get<Components::Rotation>(main_player_);
-    rotation->pitch = player_action_event->pitch;
-    rotation->yaw = player_action_event->yaw;
+    rotation->pitch                = player_action_event->pitch;
+    rotation->yaw                  = player_action_event->yaw;
     hum.process_action(*player_action_event);
 
     // Send the player input to the server
@@ -80,14 +80,8 @@ void ClientWorld::update(f32 dt)
     server_con_.dispatch_incoming();
 
     // update camera pos to be center of "head"
-    const auto* collider = world_->registry().try_get<Components::AabbCollider>(main_player_);
-    vec3 camera_pos = vec3_new(
-        (collider->aabb.min.x + collider->aabb.max.x) / 2.0,
-        collider->aabb.max.y - 0.25,
-        (collider->aabb.min.z + collider->aabb.max.z) / 2.0
-    );
-    GDF_CameraSetPosition(
-        APP.main_camera,
-        camera_pos
-    );
+    const auto* collider   = world_->registry().try_get<Components::AabbCollider>(main_player_);
+    vec3        camera_pos = vec3_new((collider->aabb.min.x + collider->aabb.max.x) / 2.0,
+               collider->aabb.max.y - 0.25, (collider->aabb.min.z + collider->aabb.max.z) / 2.0);
+    GDF_CameraSetPosition(APP.main_camera, camera_pos);
 }

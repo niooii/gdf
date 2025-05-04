@@ -1,9 +1,9 @@
 #pragma once
 
-#include <gdfe/prelude.h>
-#include <gdfe/math/math.h>
 #include <game/entity/entity.h>
 #include <game/world.h>
+#include <gdfe/math/math.h>
+#include <gdfe/prelude.h>
 
 typedef enum RAYCAST_STATUS {
     RAYCAST_STATUS_ERR_UNKNOWN,
@@ -13,26 +13,17 @@ typedef enum RAYCAST_STATUS {
 } RAYCAST_STATUS;
 
 typedef struct RaycastInfo {
-    vec3 origin;
-    vec3 dir;
-    f32 max_distance;
+    vec3   origin;
+    vec3   dir;
+    f32    max_distance;
     World* world;
 } RaycastInfo;
 
 // Returns a recommended RaycastInfo struct for general block raycasting.
-FORCEINLINE RaycastInfo raycast_info_new(
-    World* world,
-    vec3 origin, 
-    vec3 dir,
-    f32 max_distance
-)
+FORCEINLINE RaycastInfo raycast_info_new(World* world, vec3 origin, vec3 dir, f32 max_distance)
 {
-    return (RaycastInfo) {
-        .origin = origin,
-        .dir = dir,
-        .max_distance = max_distance,
-        .world = world
-    };
+    return (
+        RaycastInfo){ .origin = origin, .dir = dir, .max_distance = max_distance, .world = world };
 }
 
 typedef struct RaycastBlockHitInfo {
@@ -40,12 +31,12 @@ typedef struct RaycastBlockHitInfo {
     // from other fields.
     RAYCAST_STATUS status;
 
-    Block* block;
-    vec3 block_world_pos;
-    Chunk* chunk;
-    ivec3 chunk_coord;
+    Block*          block;
+    vec3            block_world_pos;
+    Chunk*          chunk;
+    ivec3           chunk_coord;
     WORLD_DIRECTION direction;
-    BLOCK_FACE hit_face;
+    BLOCK_FACE      hit_face;
 } RaycastBlockHitInfo;
 
 typedef struct RaycastEntityHitInfo {
@@ -54,5 +45,5 @@ typedef struct RaycastEntityHitInfo {
     RAYCAST_STATUS status;
 } RaycastEntityHitInfo;
 
-void raycast_blocks(RaycastInfo* info, RaycastBlockHitInfo* result);
+void                 raycast_blocks(RaycastInfo* info, RaycastBlockHitInfo* result);
 RaycastEntityHitInfo raycast_entity(RaycastInfo* info);

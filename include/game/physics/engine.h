@@ -3,22 +3,23 @@
 
 #include "aabb.h"
 
+#include <game/ecs.h>
+
 struct EntityBlockCollisionEvent {
-    ecs::Entity entity;
+    ecs::Entity                entity;
     std::vector<struct Block*> touched;
 };
 
-namespace Components
-{
+namespace Components {
     struct Velocity {
         vec3 vec;
     };
 
     struct AabbCollider {
         AxisAlignedBoundingBox aabb;
-        bool is_grounded;
+        bool                   is_grounded;
     };
-}
+} // namespace Components
 
 class World;
 
@@ -27,8 +28,8 @@ struct SimulationCreateInfo {
     f32 air_drag;
     // TODO! this is only for negative Y, so
     // only negative numbers will work
-    f32 terminal_velocity;
-    vec3 gravity;
+    f32      terminal_velocity;
+    vec3     gravity;
     GDF_BOOL gravity_active;
     // The lifetime of this registry must outlive the simulation
     ecs::Registry* entity_registry_p;
@@ -40,9 +41,9 @@ class PhysicsSimulation {
 
     // TODO! calculate gravity on the fly heh
     // chibaku tensei....
-    f32 terminal_velocity_;
-    f32 air_drag_;
-    f32 ground_drag_;
+    f32  terminal_velocity_;
+    f32  air_drag_;
+    f32  ground_drag_;
     vec3 gravity_;
     bool gravity_active_;
 
@@ -50,7 +51,7 @@ class PhysicsSimulation {
     const World* world;
 
 public:
-    PhysicsSimulation(const SimulationCreateInfo& info, const World* world);
+     PhysicsSimulation(const SimulationCreateInfo& info, const World* world);
     ~PhysicsSimulation();
 
     void update(f32 dt);

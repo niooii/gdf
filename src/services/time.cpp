@@ -4,5 +4,5 @@ namespace Services::Time {
     namespace detail {
         // updated in server/server and client/app respectively.
         f64 _internal_dt = 0;
-    }
-}
+    } // namespace detail
+} // namespace Services::Time

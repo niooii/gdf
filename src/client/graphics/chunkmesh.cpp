@@ -1,72 +1,40 @@
 #include <client/graphics/chunkmesh.h>
 #include <gdfe/render/vk/utils.h>
 
-#include "gdfe/collections/hashmap.h"
 #include <client/graphics/renderer.h>
 #include <gdfe/render/vk/buffers.h>
+#include "gdfe/collections/hashmap.h"
 
 #define GDFP_DISABLE
 
 static const VkVertexInputAttributeDescription vertex_attrs[] = {
-    {
-        .binding = 0,
-        .location = 0,
-        .format = VK_FORMAT_R8_UINT,
-        .offset = 0
-    },
-    {
-        .binding = 0,
-        .location = 1,
-        .format = VK_FORMAT_R8_UINT,
-        .offset = 1
-    },
-    {
-        .binding = 0,
-        .location = 2,
-        .format = VK_FORMAT_R8_UINT,
-        .offset = 2
-    },
-    {
-        .binding = 0,
-        .location = 3,
-        .format = VK_FORMAT_R8_UINT,
-        .offset = 3
-    },
-    {
-        .binding = 0,
-        .location = 4,
-        .format = VK_FORMAT_R16_UINT,
-        .offset = 4
-    },
-    {
-        .binding = 0,
-        .location = 5,
-        .format = VK_FORMAT_R8_UINT,
-        .offset = 6
-    },
-    {
-        .binding = 0,
-        .location = 6,
-        .format = VK_FORMAT_R8_UINT,
-        .offset = 7
-    },
+    { .binding = 0, .location = 0, .format = VK_FORMAT_R8_UINT, .offset = 0 },
+    { .binding = 0, .location = 1, .format = VK_FORMAT_R8_UINT, .offset = 1 },
+    { .binding = 0, .location = 2, .format = VK_FORMAT_R8_UINT, .offset = 2 },
+    { .binding = 0, .location = 3, .format = VK_FORMAT_R8_UINT, .offset = 3 },
+    { .binding = 0, .location = 4, .format = VK_FORMAT_R16_UINT, .offset = 4 },
+    { .binding = 0, .location = 5, .format = VK_FORMAT_R8_UINT, .offset = 6 },
+    { .binding = 0, .location = 6, .format = VK_FORMAT_R8_UINT, .offset = 7 },
 };
 
 void get_vertex_attrs(VkVertexInputAttributeDescription** attrs, u32* len)
 {
     *attrs = const_cast<VkVertexInputAttributeDescription*>(vertex_attrs);
-    *len = std::size(vertex_attrs);
+    *len   = std::size(vertex_attrs);
 }
 
 void print_mask(const char* msg, u64 n)
 {
-    char s[65]; 
+    char s[65];
     GDF_Memset(s, 0, sizeof(s));
-    for (u64 i = 1ULL << 63; i > 0; i = i / 2) {
-        if ((n & i) != 0) {
+    for (u64 i = 1ULL << 63; i > 0; i = i / 2)
+    {
+        if ((n & i) != 0)
+        {
             strcat(s, "1");
         }
-        else {
+        else
+        {
             strcat(s, "0");
         }
     }
@@ -75,13 +43,16 @@ void print_mask(const char* msg, u64 n)
 
 void print_mask_64(const char* msg, u64 n)
 {
-    char s[65]; 
+    char s[65];
     GDF_Memset(s, 0, sizeof(s));
-    for (u64 i = 1ULL << 63; i > 0; i = i / 2) {
-        if ((n & i) != 0) {
+    for (u64 i = 1ULL << 63; i > 0; i = i / 2)
+    {
+        if ((n & i) != 0)
+        {
             strcat(s, "1");
         }
-        else {
+        else
+        {
             strcat(s, "0");
         }
     }
@@ -92,11 +63,14 @@ void print_mask_32(const char* msg, u32 n)
 {
     char s[33];
     GDF_Memset(s, 0, sizeof(s));
-    for (u32 i = 1U << 31; i > 0; i = i / 2) {
-        if ((n & i) != 0) {
+    for (u32 i = 1U << 31; i > 0; i = i / 2)
+    {
+        if ((n & i) != 0)
+        {
             strcat(s, "1");
         }
-        else {
+        else
+        {
             strcat(s, "0");
         }
     }
@@ -107,48 +81,50 @@ void print_mask_32(const char* msg, u32 n)
 #define AXIS_Y 1
 #define AXIS_Z 2
 
-#define AXIS_X_ASC 0
+#define AXIS_X_ASC  0
 #define AXIS_X_DESC 1
-#define AXIS_Y_ASC 2
+#define AXIS_Y_ASC  2
 #define AXIS_Y_DESC 3
-#define AXIS_Z_ASC 4
+#define AXIS_Z_ASC  4
 #define AXIS_Z_DESC 5
 
 FORCEINLINE BLOCK_FACE __axis_to_face(u32 axis)
 {
-    switch (axis) {
-        case AXIS_X_ASC:
-            return BLOCK_FACE_RIGHT;
-        case AXIS_X_DESC:
-            return BLOCK_FACE_LEFT;
-        case AXIS_Y_ASC:
-            return BLOCK_FACE_TOP;
-        case AXIS_Y_DESC:
-            return BLOCK_FACE_BOT;
-        case AXIS_Z_ASC:
-            return BLOCK_FACE_FRONT;
-        case AXIS_Z_DESC:
-            return BLOCK_FACE_BACK;
+    switch (axis)
+    {
+    case AXIS_X_ASC:
+        return BLOCK_FACE_RIGHT;
+    case AXIS_X_DESC:
+        return BLOCK_FACE_LEFT;
+    case AXIS_Y_ASC:
+        return BLOCK_FACE_TOP;
+    case AXIS_Y_DESC:
+        return BLOCK_FACE_BOT;
+    case AXIS_Z_ASC:
+        return BLOCK_FACE_FRONT;
+    case AXIS_Z_DESC:
+        return BLOCK_FACE_BACK;
     }
     LOG_FATAL("are u stupid");
     return BLOCK_FACE_BOT;
 }
 
-FORCEINLINE ivec3 __get_actual_coord(u32 axis_depth, BLOCK_FACE face, u32 rel_x, u32 rel_y) 
+FORCEINLINE ivec3 __get_actual_coord(u32 axis_depth, BLOCK_FACE face, u32 rel_x, u32 rel_y)
 {
-    switch (face) {
-        case BLOCK_FACE_TOP:
-            return ivec3_new(rel_x, axis_depth + 1, rel_y);
-        case BLOCK_FACE_BOT:
-            return ivec3_new(rel_x, axis_depth, rel_y);
-        case BLOCK_FACE_LEFT:
-            return ivec3_new(axis_depth, rel_y, rel_x);
-        case BLOCK_FACE_RIGHT:
-            return ivec3_new(axis_depth + 1, rel_y, rel_x);
-        case BLOCK_FACE_FRONT:
-            return ivec3_new(rel_x, rel_y, axis_depth + 1);
-        case BLOCK_FACE_BACK:
-            return ivec3_new(rel_x, rel_y, axis_depth);
+    switch (face)
+    {
+    case BLOCK_FACE_TOP:
+        return ivec3_new(rel_x, axis_depth + 1, rel_y);
+    case BLOCK_FACE_BOT:
+        return ivec3_new(rel_x, axis_depth, rel_y);
+    case BLOCK_FACE_LEFT:
+        return ivec3_new(axis_depth, rel_y, rel_x);
+    case BLOCK_FACE_RIGHT:
+        return ivec3_new(axis_depth + 1, rel_y, rel_x);
+    case BLOCK_FACE_FRONT:
+        return ivec3_new(rel_x, rel_y, axis_depth + 1);
+    case BLOCK_FACE_BACK:
+        return ivec3_new(rel_x, rel_y, axis_depth);
     }
     LOG_FATAL("are u stupid 2");
     return ivec3_zero();
@@ -158,8 +134,10 @@ FORCEINLINE ivec3 __get_actual_coord(u32 axis_depth, BLOCK_FACE face, u32 rel_x,
 // WARNING: this is a very specific impl that only works for 32x32x32. take a look later..
 void ChunkMesh::mesh()
 {
-// #define GDFP_DISABLE
-    #include <gdfe/profiler.h>
+    // #define GDFP_DISABLE
+#include <gdfe/profiler.h>
+
+
     World* world = world_;
     Chunk* chunk = chunk_;
     vertices_.clear();
@@ -167,7 +145,7 @@ void ChunkMesh::mesh()
 
     // stores the bitmasks for each axis x y and z
     u64 axis_masks[3][CHUNK_SIZE_P][CHUNK_SIZE_P];
-    // stores the masks for culled faces, where 1 represents a visible face and 0 doesnt.  
+    // stores the masks for culled faces, where 1 represents a visible face and 0 doesnt.
     u64 axis_face_masks[6][CHUNK_SIZE_P][CHUNK_SIZE_P];
 
     GDF_Memset(axis_masks, 0, sizeof(axis_masks));
@@ -176,18 +154,21 @@ void ChunkMesh::mesh()
     GDFP_START();
 
     // TODO! MAIN BOTTLENECK HELP
-    for (i32 x = 0; x < CHUNK_SIZE_P; x++) 
+    for (i32 x = 0; x < CHUNK_SIZE_P; x++)
     {
-        for (i32 y = 0; y < CHUNK_SIZE_P; y++) 
+        for (i32 y = 0; y < CHUNK_SIZE_P; y++)
         {
-            for (i32 z = 0; z < CHUNK_SIZE_P; z++) 
+            for (i32 z = 0; z < CHUNK_SIZE_P; z++)
             {
-                vec3 world_pos = vec3_add(chunk_coord_to_world_pos(chunk_coord_), vec3_new(x-1, y-1, z-1));
-                
+                vec3 world_pos =
+                    vec3_add(chunk_coord_to_world_pos(chunk_coord_), vec3_new(x - 1, y - 1, z - 1));
+
                 // TODO! could replace this entire loop with just iterating through the chunks
-                // owned blocks, then 8 other for loops for the outer edges of the chunk (the neighboring stuff)
+                // owned blocks, then 8 other for loops for the outer edges of the chunk (the
+                // neighboring stuff)
                 // TODO! filter blocks by visibility and solidness not existence
-                if (world->get_block(world_pos)) {
+                if (world->get_block(world_pos))
+                {
                     // z,y - x axis
                     axis_masks[AXIS_X][y][z] |= 1ULL << (u64)x;
                     // x,z - y axis
@@ -210,13 +191,13 @@ void ChunkMesh::mesh()
 
                 // TODO! does this work like this
                 if (!bits)
-                    continue;  
-                    
+                    continue;
+
                 // ascending (forward) axis
                 axis_face_masks[2 * axis][i][j] = (bits & ~(bits >> 1));
                 // descending (backward) axis
                 axis_face_masks[2 * axis + 1][i][j] = (bits & ~(bits << 1));
-            
+
                 // print_mask("asc axis: ", axis_face_masks[2 * axis][i][j]);
                 // print_mask("desc axis: ", axis_face_masks[2 * axis + 1][i][j]);
             }
@@ -234,7 +215,7 @@ void ChunkMesh::mesh()
     // TODO! might as well just use a flat array oml
     map<u32, map<u32, array<u32, 32>>> planes[6] = {};
 
-    for (u32 axis = 0; axis < 6; axis++) 
+    for (u32 axis = 0; axis < 6; axis++)
     {
         for (u32 i = 0; i < CHUNK_SIZE; i++)
         {
@@ -255,7 +236,8 @@ void ChunkMesh::mesh()
                     bits &= bits - 1;
 
                     u8vec3 block_coord;
-                    switch(axis) {
+                    switch (axis)
+                    {
                     case AXIS_X_ASC:
                     case AXIS_X_DESC:
                         block_coord.x = depth;
@@ -278,7 +260,8 @@ void ChunkMesh::mesh()
 
                     Block* block = chunk->get_block(block_coord);
 
-                    if (!block) {
+                    if (!block)
+                    {
                         LOG_FATAL("yea ur code is so bad");
                         continue;
                     }
@@ -295,23 +278,28 @@ void ChunkMesh::mesh()
     }
     GDFP_LOG_MSG_RESET("Finished generating binary planes.");
 
-    // iterate for each axis (forward and backward), then for each block type in the map we get all the planes that
-    // need to be meshed at a specific depth. 
-    for (u32 axis = 0; axis < 6; axis++) {
+    // iterate for each axis (forward and backward), then for each block type in the map we get all
+    // the planes that need to be meshed at a specific depth.
+    for (u32 axis = 0; axis < 6; axis++)
+    {
         BLOCK_FACE face = __axis_to_face(axis);
-        for (auto& [block_type, depth_map] : planes[axis]) {
+        for (auto& [block_type, depth_map] : planes[axis])
+        {
             // no type chekcing is so scary help m,e
             // update: c++...
-            for (auto& [depth, plane] : depth_map) {
+            for (auto& [depth, plane] : depth_map)
+            {
                 // actual greedy meshing algorithim
                 // debugging stuff
                 // for (int k = 0; k < 32; k++) {
                 //     print_mask_32("mask: ", plane[k]);
                 // }
-                for (u32 row = 0; row < CHUNK_SIZE; row++) {
+                for (u32 row = 0; row < CHUNK_SIZE; row++)
+                {
                     // x is the current x position within this row
                     u32 x = 0;
-                    while (x < CHUNK_SIZE) {
+                    while (x < CHUNK_SIZE)
+                    {
                         // TODO! could we pregenerate this per chunk and then just update a few bits
                         // on each chunk change, then deep copy the data in this function?
                         // im p sure itll be faster
@@ -326,7 +314,8 @@ void ChunkMesh::mesh()
 
                         u32 h = 1;
                         // if you ever change chunk size beware of this
-                        while (row + h < CHUNK_SIZE) {
+                        while (row + h < CHUNK_SIZE)
+                        {
                             if ((w_mask & plane[row + h]) != w_mask)
                                 break;
 
@@ -342,99 +331,93 @@ void ChunkMesh::mesh()
                         ivec3 v1_pos = __get_actual_coord(depth, face, row + h, x);
                         ivec3 v2_pos = __get_actual_coord(depth, face, row + h, x + w);
                         ivec3 v3_pos = __get_actual_coord(depth, face, row, x + w);
+
                         u32 num_vertices = vertices_.size();
-                        vertices_.push_back((ChunkVertex){
-                            .block_type = (u16)block_type,
-                            .face_dir = (u8)face,
-                            .x_pos = (u8)v0_pos.x,
-                            .y_pos = (u8)v0_pos.y,
-                            .z_pos = (u8)v0_pos.z,
-                            .u = 0,
-                            .v = 0
-                        });
-                        vertices_.push_back((ChunkVertex){
-                            .block_type = (u16)block_type,
-                            .face_dir = (u8)face,
-                            .x_pos = (u8)v1_pos.x,
-                            .y_pos = (u8)v1_pos.y,
-                            .z_pos = (u8)v1_pos.z,
-                            .u = (u8)h,
-                            .v = 0
-                        });
-                        vertices_.push_back((ChunkVertex){
-                            .block_type = (u16)block_type,
-                            .face_dir = (u8)face,
-                            .x_pos = (u8)v2_pos.x,
-                            .y_pos = (u8)v2_pos.y,
-                            .z_pos = (u8)v2_pos.z,
-                            .u = (u8)h,
-                            .v = (u8)w
-                        });
-                        vertices_.push_back((ChunkVertex){
-                            .block_type = (u16)block_type,
-                            .face_dir = (u8)face,
-                            .x_pos = (u8)v3_pos.x,
-                            .y_pos = (u8)v3_pos.y,
-                            .z_pos = (u8)v3_pos.z,
-                            .u = 0,
-                            .v = (u8)w
-                        });
+                        vertices_.push_back((ChunkVertex){ .block_type = (u16)block_type,
+                            .face_dir                                  = (u8)face,
+                            .x_pos                                     = (u8)v0_pos.x,
+                            .y_pos                                     = (u8)v0_pos.y,
+                            .z_pos                                     = (u8)v0_pos.z,
+                            .u                                         = 0,
+                            .v                                         = 0 });
+                        vertices_.push_back((ChunkVertex){ .block_type = (u16)block_type,
+                            .face_dir                                  = (u8)face,
+                            .x_pos                                     = (u8)v1_pos.x,
+                            .y_pos                                     = (u8)v1_pos.y,
+                            .z_pos                                     = (u8)v1_pos.z,
+                            .u                                         = (u8)h,
+                            .v                                         = 0 });
+                        vertices_.push_back((ChunkVertex){ .block_type = (u16)block_type,
+                            .face_dir                                  = (u8)face,
+                            .x_pos                                     = (u8)v2_pos.x,
+                            .y_pos                                     = (u8)v2_pos.y,
+                            .z_pos                                     = (u8)v2_pos.z,
+                            .u                                         = (u8)h,
+                            .v                                         = (u8)w });
+                        vertices_.push_back((ChunkVertex){ .block_type = (u16)block_type,
+                            .face_dir                                  = (u8)face,
+                            .x_pos                                     = (u8)v3_pos.x,
+                            .y_pos                                     = (u8)v3_pos.y,
+                            .z_pos                                     = (u8)v3_pos.z,
+                            .u                                         = 0,
+                            .v                                         = (u8)w });
 
                         // push indices based on face dir for consistent winding
-                        switch (face) {
-                            case BLOCK_FACE_FRONT: // +Z face
-                                indices_.push_back(num_vertices);     // v0
-                                indices_.push_back(num_vertices + 3); // v3
-                                indices_.push_back(num_vertices + 2); // v2
-                                indices_.push_back(num_vertices);     // v0
-                                indices_.push_back(num_vertices + 2); // v2
-                                indices_.push_back(num_vertices + 1); // v1
-                                break;
+                        switch (face)
+                        {
+                        case BLOCK_FACE_FRONT: // +Z face
+                            indices_.push_back(num_vertices); // v0
+                            indices_.push_back(num_vertices + 3); // v3
+                            indices_.push_back(num_vertices + 2); // v2
+                            indices_.push_back(num_vertices); // v0
+                            indices_.push_back(num_vertices + 2); // v2
+                            indices_.push_back(num_vertices + 1); // v1
+                            break;
 
-                            case BLOCK_FACE_BACK: // -Z face
-                                indices_.push_back(num_vertices);     // v0
-                                indices_.push_back(num_vertices + 1); // v1
-                                indices_.push_back(num_vertices + 2); // v2
-                                indices_.push_back(num_vertices);     // v0
-                                indices_.push_back(num_vertices + 2); // v2
-                                indices_.push_back(num_vertices + 3); // v3
-                                break;
+                        case BLOCK_FACE_BACK: // -Z face
+                            indices_.push_back(num_vertices); // v0
+                            indices_.push_back(num_vertices + 1); // v1
+                            indices_.push_back(num_vertices + 2); // v2
+                            indices_.push_back(num_vertices); // v0
+                            indices_.push_back(num_vertices + 2); // v2
+                            indices_.push_back(num_vertices + 3); // v3
+                            break;
 
-                            case BLOCK_FACE_RIGHT: // +X face
-                                indices_.push_back(num_vertices);     // v0
-                                indices_.push_back(num_vertices + 1); // v1
-                                indices_.push_back(num_vertices + 2); // v2
-                                indices_.push_back(num_vertices);     // v0
-                                indices_.push_back(num_vertices + 2); // v2
-                                indices_.push_back(num_vertices + 3); // v3
-                                break;
+                        case BLOCK_FACE_RIGHT: // +X face
+                            indices_.push_back(num_vertices); // v0
+                            indices_.push_back(num_vertices + 1); // v1
+                            indices_.push_back(num_vertices + 2); // v2
+                            indices_.push_back(num_vertices); // v0
+                            indices_.push_back(num_vertices + 2); // v2
+                            indices_.push_back(num_vertices + 3); // v3
+                            break;
 
-                            case BLOCK_FACE_LEFT: // -X face
-                                indices_.push_back(num_vertices);     // v0
-                                indices_.push_back(num_vertices + 3); // v3
-                                indices_.push_back(num_vertices + 2); // v2
-                                indices_.push_back(num_vertices);     // v0
-                                indices_.push_back(num_vertices + 2); // v2
-                                indices_.push_back(num_vertices + 1); // v1
-                                break;
+                        case BLOCK_FACE_LEFT: // -X face
+                            indices_.push_back(num_vertices); // v0
+                            indices_.push_back(num_vertices + 3); // v3
+                            indices_.push_back(num_vertices + 2); // v2
+                            indices_.push_back(num_vertices); // v0
+                            indices_.push_back(num_vertices + 2); // v2
+                            indices_.push_back(num_vertices + 1); // v1
+                            break;
 
-                            case BLOCK_FACE_TOP: // +Y face
-                                indices_.push_back(num_vertices);     // v0
-                                indices_.push_back(num_vertices + 1); // v1
-                                indices_.push_back(num_vertices + 2); // v2
-                                indices_.push_back(num_vertices);     // v0
-                                indices_.push_back(num_vertices + 2); // v2
-                                indices_.push_back(num_vertices + 3); // v3
-                                break;
+                        case BLOCK_FACE_TOP: // +Y face
+                            indices_.push_back(num_vertices); // v0
+                            indices_.push_back(num_vertices + 1); // v1
+                            indices_.push_back(num_vertices + 2); // v2
+                            indices_.push_back(num_vertices); // v0
+                            indices_.push_back(num_vertices + 2); // v2
+                            indices_.push_back(num_vertices + 3); // v3
+                            break;
 
-                            case BLOCK_FACE_BOT: // -Y face
-                                indices_.push_back(num_vertices);     // v0
-                                indices_.push_back(num_vertices + 3); // v3
-                                indices_.push_back(num_vertices + 2); // v2
-                                indices_.push_back(num_vertices);     // v0
-                                indices_.push_back(num_vertices + 2); // v2
-                                indices_.push_back(num_vertices + 1); // v1
-                                break;
+                        case BLOCK_FACE_BOT: // -Y face
+                            indices_.push_back(num_vertices); // v0
+                            indices_.push_back(num_vertices + 3); // v3
+                            indices_.push_back(num_vertices + 2); // v2
+                            indices_.push_back(num_vertices); // v0
+                            indices_.push_back(num_vertices + 2); // v2
+                            indices_.push_back(num_vertices + 1); // v1
+                            break;
                         }
                         x += w;
                     }
@@ -446,45 +429,37 @@ void ChunkMesh::mesh()
     GDFP_LOG_MSG_RESET("Finished meshing algorithm.");
 
     // finalization
-    for (u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    for (u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
         buffers_[i].up_to_date = false;
     }
     GDFP_END();
 }
 
-u32 ChunkMesh::get_index_count()
-{
-    return indices_.size();
-}
+u32 ChunkMesh::get_index_count() { return indices_.size(); }
 
-ChunkMesh::ChunkMesh(World* world, Chunk* chunk, ivec3 chunk_coord)
-    : chunk_(chunk), world_(world), chunk_coord_(chunk_coord)
+ChunkMesh::ChunkMesh(World* world, Chunk* chunk, ivec3 chunk_coord) :
+    chunk_(chunk), world_(world), chunk_coord_(chunk_coord)
 {
     vertices_.reserve(256);
     indices_.reserve(256);
 
     this->mesh();
 
-    for (u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    for (u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
         if (!GDF_VkBufferCreateVertex(
-            NULL,
-            MAX_CHUNK_VERTICES,
-            sizeof(ChunkVertex),
-            &buffers_[i].vertex_buffer
-        ))
+                NULL, MAX_CHUNK_VERTICES, sizeof(ChunkVertex), &buffers_[i].vertex_buffer))
         {
             LOG_FATAL("buffer cooked");
         }
-        if (!GDF_VkBufferCreateIndex(
-            NULL,
-            MAX_CHUNK_INDICES,
-            &buffers_[i].index_buffer
-        ))
+        if (!GDF_VkBufferCreateIndex(NULL, MAX_CHUNK_INDICES, &buffers_[i].index_buffer))
         {
             LOG_FATAL("buffer cooked");
         }
         // update info for all buffers in the init pass as well.
-        if (!this->update_buffers(i)) {
+        if (!this->update_buffers(i))
+        {
             LOG_FATAL("Failed to update chunkmesh buffer");
         }
     }
@@ -492,13 +467,10 @@ ChunkMesh::ChunkMesh(World* world, Chunk* chunk, ivec3 chunk_coord)
 
 ChunkMesh::~ChunkMesh()
 {
-    for (auto& buffer : buffers_) {
-        GDF_VkBufferDestroy(
-            &buffer.vertex_buffer
-        );
-        GDF_VkBufferDestroy(
-            &buffer.index_buffer
-        );
+    for (auto& buffer : buffers_)
+    {
+        GDF_VkBufferDestroy(&buffer.vertex_buffer);
+        GDF_VkBufferDestroy(&buffer.index_buffer);
     }
 }
 
@@ -506,18 +478,12 @@ bool ChunkMesh::update_buffers(u32 frame_idx)
 {
     if (buffers_[frame_idx].up_to_date)
         return true;
-    if (!GDF_VkBufferUpdate(
-        &buffers_[frame_idx].vertex_buffer,
-        vertices_.data(),
-        vertices_.size() * sizeof(ChunkVertex)
-    ))
+    if (!GDF_VkBufferUpdate(&buffers_[frame_idx].vertex_buffer, vertices_.data(),
+            vertices_.size() * sizeof(ChunkVertex)))
         return false;
 
-    if (!GDF_VkBufferUpdate(
-        &buffers_[frame_idx].index_buffer,
-        indices_.data(),
-        indices_.size() * sizeof(CHUNK_MESH_INDEX_TYPE)
-    ))
+    if (!GDF_VkBufferUpdate(&buffers_[frame_idx].index_buffer, indices_.data(),
+            indices_.size() * sizeof(CHUNK_MESH_INDEX_TYPE)))
         return false;
 
     buffers_[frame_idx].up_to_date = true;

@@ -25,33 +25,36 @@ void raycast_blocks(RaycastInfo* info, RaycastBlockHitInfo* result)
     f32 dy = (info->dir.y != 0) ? gabs(1.0f / info->dir.y) : INFINITY;
     f32 dz = (info->dir.z != 0) ? gabs(1.0f / info->dir.z) : INFINITY;
 
-    f32 tx = (info->dir.x != 0) ? 
-        ((step_x > 0 ? (block_x + 1 - info->origin.x) : (info->origin.x - block_x)) / gabs(info->dir.x)) : 
+    f32 tx = (info->dir.x != 0) ?
+        ((step_x > 0 ? (block_x + 1 - info->origin.x) : (info->origin.x - block_x)) /
+            gabs(info->dir.x)) :
         INFINITY;
-    f32 ty = (info->dir.y != 0) ? 
-        ((step_y > 0 ? (block_y + 1 - info->origin.y) : (info->origin.y - block_y)) / gabs(info->dir.y)) : 
+    f32 ty = (info->dir.y != 0) ?
+        ((step_y > 0 ? (block_y + 1 - info->origin.y) : (info->origin.y - block_y)) /
+            gabs(info->dir.y)) :
         INFINITY;
-    f32 tz = (info->dir.z != 0) ? 
-        ((step_z > 0 ? (block_z + 1 - info->origin.z) : (info->origin.z - block_z)) / gabs(info->dir.z)) : 
+    f32 tz = (info->dir.z != 0) ?
+        ((step_z > 0 ? (block_z + 1 - info->origin.z) : (info->origin.z - block_z)) /
+            gabs(info->dir.z)) :
         INFINITY;
 
-    f32 total_dist = 0.0f;
+    f32        total_dist = 0.0f;
     BLOCK_FACE last_intersection;
-    const int MAX_ITERATIONS = 1000;
-    int iterations = 0;
+    const int  MAX_ITERATIONS = 1000;
+    int        iterations     = 0;
 
     while (total_dist <= info->max_distance && iterations++ < MAX_ITERATIONS)
     {
         Block* b = info->world->get_block(vec3_new(block_x, block_y, block_z));
         if (b != NULL)
         {
-            ivec3 cc = world_pos_to_chunk_coord(vec3_new(block_x, block_y, block_z));
-            result->status = RAYCAST_STATUS_HIT;
-            result->hit_face = last_intersection;
-            result->block = b;
-            result->chunk_coord = cc;
+            ivec3 cc                = world_pos_to_chunk_coord(vec3_new(block_x, block_y, block_z));
+            result->status          = RAYCAST_STATUS_HIT;
+            result->hit_face        = last_intersection;
+            result->block           = b;
+            result->chunk_coord     = cc;
             result->block_world_pos = vec3_new(block_x, block_y, block_z);
-            result->chunk = info->world->get_or_create_chunk(cc);
+            result->chunk           = info->world->get_or_create_chunk(cc);
             return;
         }
 
@@ -96,14 +99,14 @@ RaycastEntityHitInfo raycast_entity(RaycastInfo* info)
     // vec3 step_vec = vec3_mul_scalar(dir, info->step_distance);
 
     // for (
-    //     f32 dist_traveled = 0; 
-    //     dist_traveled < info->max_distance; 
+    //     f32 dist_traveled = 0;
+    //     dist_traveled < info->max_distance;
     //     dist_traveled += info->step_distance
     // )
     // {
     //     if (info->mode == RAYCAST_MODE_ENTITIES || info->mode == RAYCAST_MODE_WHATEVER)
     //     {
-            
+
     //     }
     //     if (info->mode == RAYCAST_MODE_BLOCKS || info->mode == RAYCAST_MODE_WHATEVER)
     //     {

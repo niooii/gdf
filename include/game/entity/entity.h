@@ -1,7 +1,7 @@
 #pragma once
 
-#include <gdfe/prelude.h>
 #include <game/physics/aabb.h>
+#include <gdfe/prelude.h>
 
 namespace Components {
     struct Health {
@@ -10,6 +10,6 @@ namespace Components {
 
     struct Rotation {
         f32 pitch = 0;
-        f32 yaw = 0;
+        f32 yaw   = 0;
     };
-}
+} // namespace Components

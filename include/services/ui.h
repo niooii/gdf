@@ -6,6 +6,6 @@
 namespace Services::UI {
     UIScreen* top_screen();
     UIScreen* pop_screen();
-    void pop_all_screens();
-    UIScreen* push_screen(UIScreen* );
-}
+    void      pop_all_screens();
+    UIScreen* push_screen(UIScreen*);
+} // namespace Services::UI

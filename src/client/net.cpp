@@ -3,7 +3,7 @@
 
 static unsigned long io_thread(void* args)
 {
-    ServerConnection* conn = (ServerConnection*) args;
+    ServerConnection* conn = (ServerConnection*)args;
     GDF_InitThreadLogging("Client:Net");
 
     const GDF_Stopwatch throttle_timer = GDF_StopwatchCreate();
@@ -20,13 +20,10 @@ static unsigned long io_thread(void* args)
         GDF_LockMutex(conn->outgoing_mutex);
         for (auto& outgoing : conn->outgoing_queue)
         {
-            std::string serialized {Net::serialize(outgoing)};
+            std::string serialized{ Net::serialize(outgoing) };
 
             ENetPacket* packet = enet_packet_create(
-                serialized.c_str(),
-                serialized.length() + 1,
-                ENET_PACKET_FLAG_RELIABLE
-            );
+                serialized.c_str(), serialized.length() + 1, ENET_PACKET_FLAG_RELIABLE);
 
             enet_peer_send(conn->peer, 0, packet);
             // LOG_WARN("Packets sent!!!");
@@ -36,17 +33,14 @@ static unsigned long io_thread(void* args)
 
         while (enet_host_service(conn->client, &event, 0) > 0)
         {
-            switch (event.type) {
+            switch (event.type)
+            {
             case ENET_EVENT_TYPE_RECEIVE:
                 {
                     try
                     {
                         auto recv_event = Net::deserialize(
-                           {
-                               (char*)event.packet->data,
-                               event.packet->dataLength
-                           }
-                        );
+                            { (char*)event.packet->data, event.packet->dataLength });
 
                         if (recv_event->source != ProgramType::Server)
                         {
@@ -57,12 +51,13 @@ static unsigned long io_thread(void* args)
                         GDF_LockMutex(conn->incoming_mutex);
                         conn->incoming_queue.push_back(std::move(recv_event));
                         GDF_ReleaseMutex(conn->incoming_mutex);
-                    } catch (const ser20::Exception& e)
+                    }
+                    catch (const ser20::Exception& e)
                     {
                         LOG_ERR("Failed to deserialize a packet from server");
                     }
 
-                    CN_DESTROY_PACKET:
+                CN_DESTROY_PACKET:
                     enet_packet_destroy(event.packet);
                 }
                 break;
@@ -75,12 +70,11 @@ static unsigned long io_thread(void* args)
                 break;
             }
         }
-        if (
-            const f64 overflow = GDF_StopwatchSleepUntil(throttle_timer, throttle_secs);
-            overflow > 0
-        )
+        if (const f64 overflow = GDF_StopwatchSleepUntil(throttle_timer, throttle_secs);
+            overflow > 0)
             LOG_WARN("Server fell behind by %lf secs :(", overflow);
-    } while (conn->io_active);
+    }
+    while (conn->io_active);
 
     GDF_StopwatchDestroy(throttle_timer);
 
@@ -89,7 +83,7 @@ static unsigned long io_thread(void* args)
 
 ServerConnection::ServerConnection(const char* addr, u16 port)
 {
-    io_active = true;
+    io_active  = true;
     this->port = port;
     this->addr = addr;
 
@@ -99,7 +93,8 @@ ServerConnection::ServerConnection(const char* addr, u16 port)
     constexpr u32 channels = 2;
 
     client = enet_host_create(NULL, 1, channels, 0, 0);
-    if (client == NULL) {
+    if (client == NULL)
+    {
         LOG_FATAL("An error occurred while creating the client")
     }
 
@@ -109,18 +104,20 @@ ServerConnection::ServerConnection(const char* addr, u16 port)
 
     this->peer = enet_host_connect(client, &address, channels, 0);
 
-    if (this->peer == NULL) {
+    if (this->peer == NULL)
+    {
         LOG_ERR("No available peers for initiating an ENet connection");
         enet_host_destroy(client);
         throw std::runtime_error("Connection to server failed");
     }
 
     ENetEvent event;
-    if (enet_host_service(client, &event, 250) > 0 &&
-        event.type == ENET_EVENT_TYPE_CONNECT) {
+    if (enet_host_service(client, &event, 250) > 0 && event.type == ENET_EVENT_TYPE_CONNECT)
+    {
         LOG_INFO("Connection to server succeeded");
     }
-    else {
+    else
+    {
         enet_peer_reset(peer);
         enet_host_destroy(client);
         throw std::runtime_error("Connection to server failed");

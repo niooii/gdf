@@ -1,21 +1,22 @@
 #pragma once
 
-#include <prelude.h>
 #include <gdfe/input.h>
+#include <prelude.h>
 
 /* These bits represent what actions the client is requesting to take */
 enum HumanoidActionBit {
     /* Movement */
-    Jump = 0b1,
-    Dash = 0b10,
+    Jump  = 0b1,
+    Dash  = 0b10,
     Sneak = 0b100,
 
     /* General */
     Attack = 0b1000,
-    Use = 0b10000,
+    Use    = 0b10000,
 };
 
-DECL_PACKET(HumanoidStateChangeEvent) {
+DECL_PACKET(HumanoidStateChangeEvent)
+{
     /* Shared usage by client and server */
     // The updated pitch of a humanoid - consider sending these separately?
     f32 pitch = 0;
@@ -52,24 +53,15 @@ DECL_PACKET(HumanoidStateChangeEvent) {
     FORCEINLINE bool has_bits(u64 bits) const { return action_bits.has_bits(bits); }
     FORCEINLINE void add_bits(u64 bits) { return action_bits.add_bits(bits); }
 
-    SERIALIZE_PACKET_FIELDS(
-        x_input,
-        z_input,
-        pitch,
-        yaw,
-        action_bits,
-        world_entity_id,
-        pos,
-        vel
-    );
+    SERIALIZE_PACKET_FIELDS(x_input, z_input, pitch, yaw, action_bits, world_entity_id, pos, vel);
 };
 
 namespace Systems {
     struct MovementContext {
         ecs::Entity entity;
 
-        bool dash_available = true;
-        vec3 dash_dir;
+        bool          dash_available = true;
+        vec3          dash_dir;
         GDF_Stopwatch dash_stopwatch;
 
         // moving left and right
@@ -84,19 +76,15 @@ namespace Systems {
 
         HumanoidStateChangeEvent* accumulator = NULL;
 
-        MovementContext() {
-            dash_stopwatch = GDF_StopwatchCreate();
-        }
+        MovementContext() { dash_stopwatch = GDF_StopwatchCreate(); }
 
-        ~MovementContext() {
-            GDF_StopwatchDestroy(dash_stopwatch);
-        }
+        ~MovementContext() { GDF_StopwatchDestroy(dash_stopwatch); }
 
         // Updates the shared movement context with the most recent humanoid action event
         FORCEINLINE void set_most_recent_action(const HumanoidStateChangeEvent& action)
         {
-            x_input = action.x_input;
-            z_input = action.z_input;
+            x_input     = action.x_input;
+            z_input     = action.z_input;
             action_bits = action.action_bits;
         }
     };
@@ -106,7 +94,7 @@ namespace Systems {
      */
     struct HumanoidMovementController {
         explicit HumanoidMovementController(ecs::Entity entity);
-        ~HumanoidMovementController();
+        ~        HumanoidMovementController();
 
         S(OnGround);
         S(InAir);
@@ -115,16 +103,10 @@ namespace Systems {
         S(Jumping);
 
         using Ctx = hfsm2::Config::ContextT<MovementContext*>;
-        using M = hfsm2::MachineT<Ctx>;
-        using FSM = M::PeerRoot<
-            OnGround,
-            Dashing,
-            M::Composite<
-                InAir, // InAir is the parent of Falling, Jumping
-                Falling,
-                Jumping
-            >
-        >;
+        using M   = hfsm2::MachineT<Ctx>;
+        using FSM = M::PeerRoot<OnGround, Dashing,
+            M::Composite<InAir, // InAir is the parent of Falling, Jumping
+                Falling, Jumping>>;
 
         /* Define states */
         struct OnGround : FSM::State {
@@ -169,20 +151,17 @@ namespace Systems {
 
             // These should always be valid - we shouldn't restrict their pitch and yaw.. or maybe?
             ctx->accumulator->pitch = action.pitch;
-            ctx->accumulator->yaw = action.yaw;
+            ctx->accumulator->yaw   = action.yaw;
 
             state_machine->react(action);
         }
 
-        FORCEINLINE void update() const
-        {
-            state_machine->update();
-        }
+        FORCEINLINE void update() const { state_machine->update(); }
 
         MovementContext* ctx;
-        FSM::Instance* state_machine;
+        FSM::Instance*   state_machine;
     };
-}
+} // namespace Systems
 
 class SimulatedHumanoid {
     ecs::Entity ecs_id;
@@ -194,8 +173,8 @@ class SimulatedHumanoid {
     HumanoidStateChangeEvent action_accumulator{};
 
 public:
-    SimulatedHumanoid(ecs::Entity ecs_id)
-        : ecs_id{ecs_id}, movement_controller{ecs_id} {
+    SimulatedHumanoid(ecs::Entity ecs_id) : ecs_id{ ecs_id }, movement_controller{ ecs_id }
+    {
 
         movement_controller.set_action_accumulator(&action_accumulator);
     }
@@ -207,8 +186,8 @@ public:
     }
 
     /// Get the accumulated actions the humanoid has taken. Should be called after the update()
-    /// function. This will contain only validated actions (actions the humanoid has TAKEN, not requested),
-    /// so it's good to send back to the client
+    /// function. This will contain only validated actions (actions the humanoid has TAKEN, not
+    /// requested), so it's good to send back to the client
     FORCEINLINE HumanoidStateChangeEvent& accumulated_actions() { return action_accumulator; }
 
     FORCEINLINE void process_action(const HumanoidStateChangeEvent& action) const
@@ -216,8 +195,5 @@ public:
         movement_controller.process_action(action);
     }
 
-    FORCEINLINE void update()
-    {
-        movement_controller.update();
-    }
+    FORCEINLINE void update() { movement_controller.update(); }
 };

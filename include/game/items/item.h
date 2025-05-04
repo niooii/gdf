@@ -16,10 +16,10 @@ typedef enum GDF_ITEM_Type {
 
 typedef struct GDF_Item {
     GDF_ITEM_Type item_type;
-    GDF_ITEM_ID item_id;
-    u16 stack_size;
-    u16 max_stack_size;
-    void* other_info;
+    GDF_ITEM_ID   item_id;
+    u16           stack_size;
+    u16           max_stack_size;
+    void*         other_info;
     // press down left click
     // void (*on_attack_start)(struct GDF_Item* item_used, HumanoidEntity* player);
     // // release left click
@@ -32,8 +32,8 @@ typedef struct GDF_Item {
 } GDF_Item;
 
 // big switch inc unlucky
-GDF_Item* GDF_MakeItem(GDF_ITEM_ID item_id);
-void GDF_DestroyItem(GDF_Item*);
+GDF_Item*     GDF_MakeItem(GDF_ITEM_ID item_id);
+void          GDF_DestroyItem(GDF_Item*);
 GDF_ITEM_Type GDF_GetItemType(GDF_ITEM_ID item_id);
 
 // some default implementaitons of useful callbacks

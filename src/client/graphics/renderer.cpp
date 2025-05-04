@@ -2,39 +2,37 @@
 
 #include <client/app.h>
 
-GameRenderer::GameRenderer(const GDF_VkRenderContext* vk_ctx)
-    : world_renderer{vk_ctx}
-{
-}
+GameRenderer::GameRenderer(const GDF_VkRenderContext* vk_ctx) : world_renderer{ vk_ctx } {}
 
-GameRenderer::~GameRenderer()
-{
-}
+GameRenderer::~GameRenderer() {}
 
-GDF_BOOL renderer_init(const GDF_VkRenderContext* vk_ctx, const GDF_AppState* app_state, void* state)
+GDF_BOOL renderer_init(
+    const GDF_VkRenderContext* vk_ctx, const GDF_AppState* app_state, void* state)
 {
-    App* game = (App*)state;
+    App* game      = (App*)state;
     game->renderer = new GameRenderer(vk_ctx);
     return GDF_TRUE;
 }
 
-GDF_BOOL renderer_destroy(const GDF_VkRenderContext* vk_ctx, const GDF_AppState* app_state, void* state)
+GDF_BOOL renderer_destroy(
+    const GDF_VkRenderContext* vk_ctx, const GDF_AppState* app_state, void* state)
 {
     App* game = (App*)state;
     delete game->renderer;
     return GDF_TRUE;
 }
 
-GDF_BOOL renderer_draw(const GDF_VkRenderContext* vk_ctx, GDF_RENDER_MODE mode, const GDF_AppState* app_state, void* state)
+GDF_BOOL renderer_draw(const GDF_VkRenderContext* vk_ctx, GDF_RENDER_MODE mode,
+    const GDF_AppState* app_state, void* state)
 {
     App* game = (App*)state;
 
     if (!game->client_world)
         return GDF_TRUE;
 
-    WorldRenderer* renderer = &game->renderer->world_renderer;
-    u32 frame_idx = vk_ctx->resource_idx;
-    VkCommandBuffer cmd_buf = vk_ctx->per_frame[frame_idx].cmd_buffer;
+    WorldRenderer*  renderer  = &game->renderer->world_renderer;
+    u32             frame_idx = vk_ctx->resource_idx;
+    VkCommandBuffer cmd_buf   = vk_ctx->per_frame[frame_idx].cmd_buffer;
 
     // vkCmdBindDescriptorSets(
     //     cmd_buf,
@@ -47,23 +45,15 @@ GDF_BOOL renderer_draw(const GDF_VkRenderContext* vk_ctx, GDF_RENDER_MODE mode, 
     //     NULL
     // );
 
-    VkPipeline terrain_vk_pipeline = mode == GDF_RENDER_MODE_WIREFRAME ? renderer->terrain_pipeline.wireframe_handle : renderer->terrain_pipeline.handle;
+    VkPipeline terrain_vk_pipeline = mode == GDF_RENDER_MODE_WIREFRAME ?
+        renderer->terrain_pipeline.wireframe_handle :
+        renderer->terrain_pipeline.handle;
 
     vkCmdBindPipeline(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS, terrain_vk_pipeline);
-    VkDescriptorSet terrain_pipeline_sets[] = {
-        vk_ctx->per_frame[frame_idx].vp_ubo_set,
-        renderer->terrain_pipeline.descriptor_sets[frame_idx]
-    };
-    vkCmdBindDescriptorSets(
-        cmd_buf,
-        VK_PIPELINE_BIND_POINT_GRAPHICS,
-        renderer->terrain_pipeline.layout,
-        0,
-        2,
-        terrain_pipeline_sets,
-        0,
-        NULL
-    );
+    VkDescriptorSet terrain_pipeline_sets[] = { vk_ctx->per_frame[frame_idx].vp_ubo_set,
+        renderer->terrain_pipeline.descriptor_sets[frame_idx] };
+    vkCmdBindDescriptorSets(cmd_buf, VK_PIPELINE_BIND_POINT_GRAPHICS,
+        renderer->terrain_pipeline.layout, 0, 2, terrain_pipeline_sets, 0, NULL);
 
     for (auto& [cc, mesh] : renderer->chunk_meshes)
     {
@@ -75,16 +65,10 @@ GDF_BOOL renderer_draw(const GDF_VkRenderContext* vk_ctx, GDF_RENDER_MODE mode, 
             continue;
         }
 
-        VkDeviceSize offsets[] = {0};
+        VkDeviceSize offsets[] = { 0 };
 
-        vkCmdPushConstants(
-            cmd_buf,
-            renderer->terrain_pipeline.layout,
-            VK_SHADER_STAGE_VERTEX_BIT,
-            0,
-            sizeof(ivec3),
-            &cc
-        );
+        vkCmdPushConstants(cmd_buf, renderer->terrain_pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT,
+            0, sizeof(ivec3), &cc);
 
         vkCmdBindVertexBuffers(cmd_buf, 0, 1, &buffers->vertex_buffer.handle, offsets);
         vkCmdBindIndexBuffer(cmd_buf, buffers->index_buffer.handle, {}, VK_INDEX_TYPE_UINT16);
@@ -117,7 +101,8 @@ GDF_BOOL renderer_draw(const GDF_VkRenderContext* vk_ctx, GDF_RENDER_MODE mode, 
 //     return GDF_TRUE;
 // }
 //
-// GDF_BOOL vk_game_renderer_draw(VkRenderContext* context, GDF_RendererState* renderer, u8 resource_idx, f32 dt)
+// GDF_BOOL vk_game_renderer_draw(VkRenderContext* context, GDF_RendererState* renderer, u8
+// resource_idx, f32 dt)
 // {
 //     GDF_Game* game = renderer->game;
 //     GDF_Camera* active_camera = game->main_camera;
@@ -225,10 +210,12 @@ GDF_BOOL renderer_draw(const GDF_VkRenderContext* vk_ctx, GDF_RENDER_MODE mode, 
 //     }
 //
 //     // draw debug grid
-//     vkCmdBindPipeline(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, context->grid_pipeline.handle);
+//     vkCmdBindPipeline(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+//     context->grid_pipeline.handle);
 //
 //     vkCmdBindVertexBuffers(cmd_buffer, 0, 1, &context->up_facing_plane_vbo.handle, offsets);
-//     vkCmdBindIndexBuffer(cmd_buffer, context->up_facing_plane_index_buffer.handle, 0, VK_INDEX_TYPE_UINT16);
+//     vkCmdBindIndexBuffer(cmd_buffer, context->up_facing_plane_index_buffer.handle, 0,
+//     VK_INDEX_TYPE_UINT16);
 //
 //     vkCmdBindDescriptorSets(
 //         cmd_buffer,

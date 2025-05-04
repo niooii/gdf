@@ -1,10 +1,9 @@
 #include <client/app.h>
-#include <gdfe/input.h>
-#include <gdfe/math/math.h>
-#include <gdfe/math/math.h>
 #include <client/graphics/renderer.h>
 #include <game/movement.h>
 #include <game/physics/raycast.h>
+#include <gdfe/input.h>
+#include <gdfe/math/math.h>
 #include <gdfe/os/thread.h>
 #include <server/net.h>
 #include <server/server.h>
@@ -14,21 +13,21 @@ App APP{};
 
 void App::join_world(const char* host, u16 port)
 {
-    client_world = new ClientWorld{host, port};
+    client_world = new ClientWorld{ host, port };
     renderer->world_renderer.set_world(client_world->world_ptr());
 }
 
 void app_init()
 {
     GDF_CameraCreateInfo camera_info = {
-        .pos = vec3_new(0.0f, 0.0f, 0.0f),
-        .pitch = DEG_TO_RAD(0.0f),
-        .yaw = DEG_TO_RAD(0.0f),
-        .roll = DEG_TO_RAD(0.0f),
+        .pos          = vec3_new(0.0f, 0.0f, 0.0f),
+        .pitch        = DEG_TO_RAD(0.0f),
+        .yaw          = DEG_TO_RAD(0.0f),
+        .roll         = DEG_TO_RAD(0.0f),
         .aspect_ratio = 1.77f,
-        .fov = DEG_TO_RAD(75.f),
-        .near_clip = 0.1f,
-        .far_clip = 1000.0f,
+        .fov          = DEG_TO_RAD(75.f),
+        .near_clip    = 0.1f,
+        .far_clip     = 1000.0f,
     };
     APP.main_camera = GDF_CameraCreate(&camera_info);
     GDF_CameraSetGlobalAxis(APP.main_camera, vec3_new(0, 1, 0));
@@ -137,7 +136,7 @@ void app_init()
 GDF_BOOL app_update(const GDF_AppState* app_state, f64 dt, void* state)
 {
     Services::Time::detail::_internal_dt = dt;
-    App* app = &APP;
+    App* app                             = &APP;
     // LOG_INFO("VEL: %f %f %f", player->base.vel.x, player->base.vel.y, player->base.vel.z);
 
     app->client_world->update(dt);

@@ -1,16 +1,14 @@
 #pragma once
+#include <game/world.h>
 #include <gdfe/os/thread.h>
 #include <prelude.h>
-#include <game/world.h>
 #include <server/net.h>
 
 // not a minecraft clone
 #define GDF_SERVER_PORT 25566
 
 // TODO! have a properties file and read from it with cereal
-struct WorldServerCreateInfo {
-
-};
+struct WorldServerCreateInfo {};
 
 struct Client {
     std::vector<HumanoidStateChangeEvent> queued_inputs;
@@ -19,30 +17,26 @@ struct Client {
 // TODO! world configuration
 class ServerWorld {
     ServerNetManager* net_;
-    World world_;
+    World             world_;
 
     std::vector<std::unique_ptr<Services::Events::Subscription>> subscriptions_;
     // this should be stored per each client, probably.
     std::vector<HumanoidStateChangeEvent> clients;
 
 public:
-
-    ServerWorld(ServerNetManager* net)
-        : net_{net}, world_{"daworld"}
+    ServerWorld(ServerNetManager* net) : net_{ net }, world_{ "daworld" }
     {
         // subscriptions_.emplace_back(
         //     // Services::Events::subscribe<>([&wo])
         // );
     }
 
-    ~ServerWorld()
-    {
-
-    }
+    ~ServerWorld() {}
 
     FORCEINLINE World* world_ptr() { return &world_; }
 
-    FORCEINLINE void update(f32 dt) {
+    FORCEINLINE void update(f32 dt)
+    {
         auto& humanoids = world_.simulated_humanoids();
         for (auto& humanoid : humanoids)
             humanoid.reset_accumulator();

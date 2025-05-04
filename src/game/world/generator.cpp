@@ -2,15 +2,9 @@
 
 #include <game/world.h>
 
-Generator::Generator()
-{
+Generator::Generator() {}
 
-}
-
-Generator::~Generator()
-{
-
-}
+Generator::~Generator() {}
 
 void Generator::gen_chunk(ivec3 cc, Chunk& chunk)
 {

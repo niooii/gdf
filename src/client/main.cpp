@@ -1,5 +1,5 @@
-#include <gdfe/prelude.h>
 #include <client/graphics/renderer.h>
+#include <gdfe/prelude.h>
 #include <prelude.h>
 
 #define ENET_IMPLEMENTATION
@@ -10,7 +10,8 @@
 int main()
 {
     GDF_InitSubsystems();
-    if (enet_initialize() != 0) {
+    if (enet_initialize() != 0)
+    {
         LOG_FATAL("An error occurred while initializing ENet");
     }
 
@@ -25,12 +26,12 @@ int main()
                 .on_render_destroy = renderer_destroy,
                 .on_render_destroy_state = &APP,
                 .on_render = renderer_draw,
-                .on_render_state = &APP
-            }
+                .on_render_state = &APP,
+            },
         },
         .config = {
             .updates_per_sec = 0,
-        }
+        },
     };
 
     const char* test_buffer = "awfwfawfwa";
@@ -44,12 +45,7 @@ int main()
     GDF_Memzero(server_path, sizeof(server_path));
     snprintf(server_path, sizeof(server_path), "%s\\server.exe", GDF_GetExecutablePath());
 
-    GDF_Process server_proc = GDF_CreateProcess(
-        server_path,
-        NULL,
-        NULL,
-        NULL
-    );
+    GDF_Process server_proc = GDF_CreateProcess(server_path, NULL, NULL, NULL);
 
     GDF_ThreadSleep(500);
 

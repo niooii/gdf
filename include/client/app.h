@@ -1,9 +1,9 @@
 #pragma once
 
-#include <gdfe/prelude.h>
-#include <gdfe/camera.h>
 #include <client/world.h>
+#include <gdfe/camera.h>
 #include <gdfe/gdfe.h>
+#include <gdfe/prelude.h>
 
 #include <client/graphics/renderer.h>
 
@@ -21,7 +21,7 @@
 
 struct App {
     // This will be NULL if the player is not in a world.
-    ClientWorld* client_world = NULL;
+    ClientWorld*  client_world = NULL;
     GameRenderer* renderer;
 
     // HumanoidEntity* main_player;
@@ -36,7 +36,6 @@ struct App {
 // The global app state.
 extern App APP;
 
-void app_init();
-void app_destroy();
+void     app_init();
+void     app_destroy();
 GDF_BOOL app_update(const GDF_AppState* app_state, f64 delta_time, void* state);
-
