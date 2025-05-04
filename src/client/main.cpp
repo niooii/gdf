@@ -4,8 +4,6 @@
 
 #define ENET_IMPLEMENTATION
 #include <client/app.h>
-#include <client/net.h>
-#include <game/events/defs.h>
 #include <server/net.h>
 #include <server/server.h>
 
@@ -34,6 +32,9 @@ int main()
             .updates_per_sec = 0,
         }
     };
+
+    const char* test_buffer = "awfwfawfwa";
+    GDF_StorageWrite("test", test_buffer, strlen(test_buffer));
 
     GDF_AppState* app_state = GDF_Init(init);
     if (!app_state)
