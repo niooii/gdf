@@ -33,8 +33,8 @@ GDF_BOOL server_update(const GDF_AppState* app_state, f64 dt, void* state)
     server->net->update();
     Services::Events::flush();
 
-    auto test = Services::Events::create_event<ChunkLoadEvent>();
-    server->net->send_to("TESTUUID ABABABA", std::move(test));
+    // auto test = Services::Events::create_event<ChunkLoadEvent>();
+    // server->net->send_to("TESTUUID ABABABA", std::move(test));
 
     server->server_world->update(dt);
 

@@ -42,7 +42,7 @@ namespace Net {
         virtual void dispatch() const = 0;
 
         /// Queues dispatching the packet's true type as an "event" to local handlers.
-        virtual void queue_dispatch() const = 0;
+        virtual void queue_dispatch() = 0;
 
         template <class Archive>
         void serialize(Archive& ar)
@@ -51,17 +51,21 @@ namespace Net {
         }
     };
 
-    // Event template type
+    // Packet template type
     template <typename Derived>
     struct PacketT : Packet {
         void dispatch() const override
         {
-            Services::Events::dispatch(static_cast<const Derived&>(*this));
+            Services::Events::dispatch(static_cast<const Derived*>(this));
         }
 
-        void queue_dispatch() const override
+        void queue_dispatch() override
         {
-            Services::Events::queue_dispatch(static_cast<const Derived&>(*this));
+            std::unique_ptr<Derived> ptr(static_cast<Derived*>(this));
+
+            Services::Events::queue_dispatch(
+                std::move(ptr)
+            );
         }
     };
 

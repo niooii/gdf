@@ -1,6 +1,7 @@
 #pragma once
 
 #undef min
+#undef max
 #ifndef GDF_RELEASE
 #define HFSM2_ENABLE_LOG_INTERFACE
 #define HFSM2_ENABLE_VERBOSE_DEBUG_LOG

@@ -32,7 +32,8 @@ namespace Services::Events {
     namespace detail {
         template <typename>
         struct SubscriptionT : Subscription {
-            ~    SubscriptionT() override = default;
+            ~SubscriptionT() override = default;
+
             void unsubscribe() const override;
         };
 
@@ -43,8 +44,7 @@ namespace Services::Events {
             // TODO! unused for now
             std::vector<std::function<bool(const T&)>> reject_conditions;
 
-            // TODO! use smart pointers instead of copying data or something along those lines
-            std::vector<T> event_buffer;
+            std::vector<std::unique_ptr<T>> event_buffer;
 
         public:
             EventDispatcher()
@@ -80,7 +80,10 @@ namespace Services::Events {
                         handler(event);
             }
 
-            void queue_dispatch(const T& event) { event_buffer.push_back(event); }
+            void queue_dispatch(std::unique_ptr<T> event)
+            {
+                event_buffer.push_back(std::move(event));
+            }
 
             void flush()
             {
@@ -88,7 +91,7 @@ namespace Services::Events {
                 {
                     for (auto& [_k, handler] : handlers)
                     {
-                        handler(event);
+                        handler(*event);
                     }
                 }
                 event_buffer.clear();
@@ -135,9 +138,9 @@ namespace Services::Events {
             }
 
             template <typename T>
-            FORCEINLINE void queue_dispatch(const T& event)
+            FORCEINLINE void queue_dispatch(std::unique_ptr<T> event)
             {
-                get_dispatcher<T>().queue_dispatch(event);
+                get_dispatcher<T>().queue_dispatch(std::move(event));
             }
 
             template <typename T>
@@ -156,9 +159,7 @@ namespace Services::Events {
             FORCEINLINE void flush()
             {
                 for (const auto& flush_fn : flush_functions)
-                {
                     flush_fn();
-                }
             }
         };
 
@@ -180,9 +181,9 @@ namespace Services::Events {
     }
 
     template <typename T>
-    FORCEINLINE void queue_dispatch(const T& event)
+    FORCEINLINE void queue_dispatch(std::unique_ptr<T> event)
     {
-        detail::EventManager::get_instance().queue_dispatch(event);
+        detail::EventManager::get_instance().queue_dispatch(std::move(event));
     }
 
     template <typename T>

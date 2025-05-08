@@ -111,9 +111,9 @@ void PhysicsSimulation::update(f32 dt)
             }
         }
 
-        EntityBlockCollisionEvent e;
-        e.entity = entity;
-        e.touched.reserve(8);
+        auto e = std::make_unique<EntityBlockCollisionEvent>();
+        e->entity = entity;
+        e->touched.reserve(8);
         for (u32 i = 0; i < results_len; i++)
         {
             BlockTouchingResult* r = results + i;
@@ -143,14 +143,14 @@ void PhysicsSimulation::update(f32 dt)
                 {
                     vel.z = 0;
                 }
-                e.touched.push_back(r->block);
+                e->touched.push_back(r->block);
             }
         }
         // update grounded status
         collider.is_grounded = ground_found;
         // this fluctuates for negative y apparently lol
         // LOG_DEBUG("GROUND FOUND: %d", ground_found);
-        Services::Events::queue_dispatch(e);
+        Services::Events::queue_dispatch(std::move(e));
 
         aabb_translate(&collider.aabb, deltas);
     }

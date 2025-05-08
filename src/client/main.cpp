@@ -56,13 +56,10 @@ int main()
     LOG_DEBUG("running path: %s", GDF_GetExecutablePath());
     f64 time_ran_for = GDF_Run();
     if (time_ran_for != -1)
-    {
-        LOG_INFO("App has been runinng for %lf seconds... Time to rest!", time_ran_for);
-    }
+        LOG_INFO("App has been runinng for %lf seconds... Time to rest!", time_ran_for)
     else
-    {
-        LOG_ERR("yikes....\n");
-    }
+        LOG_ERR("yikes....\n")
+
     GDF_FlushLogBuffer();
     enet_deinitialize();
     return 0;

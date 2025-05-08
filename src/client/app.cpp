@@ -141,6 +141,7 @@ GDF_BOOL app_update(const GDF_AppState* app_state, f64 dt, void* state)
 
     app->client_world->update(dt);
 
+    // TODO! MEMORY LEAK HERE?? man..
     Services::Events::flush();
 
     // LOG_DEBUG("pos: %f %f %f", collider->aabb.min.x, collider->aabb.min.y, collider->aabb.min.z);

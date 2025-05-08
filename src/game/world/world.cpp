@@ -25,7 +25,7 @@ World::World(WorldCreateInfo& create_info)
 
     upd_stopwatch_ = GDF_StopwatchCreate();
 
-    auto chunk_load_event    = Services::Events::create_event<ChunkLoadEvent>();
+    auto chunk_load_event = Services::Events::create_event<ChunkLoadEvent>();
     chunk_load_event->source = ProgramType::Client;
 
     // Create chunks
@@ -43,7 +43,7 @@ World::World(WorldCreateInfo& create_info)
         }
     }
 
-    Services::Events::queue_dispatch(*chunk_load_event);
+    Services::Events::queue_dispatch(std::move(chunk_load_event));
 }
 
 // TODO! actually implement loading and saving
@@ -82,7 +82,7 @@ World::World(const char* folder_path)
         }
     }
 
-    Services::Events::queue_dispatch(*chunk_load_event);
+    Services::Events::queue_dispatch(std::move(chunk_load_event));
 }
 
 World::~World()

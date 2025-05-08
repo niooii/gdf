@@ -177,7 +177,7 @@ static unsigned long io_thread(void* args)
         }
         if (const f64 overflow = GDF_StopwatchSleepUntil(throttle_timer, throttle_secs);
             overflow > 0)
-            LOG_WARN("Server fell behind by %lf secs :(", overflow);
+            LOG_WARN("Packet shuttling fell behind by %lf secs :(", overflow);
     }
     while (server->io_active);
 
