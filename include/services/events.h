@@ -32,7 +32,7 @@ namespace Services::Events {
     namespace detail {
         template <typename>
         struct SubscriptionT : Subscription {
-            ~SubscriptionT() override = default;
+            FORCEINLINE ~SubscriptionT() override { unsubscribe(); }
 
             void unsubscribe() const override;
         };
@@ -47,17 +47,12 @@ namespace Services::Events {
             std::vector<std::unique_ptr<T>> event_buffer;
 
         public:
-            EventDispatcher()
-            {
-                handlers.reserve(4);
-                event_buffer.reserve(32);
-            }
-
             // Subscribers will be notified when the event manager is flushed
             // Flushing will happen every frame after input is updated and
             // before rendering.
             std::unique_ptr<Subscription> subscribe(std::function<void(const T&)> handler)
             {
+                // u64 is quite big, we can effectively consider it to be infinite.
                 static SubscriptionId next_id;
 
                 SubscriptionId id = next_id++;
@@ -88,12 +83,8 @@ namespace Services::Events {
             void flush()
             {
                 for (auto& event : event_buffer)
-                {
                     for (auto& [_k, handler] : handlers)
-                    {
                         handler(*event);
-                    }
-                }
                 event_buffer.clear();
             }
         };

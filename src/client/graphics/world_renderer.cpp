@@ -29,6 +29,7 @@ WorldRenderer::WorldRenderer(const GDF_VkRenderContext* vk_ctx)
         [this](const auto& event)
         {
             ivec3 cc = event.chunk_coord;
+            LOG_INFO("AFA")
 
             if (chunk_meshes.contains(cc))
             {
@@ -40,7 +41,5 @@ WorldRenderer::WorldRenderer(const GDF_VkRenderContext* vk_ctx)
 
 WorldRenderer::~WorldRenderer()
 {
-    on_chunk_update->unsubscribe();
-    on_chunk_load->unsubscribe();
     block_textures_destroy(&this->block_textures);
 }
